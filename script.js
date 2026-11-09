@@ -2348,19 +2348,24 @@ applySettings();
 
 
 
-
-/* =========================================
-   STUDYSPACE AI ENGINE 3.0
-   WebLLM - lokale KI im Browser
-========================================= */
+/* =====================================================
+   STUDYSPACE AI ENGINE 4.0
+   Llama 3.1 8B – lokale KI über WebLLM
+   Mit automatischem Fallback auf Llama 3.2 3B
+===================================================== */
 
 (() => {
     "use strict";
 
     const CONFIG = {
-        model: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
-        temperature: 0.65,
-        maxTokens: 1200
+        primaryModel: "Llama-3.1-8B-Instruct-q4f16_1-MLC",
+        fallbackModel: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+
+        temperature: 0.4,
+        maxTokens: 1800,
+        historyMessages: 2,
+
+        webLLMVersion: "0.2.87"
     };
 
     const state = {
@@ -2368,11 +2373,17 @@ applySettings();
         module: null,
         loading: false,
         ready: false,
+        activeModel: null,
         messages: []
     };
 
+    // -------------------------------------------------
+    // STATUSANZEIGE
+    // -------------------------------------------------
+
     function status(message, type = "info") {
         const element = document.getElementById("aiEngineStatus");
+
         if (!element) {
             console.log("[StudySpace AI]", message);
             return;
@@ -2387,77 +2398,152 @@ applySettings();
         const label = document.getElementById("aiProgressText");
 
         if (bar) {
-            bar.style.width =
-                `${Math.round((info.progress || 0) * 100)}%`;
+            const value = Math.max(
+                0,
+                Math.min(100, Math.round((info.progress || 0) * 100))
+            );
+
+            bar.style.width = `${value}%`;
         }
 
         if (label) {
             label.textContent =
-                info.text || "Modell wird geladen...";
+                info.text || "Modell wird heruntergeladen...";
         }
     }
 
-    async function loadLibrary() {
-        if (state.module) return state.module;
+    // -------------------------------------------------
+    // WEBLLM LADEN
+    // -------------------------------------------------
 
-        status("KI-Bibliothek wird geladen...");
+    async function loadLibrary() {
+        if (state.module) {
+            return state.module;
+        }
+
+        status("Neue KI-Engine wird geladen...");
 
         state.module = await import(
-            "https://esm.run/@mlc-ai/web-llm"
+            `https://esm.run/@mlc-ai/web-llm@${CONFIG.webLLMVersion}`
         );
 
         return state.module;
     }
 
+    // -------------------------------------------------
+    // MODELL VERFÜGBARKEIT PRÜFEN
+    // -------------------------------------------------
+
+    function modelAvailable(modelId) {
+        const models =
+            state.module?.prebuiltAppConfig?.model_list || [];
+
+        return models.some(model => model.model_id === modelId);
+    }
+
+    // -------------------------------------------------
+    // MODELL INITIALISIEREN
+    // -------------------------------------------------
+
+    async function createModel(modelId) {
+        if (!modelAvailable(modelId)) {
+            throw new Error(
+                `Das Modell ${modelId} ist in dieser WebLLM-Version nicht verfügbar.`
+            );
+        }
+
+        return await state.module.CreateMLCEngine(
+            modelId,
+            {
+                initProgressCallback: progress
+            }
+        );
+    }
+
     async function initialize() {
-        if (state.ready) return true;
-        if (state.loading) return false;
+        if (state.ready) {
+            return true;
+        }
+
+        if (state.loading) {
+            return false;
+        }
 
         state.loading = true;
 
         try {
+            // WebGPU überprüfen
             if (!navigator.gpu) {
                 throw new Error(
-                    "WebGPU wird von deinem Browser nicht unterstützt."
+                    "Dein Browser unterstützt WebGPU nicht."
                 );
             }
 
-            status("KI-Bibliothek wird vorbereitet...");
+            const adapter = await navigator.gpu.requestAdapter();
 
-            const module = await loadLibrary();
-
-            const available = module.prebuiltAppConfig.model_list
-                .some(model => model.model_id === CONFIG.model);
-
-            if (!available) {
+            if (!adapter) {
                 throw new Error(
-                    "Das ausgewählte KI-Modell ist nicht verfügbar."
+                    "Es wurde keine geeignete GPU gefunden."
                 );
             }
 
-            status("KI-Modell wird geladen...");
+            await loadLibrary();
 
-            state.engine = await module.CreateMLCEngine(
-                CONFIG.model,
-                {
-                    initProgressCallback: progress
-                }
-            );
+            // Zuerst das leistungsstärkere 8B-Modell versuchen
+            try {
+                status(
+                    "Das leistungsstärkere StudySpace-Modell wird geladen..."
+                );
+
+                state.engine = await createModel(
+                    CONFIG.primaryModel
+                );
+
+                state.activeModel = CONFIG.primaryModel;
+
+            } catch (primaryError) {
+                console.warn(
+                    "Das 8B-Modell konnte nicht gestartet werden:",
+                    primaryError
+                );
+
+                status(
+                    "Das größere Modell funktioniert nicht. " +
+                    "Das kleinere Ersatzmodell wird geladen..."
+                );
+
+                state.engine = await createModel(
+                    CONFIG.fallbackModel
+                );
+
+                state.activeModel = CONFIG.fallbackModel;
+            }
 
             state.ready = true;
-            status("StudySpace KI ist bereit!", "success");
 
-            console.log("StudySpace KI gestartet:", CONFIG.model);
+            status(
+                "StudySpace KI ist bereit!",
+                "success"
+            );
+
+            console.log(
+                "StudySpace KI gestartet:",
+                state.activeModel
+            );
 
             return true;
 
         } catch (error) {
             console.error("StudySpace AI:", error);
 
-            status("Fehler: " + error.message, "error");
-
             state.engine = null;
+            state.activeModel = null;
             state.ready = false;
+
+            status(
+                "KI konnte nicht gestartet werden: " + error.message,
+                "error"
+            );
 
             return false;
 
@@ -2466,18 +2552,33 @@ applySettings();
         }
     }
 
+    // -------------------------------------------------
+    // SYSTEM-PROMPT
+    // -------------------------------------------------
+
     function getSystemPrompt() {
-        const subject =
-            document.getElementById("tutorSubject")?.value || "Allgemein";
+        const subjectSelect =
+            document.getElementById("tutorSubject");
+
+        const subject = subjectSelect?.value
+            ? subjectSelect.selectedOptions?.[0]?.textContent?.trim()
+            : "Allgemein";
 
         const topic =
-            document.getElementById("tutorTopic")?.value || "Allgemein";
+            document.getElementById("tutorTopic")?.value ||
+            "Allgemein";
 
         const difficulty =
-            document.getElementById("difficulty")?.value || "Mittel";
+            document.getElementById("difficulty")?.value ||
+            "Mittel";
 
         const method =
-            document.getElementById("learningMethod")?.value || "Erklären";
+            document.getElementById("learningMethod")?.value ||
+            "Erklären";
+
+        const source =
+            document.getElementById("learningSource")?.value ||
+            "notebook";
 
         return `
 Du bist der StudySpace-Lernassistent.
@@ -2486,50 +2587,80 @@ Fach: ${subject}
 Thema: ${topic}
 Niveau: ${difficulty}
 Lernmethode: ${method}
+Quelle: ${source}
 
-Erkläre schulische Inhalte verständlich und strukturiert.
-Passe deine Sprache an einen Schüler der Sekundarstufe an.
-Nutze Beispiele und stelle Verständnisfragen.
-Erstelle auf Wunsch Übungsaufgaben.
-Erkläre Fehler konstruktiv.
-Erfinde keine Fakten.
+Deine Aufgabe ist es, dem Schüler beim tatsächlichen Lernen zu helfen.
+
 Antworte auf Deutsch.
+Erkläre fachlich korrekt und nachvollziehbar.
+Verwende klare Überschriften und sinnvolle Absätze.
+Erkläre schwierige Fachbegriffe.
+Nutze Beispiele und zeige Zusammenhänge.
+Passe die Erklärungen an die Klassenstufe 10 an.
+Unterscheide zwischen Unterrichtsmaterialien und Ergänzungen.
+Erfinde keine Fakten.
+Beantworte die konkrete Frage vollständig.
 `;
     }
 
+    // -------------------------------------------------
+    // GESPRÄCHSKONTEXT
+    // -------------------------------------------------
+
+    function getConversationMessages() {
+        return state.messages
+            .slice(-CONFIG.historyMessages)
+            .map(message => ({
+                role: message.role,
+                content: message.content
+            }));
+    }
+
+    // -------------------------------------------------
+    // KI-ANTWORT ERZEUGEN
+    // -------------------------------------------------
+
     async function ask(question) {
-        if (!question || !question.trim()) return null;
+        const userQuestion = String(question ?? "").trim();
+
+        if (!userQuestion) {
+            return null;
+        }
 
         if (!state.ready) {
             const started = await initialize();
 
             if (!started) {
-                return "Die KI konnte nicht gestartet werden.";
+                return "Die KI konnte nicht gestartet werden. Bitte prüfe die Fehlermeldung.";
             }
         }
 
-        state.messages.push({
+        const newMessage = {
             role: "user",
-            content: question.trim()
-        });
+            content: userQuestion
+        };
+
+        state.messages.push(newMessage);
 
         try {
+            const messages = [
+                {
+                    role: "system",
+                    content: getSystemPrompt()
+                },
+                ...getConversationMessages()
+            ];
+
             const response =
                 await state.engine.chat.completions.create({
-                    messages: [
-                        {
-                            role: "system",
-                            content: getSystemPrompt()
-                        },
-                        ...state.messages.slice(-12)
-                    ],
+                    messages,
                     temperature: CONFIG.temperature,
                     max_tokens: CONFIG.maxTokens
                 });
 
             const answer =
-                response.choices?.[0]?.message?.content ||
-                "Keine Antwort erhalten.";
+                response.choices?.[0]?.message?.content?.trim() ||
+                "Die KI hat leider keine Antwort geliefert.";
 
             state.messages.push({
                 role: "assistant",
@@ -2539,44 +2670,72 @@ Antworte auf Deutsch.
             return answer;
 
         } catch (error) {
-            console.error("Antwortfehler:", error);
-            return "Bei der KI-Antwort ist ein Fehler aufgetreten.";
+            console.error("StudySpace Antwortfehler:", error);
+
+            // Fehlgeschlagene Frage aus dem Kontext entfernen
+            if (state.messages[state.messages.length - 1] === newMessage) {
+                state.messages.pop();
+            }
+
+            return (
+                "Bei der Erstellung der Antwort ist ein Fehler aufgetreten. " +
+                "Bitte versuche es erneut. Details stehen in der Browser-Konsole."
+            );
         }
     }
+
+    // -------------------------------------------------
+    // GESPRÄCH ZURÜCKSETZEN
+    // -------------------------------------------------
 
     function clear() {
         state.messages = [];
     }
+
+    // -------------------------------------------------
+    // KI BEENDEN
+    // -------------------------------------------------
 
     async function stop() {
         if (state.engine) {
             try {
                 await state.engine.unload();
             } catch (error) {
-                console.warn(error);
+                console.warn(
+                    "Fehler beim Beenden der KI:",
+                    error
+                );
             }
         }
 
         state.engine = null;
+        state.activeModel = null;
         state.ready = false;
         state.loading = false;
 
-        status("KI beendet.");
+        status("StudySpace KI wurde beendet.");
     }
+
+    // -------------------------------------------------
+    // ÖFFENTLICHE STUDYSPACE-SCHNITTSTELLE
+    // -------------------------------------------------
 
     window.StudySpaceAI = {
         initialize,
         ask,
         clear,
         stop,
+
         getState: () => ({
             ready: state.ready,
             loading: state.loading,
-            model: CONFIG.model
+            model: state.activeModel || CONFIG.primaryModel
         })
     };
 
-    console.log("StudySpace AI Engine 3.0 geladen.");
+    console.log(
+        "StudySpace AI Engine 4.0 geladen."
+    );
 
 })();
 
