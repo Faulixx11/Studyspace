@@ -4602,3 +4602,855 @@ mit deinem Originalhefter.
         waitForPage();
     }
 })();
+
+
+/* ==========================================================
+   STUDYSPACE – LERNWERKSTATT 1.0
+   Wiederholung · Prüfungsmodus · Fehlertrainer · Notizen
+   Eigene Daten werden separat gespeichert.
+========================================================== */
+
+(() => {
+    "use strict";
+
+    const STORAGE_KEY = "studySpaceLearningWorkshop";
+    const $ = id => document.getElementById(id);
+
+    const today = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    const uid = () => "lw_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    })[c]);
+
+    const emptyData = {
+        notes: [],
+        questions: [],
+        mistakes: [],
+        history: [],
+        settings: { dailyGoal: 30 },
+        lastVisit: today(),
+        streak: 0
+    };
+
+    function loadWorkshop() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            return { ...emptyData, ...saved };
+        } catch {
+            return structuredClone(emptyData);
+        }
+    }
+
+    let store = loadWorkshop();
+
+    function save() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+            updateOverview();
+            return true;
+        } catch (error) {
+            console.error("Lernwerkstatt konnte nicht speichern:", error);
+            alert("Speichern fehlgeschlagen. Möglicherweise ist dein Browserspeicher voll.");
+            return false;
+        }
+    }
+
+    function subjects() {
+        return Array.isArray(data.subjects) ? data.subjects : [];
+    }
+
+    function cards() {
+        return Array.isArray(data.flashcards) ? data.flashcards : [];
+    }
+
+    function subjectName(id) {
+        return subjects().find(s => String(s.id) === String(id))?.name || "Allgemein";
+    }
+
+    function subjectOptions(selected = "") {
+        return `<option value="">Allgemein / kein Fach</option>` +
+            subjects().map(s =>
+                `<option value="${esc(s.id)}" ${String(s.id) === String(selected) ? "selected" : ""}>${esc(s.name)}</option>`
+            ).join("");
+    }
+
+    function dueDate(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function ensurePage() {
+        if ($("page-workshop")) return;
+
+        const nav = document.querySelector(".navigation");
+        const main = document.querySelector(".main-content");
+
+        if (!nav || !main) {
+            console.error("Lernwerkstatt: Navigation oder Hauptbereich nicht gefunden.");
+            return;
+        }
+
+        const navButton = document.createElement("button");
+        navButton.className = "nav-item";
+        navButton.dataset.page = "workshop";
+        navButton.innerHTML = `
+            <span class="nav-icon">🧠</span>
+            <span class="nav-text">Lernwerkstatt</span>
+        `;
+        nav.appendChild(navButton);
+
+        const page = document.createElement("section");
+        page.className = "page";
+        page.id = "page-workshop";
+
+        page.innerHTML = `
+            <div class="page-intro">
+                <h1>Lernwerkstatt</h1>
+                <p>Wiederhole gezielt, trainiere Prüfungsfragen und erkenne deine Wissenslücken.</p>
+            </div>
+
+            <div class="lw-overview" id="lwOverview"></div>
+
+            <div class="lw-tabs">
+                <button class="lw-tab active" data-tab="today">Heute lernen</button>
+                <button class="lw-tab" data-tab="cards">Wiederholen</button>
+                <button class="lw-tab" data-tab="exam">Prüfungsmodus</button>
+                <button class="lw-tab" data-tab="mistakes">Fehlertrainer</button>
+                <button class="lw-tab" data-tab="questions">Fragenpool</button>
+                <button class="lw-tab" data-tab="notes">Lernnotizen</button>
+                <button class="lw-tab" data-tab="stats">Statistik</button>
+                <button class="lw-tab" data-tab="backup">Daten</button>
+            </div>
+
+            <div class="lw-panel active" id="lw-today">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Dein Lernstart</h2>
+                        <p>Beginne mit den Inhalten, die heute wirklich wichtig sind.</p>
+                    </div>
+                </div>
+                <div id="lwTodayContent"></div>
+                <div class="lw-box">
+                    <h3>Tagesziel</h3>
+                    <p>Wie viele Minuten möchtest du heute aktiv lernen?</p>
+                    <div class="lw-inline">
+                        <input type="number" id="lwDailyGoal" min="5" max="600" step="5">
+                        <span>Minuten</span>
+                        <button class="primary-button" id="lwSaveGoal">Ziel speichern</button>
+                    </div>
+                    <div class="lw-progress"><div id="lwGoalProgress"></div></div>
+                    <p id="lwGoalText" class="muted"></p>
+                </div>
+                <div class="lw-box">
+                    <h3>Deine StudySpace-Karteikarten</h3>
+                    <p>Auch deine bereits vorhandenen Karteikarten kannst du hier wiederholen.</p>
+                    <button class="primary-button" data-open-tab="cards">Karteikarten wiederholen</button>
+                </div>
+            </div>
+
+            <div class="lw-panel" id="lw-cards">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Intelligente Wiederholung</h2>
+                        <p>Karten werden abhängig davon erneut fällig, wie sicher du sie beherrschst.</p>
+                    </div>
+                </div>
+                <div class="lw-inline lw-filters">
+                    <select id="lwCardSubject"><option value="">Alle Fächer</option></select>
+                    <select id="lwCardSource">
+                        <option value="all">Alle Karten</option>
+                        <option value="due">Nur fällige Karten</option>
+                        <option value="new">Noch nie gelernt</option>
+                    </select>
+                </div>
+                <div id="lwReviewArea"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-exam">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Prüfungsmodus</h2>
+                        <p>Teste dein Wissen ohne die Antwort vorher zu sehen.</p>
+                    </div>
+                </div>
+                <div class="lw-box">
+                    <label>Fach
+                        <select id="lwExamSubject"><option value="">Alle Fächer</option></select>
+                    </label>
+                    <label>Anzahl der Fragen
+                        <select id="lwExamCount">
+                            <option value="5">5 Fragen</option>
+                            <option value="10" selected>10 Fragen</option>
+                            <option value="20">20 Fragen</option>
+                            <option value="all">Alle verfügbaren Fragen</option>
+                        </select>
+                    </label>
+                    <button class="primary-button" id="lwStartExam">Prüfung starten</button>
+                </div>
+                <div id="lwExamArea"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-mistakes">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Fehlertrainer</h2>
+                        <p>Hier sammelst du Fragen, bei denen du noch unsicher bist.</p>
+                    </div>
+                </div>
+                <div id="lwMistakeList"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-questions">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Eigener Fragenpool</h2>
+                        <p>Erstelle Fragen und Antworten für deinen persönlichen Prüfungsmodus.</p>
+                    </div>
+                </div>
+                <form id="lwQuestionForm" class="lw-form">
+                    <label>Frage
+                        <textarea id="lwQuestionText" required placeholder="Was möchtest du wissen?"></textarea>
+                    </label>
+                    <label>Musterantwort
+                        <textarea id="lwQuestionAnswer" required placeholder="Wie lautet eine gute Antwort?"></textarea>
+                    </label>
+                    <label>Fach
+                        <select id="lwQuestionSubject">${subjectOptions()}</select>
+                    </label>
+                    <label>Thema / Kapitel
+                        <input id="lwQuestionTopic" placeholder="z. B. Dynamik, Kräfte">
+                    </label>
+                    <label>Schwierigkeit
+                        <select id="lwQuestionDifficulty">
+                            <option value="1">Leicht</option>
+                            <option value="2" selected>Mittel</option>
+                            <option value="3">Schwer</option>
+                        </select>
+                    </label>
+                    <button class="primary-button" type="submit">Frage speichern</button>
+                </form>
+                <div class="lw-inline lw-filters">
+                    <input id="lwQuestionSearch" placeholder="Fragen durchsuchen ...">
+                    <select id="lwQuestionFilter"><option value="">Alle Fächer</option></select>
+                </div>
+                <div id="lwQuestionList"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-notes">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Deine Lernnotizen</h2>
+                        <p>Erstelle eigene Erklärungen, Zusammenfassungen und Merksätze.</p>
+                    </div>
+                </div>
+                <form id="lwNoteForm" class="lw-form">
+                    <label>Titel
+                        <input id="lwNoteTitle" required placeholder="z. B. Newtonsche Gesetze">
+                    </label>
+                    <label>Fach
+                        <select id="lwNoteSubject">${subjectOptions()}</select>
+                    </label>
+                    <label>Thema
+                        <input id="lwNoteTopic" placeholder="Kapitel oder Unterthema">
+                    </label>
+                    <label>Inhalt
+                        <textarea id="lwNoteContent" rows="7" required placeholder="Schreibe deine Erklärung, Definitionen, Beispiele oder Formeln ..."></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Notiz speichern</button>
+                </form>
+                <input id="lwNoteSearch" class="lw-search" placeholder="Notizen durchsuchen ...">
+                <div id="lwNoteList"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-stats">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Dein Lernfortschritt</h2>
+                        <p>Beobachte deine Wiederholungen und deine Entwicklung.</p>
+                    </div>
+                </div>
+                <div id="lwStatsContent"></div>
+            </div>
+
+            <div class="lw-panel" id="lw-backup">
+                <div class="lw-section-heading">
+                    <div>
+                        <h2>Datensicherung</h2>
+                        <p>Exportiere deine Lernwerkstatt-Daten oder importiere eine Sicherung.</p>
+                    </div>
+                </div>
+                <div class="lw-box">
+                    <button class="primary-button" id="lwExport">Lernwerkstatt exportieren</button>
+                    <label class="lw-file-label">Sicherung importieren
+                        <input type="file" id="lwImport" accept=".json,application/json">
+                    </label>
+                    <p class="muted">Beim Import werden die Daten der Lernwerkstatt ersetzt. Deine normalen StudySpace-Fächer und Materialien bleiben unberührt.</p>
+                </div>
+            </div>
+        `;
+
+        main.appendChild(page);
+
+        navButton.addEventListener("click", () => openPage("workshop"));
+
+        // Die vorhandene Navigation kennt die neue Seite.
+        pageTitles.workshop = "Lernwerkstatt";
+
+        navButton.addEventListener("click", () => {
+            document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+            page.classList.add("active");
+            document.querySelectorAll(".nav-item[data-page]").forEach(b =>
+                b.classList.toggle("active", b.dataset.page === "workshop")
+            );
+            $("pageTitle").textContent = "Lernwerkstatt";
+            renderAllWorkshop();
+        });
+
+        bindEvents();
+        renderAllWorkshop();
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll(".lw-tab").forEach(b =>
+            b.classList.toggle("active", b.dataset.tab === name)
+        );
+        document.querySelectorAll(".lw-panel").forEach(p =>
+            p.classList.toggle("active", p.id === "lw-" + name)
+        );
+
+        if (name === "cards") renderReview();
+        if (name === "today") renderToday();
+        if (name === "exam") $("lwExamArea").innerHTML = "";
+        if (name === "mistakes") renderMistakes();
+        if (name === "questions") renderQuestions();
+        if (name === "notes") renderNotes();
+        if (name === "stats") renderStats();
+    }
+
+    function allReviewCards() {
+        const existing = cards().map(card => ({
+            id: String(card.id),
+            question: card.question || "",
+            answer: card.answer || "",
+            subjectId: card.subjectId || "",
+            source: "existing",
+            original: card
+        }));
+
+        const custom = store.questions.map(q => ({
+            id: q.id,
+            question: q.question,
+            answer: q.answer,
+            subjectId: q.subjectId || "",
+            source: "custom",
+            original: q
+        }));
+
+        return [...existing, ...custom];
+    }
+
+    function reviewMeta(card) {
+        const meta = store.review?.[card.id] || {};
+        return {
+            repetitions: meta.repetitions || 0,
+            interval: meta.interval || 0,
+            due: meta.due || today(),
+            ease: meta.ease || 2.5,
+            last: meta.last || null
+        };
+    }
+
+    function scheduleCard(card, rating) {
+        store.review ||= {};
+        const old = reviewMeta(card);
+        let interval = old.interval;
+        let repetitions = old.repetitions;
+        let ease = old.ease;
+
+        if (rating === "again") {
+            repetitions = 0;
+            interval = 0;
+            ease = Math.max(1.3, ease - 0.2);
+        } else {
+            repetitions++;
+            if (repetitions === 1) interval = rating === "hard" ? 1 : 1;
+            else if (repetitions === 2) interval = rating === "hard" ? 2 : 3;
+            else interval = Math.max(1, Math.round(old.interval * (rating === "hard" ? 1.2 : rating === "good" ? ease : ease + 0.5)));
+
+            if (rating === "easy") ease = Math.min(3.2, ease + 0.15);
+            if (rating === "hard") ease = Math.max(1.3, ease - 0.15);
+        }
+
+        store.review[card.id] = {
+            repetitions,
+            interval,
+            ease,
+            due: dueDate(interval),
+            last: today()
+        };
+
+        store.history.push({
+            date: today(),
+            cardId: card.id,
+            rating
+        });
+
+        if (store.history.length > 5000) store.history = store.history.slice(-5000);
+
+        if (rating === "again") addMistake(card, "Bei der Wiederholung als nicht gewusst markiert.");
+        save();
+        renderReview();
+    }
+
+    function addMistake(card, reason = "") {
+        const found = store.mistakes.find(m => m.cardId === card.id && !m.resolved);
+        if (found) {
+            found.count = (found.count || 1) + 1;
+            found.updated = today();
+            return;
+        }
+
+        store.mistakes.unshift({
+            id: uid(),
+            cardId: card.id,
+            question: card.question,
+            answer: card.answer,
+            subjectId: card.subjectId,
+            reason,
+            count: 1,
+            created: today(),
+            resolved: false
+        });
+    }
+
+    function renderReview() {
+        const area = $("lwReviewArea");
+        if (!area) return;
+
+        const subject = $("lwCardSubject").value;
+        const mode = $("lwCardSource").value;
+
+        let list = allReviewCards().filter(c =>
+            !subject || String(c.subjectId) === String(subject)
+        );
+
+        list = list.filter(c => {
+            const meta = reviewMeta(c);
+            if (mode === "due") return meta.due <= today();
+            if (mode === "new") return meta.repetitions === 0;
+            return true;
+        });
+
+        const due = list.filter(c => reviewMeta(c).due <= today());
+        const selected = due[0] || list[0];
+
+        if (!selected) {
+            area.innerHTML = `<div class="lw-empty">Keine Karten in dieser Auswahl. Erstelle eigene Fragen oder füge Karteikarten hinzu.</div>`;
+            return;
+        }
+
+        const meta = reviewMeta(selected);
+        area.innerHTML = `
+            <div class="lw-review-card">
+                <div class="lw-review-meta">
+                    <span>${esc(subjectName(selected.subjectId))}</span>
+                    <span>${meta.repetitions === 0 ? "Neu" : `Wiederholung ${meta.repetitions}`}</span>
+                </div>
+                <div class="lw-review-question">${esc(selected.question)}</div>
+                <button class="primary-button" id="lwReveal">Antwort anzeigen</button>
+                <div id="lwAnswerArea" hidden>
+                    <div class="lw-review-answer">${esc(selected.answer)}</div>
+                    <p>Wie sicher konntest du die Antwort wiedergeben?</p>
+                    <div class="lw-rating">
+                        <button data-rating="again">Nicht gewusst</button>
+                        <button data-rating="hard">Schwer</button>
+                        <button data-rating="good">Gut</button>
+                        <button data-rating="easy">Sehr sicher</button>
+                    </div>
+                </div>
+            </div>
+            <p class="muted lw-center">${list.length} Karten in dieser Auswahl · ${due.length} davon fällig</p>
+        `;
+
+        $("lwReveal").addEventListener("click", () => {
+            $("lwAnswerArea").hidden = false;
+            $("lwReveal").hidden = true;
+        });
+
+        area.querySelectorAll("[data-rating]").forEach(button => {
+            button.addEventListener("click", () => scheduleCard(selected, button.dataset.rating));
+        });
+    }
+
+    let examSession = null;
+
+    function examQuestions() {
+        const subject = $("lwExamSubject").value;
+        return allReviewCards()
+            .filter(c => c.question.trim() && c.answer.trim())
+            .filter(c => !subject || String(c.subjectId) === String(subject))
+            .sort(() => Math.random() - 0.5);
+    }
+
+    function startExam() {
+        let list = examQuestions();
+        const count = $("lwExamCount").value;
+        if (count !== "all") list = list.slice(0, Number(count));
+
+        if (!list.length) {
+            $("lwExamArea").innerHTML = `<div class="lw-empty">Für diese Auswahl gibt es noch keine Fragen.</div>`;
+            return;
+        }
+
+        examSession = { list, index: 0, correct: 0, answers: [] };
+        showExamQuestion();
+    }
+
+    function showExamQuestion() {
+        const s = examSession;
+        if (!s) return;
+
+        if (s.index >= s.list.length) {
+            const percent = Math.round(s.correct / s.list.length * 100);
+            store.history.push({
+                date: today(),
+                type: "exam",
+                correct: s.correct,
+                total: s.list.length,
+                percent
+            });
+            save();
+
+            $("lwExamArea").innerHTML = `
+                <div class="lw-review-card lw-center">
+                    <h2>Prüfung beendet</h2>
+                    <div class="lw-score">${percent}%</div>
+                    <p>${s.correct} von ${s.list.length} Fragen richtig bewertet.</p>
+                    <p class="muted">Die Bewertung basiert auf deiner eigenen Einschätzung.</p>
+                    <button class="primary-button" id="lwExamAgain">Neue Prüfung starten</button>
+                </div>
+            `;
+            $("lwExamAgain").addEventListener("click", startExam);
+            return;
+        }
+
+        const q = s.list[s.index];
+        $("lwExamArea").innerHTML = `
+            <div class="lw-review-card">
+                <div class="lw-review-meta"><span>Frage ${s.index + 1} von ${s.list.length}</span><span>${esc(subjectName(q.subjectId))}</span></div>
+                <div class="lw-exam-progress"><div style="width:${s.index / s.list.length * 100}%"></div></div>
+                <div class="lw-review-question">${esc(q.question)}</div>
+                <button class="primary-button" id="lwExamReveal">Musterantwort zeigen</button>
+                <div id="lwExamAnswer" hidden>
+                    <div class="lw-review-answer">${esc(q.answer)}</div>
+                    <p>Hast du die Frage richtig beantwortet?</p>
+                    <div class="lw-rating">
+                        <button id="lwExamWrong">Nein</button>
+                        <button id="lwExamRight">Ja</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $("lwExamReveal").addEventListener("click", () => {
+            $("lwExamAnswer").hidden = false;
+            $("lwExamReveal").hidden = true;
+        });
+
+        $("lwExamWrong").addEventListener("click", () => examAnswer(false, q));
+        $("lwExamRight").addEventListener("click", () => examAnswer(true, q));
+    }
+
+    function examAnswer(correct, card) {
+        if (correct) examSession.correct++;
+        else addMistake(card, "Im Prüfungsmodus falsch beantwortet.");
+
+        examSession.answers.push({ cardId: card.id, correct });
+        examSession.index++;
+        save();
+        showExamQuestion();
+    }
+
+    function renderMistakes() {
+        const area = $("lwMistakeList");
+        const list = store.mistakes.filter(m => !m.resolved);
+
+        if (!list.length) {
+            area.innerHTML = `<div class="lw-empty">Aktuell keine offenen Fehler. Sehr gut!</div>`;
+            return;
+        }
+
+        area.innerHTML = list.map(m => `
+            <div class="lw-list-card">
+                <div>
+                    <strong>${esc(m.question)}</strong>
+                    <p>${esc(subjectName(m.subjectId))} · ${m.count}× als schwierig markiert</p>
+                    <details><summary>Lösung ansehen</summary><p>${esc(m.answer)}</p></details>
+                    <small>${esc(m.reason || "")}</small>
+                </div>
+                <button class="secondary-button" data-resolve="${esc(m.id)}">Beherrscht</button>
+            </div>
+        `).join("");
+
+        area.querySelectorAll("[data-resolve]").forEach(b => b.addEventListener("click", () => {
+            const m = store.mistakes.find(x => x.id === b.dataset.resolve);
+            if (m) m.resolved = true;
+            save();
+            renderMistakes();
+        }));
+    }
+
+    function renderQuestions() {
+        const area = $("lwQuestionList");
+        if (!area) return;
+
+        const search = ($("lwQuestionSearch").value || "").toLowerCase();
+        const subject = $("lwQuestionFilter").value;
+
+        const list = store.questions.filter(q =>
+            (!subject || String(q.subjectId) === String(subject)) &&
+            `${q.question} ${q.answer} ${q.topic}`.toLowerCase().includes(search)
+        );
+
+        area.innerHTML = list.length ? list.map(q => `
+            <div class="lw-list-card">
+                <div>
+                    <strong>${esc(q.question)}</strong>
+                    <p>${esc(subjectName(q.subjectId))} · ${esc(q.topic || "Ohne Thema")} · ${["", "Leicht", "Mittel", "Schwer"][q.difficulty]}</p>
+                    <details><summary>Antwort anzeigen</summary><p>${esc(q.answer)}</p></details>
+                </div>
+                <button class="small-button delete" data-delete-question="${esc(q.id)}">Löschen</button>
+            </div>
+        `).join("") : `<div class="lw-empty">Keine passenden Fragen gefunden.</div>`;
+
+        area.querySelectorAll("[data-delete-question]").forEach(b => b.addEventListener("click", () => {
+            store.questions = store.questions.filter(q => q.id !== b.dataset.deleteQuestion);
+            save();
+            renderQuestions();
+        }));
+    }
+
+    function renderNotes() {
+        const area = $("lwNoteList");
+        if (!area) return;
+
+        const search = ($("lwNoteSearch").value || "").toLowerCase();
+        const list = store.notes.filter(n =>
+            `${n.title} ${n.topic} ${n.content}`.toLowerCase().includes(search)
+        );
+
+        area.innerHTML = list.length ? list.map(n => `
+            <div class="lw-list-card lw-note-card">
+                <div>
+                    <strong>${esc(n.title)}</strong>
+                    <p>${esc(subjectName(n.subjectId))} · ${esc(n.topic || "Ohne Thema")}</p>
+                    <details><summary>Notiz öffnen</summary><p class="lw-note-content">${esc(n.content)}</p></details>
+                </div>
+                <button class="small-button delete" data-delete-note="${esc(n.id)}">Löschen</button>
+            </div>
+        `).join("") : `<div class="lw-empty">Noch keine Notizen vorhanden.</div>`;
+
+        area.querySelectorAll("[data-delete-note]").forEach(b => b.addEventListener("click", () => {
+            store.notes = store.notes.filter(n => n.id !== b.dataset.deleteNote);
+            save();
+            renderNotes();
+        }));
+    }
+
+    function getTodayMinutes() {
+        return store.history
+            .filter(h => h.date === today() && h.type !== "exam")
+            .length;
+    }
+
+    function updateOverview() {
+        if (!$("lwOverview")) return;
+
+        const all = allReviewCards();
+        const due = all.filter(c => reviewMeta(c).due <= today()).length;
+        const done = store.history.filter(h => h.date === today() && h.type !== "exam").length;
+        const mistakes = store.mistakes.filter(m => !m.resolved).length;
+
+        $("lwOverview").innerHTML = `
+            <div class="lw-stat-card"><span>Fällige Karten</span><strong>${due}</strong><small>Heute zu wiederholen</small></div>
+            <div class="lw-stat-card"><span>Wiederholungen</span><strong>${done}</strong><small>Heute erledigt</small></div>
+            <div class="lw-stat-card"><span>Offene Fehler</span><strong>${mistakes}</strong><small>Gezielt trainieren</small></div>
+            <div class="lw-stat-card"><span>Eigene Fragen</span><strong>${store.questions.length}</strong><small>Im Fragenpool</small></div>
+        `;
+
+        if ($("lwDailyGoal")) $("lwDailyGoal").value = store.settings.dailyGoal || 30;
+        if ($("lwGoalProgress")) {
+            const goal = store.settings.dailyGoal || 30;
+            const pct = Math.min(100, Math.round(done / goal * 100));
+            $("lwGoalProgress").style.width = pct + "%";
+            $("lwGoalText").textContent = `${done} von ${goal} Wiederholungen heute`;
+        }
+    }
+
+    function renderToday() {
+        const all = allReviewCards();
+        const due = all.filter(c => reviewMeta(c).due <= today()).length;
+        const openMistakes = store.mistakes.filter(m => !m.resolved).length;
+
+        $("lwTodayContent").innerHTML = `
+            <div class="lw-today-grid">
+                <div class="lw-box"><span class="lw-big-number">${due}</span><strong>Fällige Karten</strong><button class="secondary-button" data-open-tab="cards">Jetzt wiederholen</button></div>
+                <div class="lw-box"><span class="lw-big-number">${openMistakes}</span><strong>Offene Fehler</strong><button class="secondary-button" data-open-tab="mistakes">Fehler trainieren</button></div>
+                <div class="lw-box"><span class="lw-big-number">${store.questions.length}</span><strong>Eigene Fragen</strong><button class="secondary-button" data-open-tab="exam">Prüfung simulieren</button></div>
+            </div>
+        `;
+        updateOverview();
+    }
+
+    function renderStats() {
+        const all = allReviewCards();
+        const total = store.history.filter(h => h.type !== "exam").length;
+        const exams = store.history.filter(h => h.type === "exam");
+        const average = exams.length ? Math.round(exams.reduce((a, b) => a + b.percent, 0) / exams.length) : 0;
+        const due = all.filter(c => reviewMeta(c).due <= today()).length;
+
+        $("lwStatsContent").innerHTML = `
+            <div class="lw-today-grid">
+                <div class="lw-box"><span class="lw-big-number">${all.length}</span><strong>Karten und Fragen</strong></div>
+                <div class="lw-box"><span class="lw-big-number">${total}</span><strong>Wiederholungen insgesamt</strong></div>
+                <div class="lw-box"><span class="lw-big-number">${exams.length}</span><strong>Abgeschlossene Prüfungen</strong></div>
+                <div class="lw-box"><span class="lw-big-number">${average}%</span><strong>Durchschnittliche Selbsteinschätzung</strong></div>
+                <div class="lw-box"><span class="lw-big-number">${due}</span><strong>Aktuell fällige Karten</strong></div>
+                <div class="lw-box"><span class="lw-big-number">${store.notes.length}</span><strong>Eigene Lernnotizen</strong></div>
+            </div>
+            <p class="muted">Die Prüfungsergebnisse beruhen auf deiner eigenen Bewertung und sind keine objektive Benotung.</p>
+        `;
+    }
+
+    function renderAllWorkshop() {
+        if (!$("page-workshop")) return;
+
+        ["lwCardSubject", "lwExamSubject", "lwQuestionSubject", "lwNoteSubject", "lwQuestionFilter"].forEach(id => {
+            const el = $(id);
+            if (!el) return;
+            const val = el.value;
+            const first = id === "lwQuestionSubject" || id === "lwNoteSubject"
+                ? `<option value="">Allgemein / kein Fach</option>`
+                : `<option value="">Alle Fächer</option>`;
+            el.innerHTML = first + subjects().map(s =>
+                `<option value="${esc(s.id)}">${esc(s.name)}</option>`
+            ).join("");
+            el.value = val;
+        });
+
+        renderToday();
+        renderReview();
+        renderMistakes();
+        renderQuestions();
+        renderNotes();
+        renderStats();
+    }
+
+    function bindEvents() {
+        document.querySelectorAll(".lw-tab").forEach(b =>
+            b.addEventListener("click", () => switchTab(b.dataset.tab))
+        );
+
+        document.addEventListener("click", event => {
+            const tab = event.target.closest("[data-open-tab]");
+            if (tab && $("page-workshop")?.classList.contains("active")) {
+                switchTab(tab.dataset.openTab);
+            }
+        });
+
+        $("lwCardSubject").addEventListener("change", renderReview);
+        $("lwCardSource").addEventListener("change", renderReview);
+        $("lwStartExam").addEventListener("click", startExam);
+
+        $("lwQuestionForm").addEventListener("submit", event => {
+            event.preventDefault();
+            store.questions.unshift({
+                id: uid(),
+                question: $("lwQuestionText").value.trim(),
+                answer: $("lwQuestionAnswer").value.trim(),
+                subjectId: $("lwQuestionSubject").value,
+                topic: $("lwQuestionTopic").value.trim(),
+                difficulty: Number($("lwQuestionDifficulty").value),
+                created: today()
+            });
+            save();
+            event.target.reset();
+            renderAllWorkshop();
+        });
+
+        $("lwNoteForm").addEventListener("submit", event => {
+            event.preventDefault();
+            store.notes.unshift({
+                id: uid(),
+                title: $("lwNoteTitle").value.trim(),
+                subjectId: $("lwNoteSubject").value,
+                topic: $("lwNoteTopic").value.trim(),
+                content: $("lwNoteContent").value.trim(),
+                created: today()
+            });
+            save();
+            event.target.reset();
+            renderNotes();
+        });
+
+        $("lwQuestionSearch").addEventListener("input", renderQuestions);
+        $("lwQuestionFilter").addEventListener("change", renderQuestions);
+        $("lwNoteSearch").addEventListener("input", renderNotes);
+
+        $("lwSaveGoal").addEventListener("click", () => {
+            store.settings.dailyGoal = Math.max(5, Math.min(600, Number($("lwDailyGoal").value) || 30));
+            save();
+        });
+
+        $("lwExport").addEventListener("click", () => {
+            const blob = new Blob([JSON.stringify(store, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "studyspace-lernwerkstatt-sicherung.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        $("lwImport").addEventListener("change", async event => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const imported = JSON.parse(await file.text());
+                if (!imported || !Array.isArray(imported.questions) || !Array.isArray(imported.notes)) {
+                    throw new Error("Ungültige Sicherungsdatei.");
+                }
+
+                if (!confirm("Möchtest du deine aktuellen Lernwerkstatt-Daten wirklich durch diese Sicherung ersetzen?")) return;
+
+                store = { ...emptyData, ...imported };
+                save();
+                renderAllWorkshop();
+                alert("Import erfolgreich.");
+            } catch (error) {
+                alert("Import fehlgeschlagen: " + error.message);
+            } finally {
+                event.target.value = "";
+            }
+        });
+    }
+
+    // Bestehende Lernkarten- und Fachseiten bleiben unverändert.
+    function start() {
+        if (!$("page-workshop")) ensurePage();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+
+    console.log("StudySpace Lernwerkstatt 1.0 geladen.");
+})();
