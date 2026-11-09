@@ -4038,3 +4038,91 @@ Arbeite fachlich sorgfältig und pädagogisch sinnvoll.
 
     console.log("StudySpace KI-Lernblätter 1.0 geladen.");
 })();
+
+
+/* =====================================================
+   STUDYSPACE – KI-LERNBLÄTTER SEITEN-INTEGRATION
+===================================================== */
+
+(function () {
+    const navigation = document.querySelector(".navigation");
+    const tutorButton = navigation?.querySelector('[data-page="tutor"]');
+    const main = document.querySelector(".main-content");
+
+    if (!navigation || !tutorButton || !main) {
+        console.error("KI-Lernblätter: Einbindung nicht möglich.");
+        return;
+    }
+
+    // Doppelte Einbindung verhindern
+    if (document.getElementById("page-ai-sheets")) return;
+
+    // Navigationsbutton erstellen
+    const navButton = document.createElement("button");
+    navButton.className = "nav-item";
+    navButton.dataset.page = "ai-sheets";
+    navButton.innerHTML = `
+        <span class="nav-icon">▤</span>
+        <span class="nav-text">KI-Lernblätter</span>
+    `;
+
+    tutorButton.insertAdjacentElement("afterend", navButton);
+
+    // Neue Seite erstellen
+    const page = document.createElement("section");
+    page.className = "page";
+    page.id = "page-ai-sheets";
+
+    page.innerHTML = `
+        <div class="page-intro">
+            <h1>KI-Lernblätter</h1>
+            <p>Deine automatisch erstellten und gespeicherten Lernübersichten.</p>
+        </div>
+
+        <div class="panel">
+            <div class="section-heading">
+                <div>
+                    <h3>Deine Lernblätter</h3>
+                    <p class="muted">Alle deine persönlichen KI-Lernunterlagen an einem Ort.</p>
+                </div>
+            </div>
+
+            <div id="aiSheetsList" class="ai-sheets-list">
+                <div class="empty-state">Noch keine Lernblätter vorhanden.</div>
+            </div>
+        </div>
+
+        <div id="aiSheetViewer" class="ai-sheet-viewer" hidden></div>
+    `;
+
+    const flashcardsPage = document.getElementById("page-flashcards");
+
+    if (flashcardsPage) {
+        main.insertBefore(page, flashcardsPage);
+    } else {
+        main.appendChild(page);
+    }
+
+    // Navigation
+    navButton.addEventListener("click", () => {
+        document.querySelectorAll(".page").forEach(item => {
+            item.classList.remove("active");
+        });
+
+        document.querySelectorAll(".nav-item").forEach(item => {
+            item.classList.remove("active");
+        });
+
+        page.classList.add("active");
+        navButton.classList.add("active");
+
+        const title = document.getElementById("pageTitle");
+        if (title) title.textContent = "KI-Lernblätter";
+
+        if (window.StudySpaceSheets) {
+            window.StudySpaceSheets.render();
+        }
+    });
+
+    console.log("StudySpace KI-Lernblätter-Seite integriert.");
+})();
