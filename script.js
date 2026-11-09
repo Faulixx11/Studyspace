@@ -2626,24 +2626,28 @@ Antworte auf Deutsch.
 })();
 
 
+
 /* =========================================
-   STUDYSPACE KI-CHAT VERBINDUNG
+   STUDYSPACE KI-CHAT VERBINDUNG 2.0
 ========================================= */
 
 (() => {
     "use strict";
 
-    const startButton = document.getElementById("aiStartButton");
-    const stopButton = document.getElementById("aiStopButton");
-    const form = document.getElementById("aiChatForm");
     const input = document.getElementById("aiChatInput");
     const messages = document.getElementById("aiChatMessages");
     const sendButton = document.getElementById("aiSendButton");
-    const clearButton = document.getElementById("aiClearButton");
+    const statusText = document.querySelector(".tutor-composer-bottom span");
 
-    if (!startButton || !form || !input || !messages) {
-        console.warn("StudySpace KI-Chat: HTML-Elemente nicht gefunden.");
+    if (!input || !messages || !sendButton) {
+        console.warn("StudySpace KI-Chat: Chat-Elemente fehlen.");
         return;
+    }
+
+    let busy = false;
+
+    function setStatus(message) {
+        if (statusText) statusText.textContent = message;
     }
 
     function addMessage(message, role) {
@@ -2655,65 +2659,78 @@ Antworte auf Deutsch.
         messages.scrollTop = messages.scrollHeight;
     }
 
-    startButton.addEventListener("click", async () => {
-        startButton.disabled = true;
-
-        try {
-            await window.StudySpaceAI.initialize();
-        } catch (error) {
-            console.error("KI-Startfehler:", error);
-        }
-
-        startButton.disabled = false;
-    });
-
-    stopButton?.addEventListener("click", async () => {
-        stopButton.disabled = true;
-
-        try {
-            await window.StudySpaceAI.stop();
-        } catch (error) {
-            console.error("KI-Stoppfehler:", error);
-        }
-
-        stopButton.disabled = false;
-    });
-
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
+    async function sendMessage() {
+        if (busy) return;
 
         const question = input.value.trim();
-
         if (!question) return;
 
+        busy = true;
         input.value = "";
+
         addMessage(question, "user");
 
         sendButton.disabled = true;
-        sendButton.textContent = "KI antwortet...";
+        sendButton.textContent = "KI lädt ...";
 
         try {
+            if (!window.StudySpaceAI) {
+                throw new Error("KI-Engine wurde nicht gefunden.");
+            }
+
+            const state = window.StudySpaceAI.getState();
+
+            if (!state.ready) {
+                setStatus("KI-Modell wird geladen. Beim ersten Mal kann das etwas dauern ...");
+                await window.StudySpaceAI.initialize();
+            }
+
+            sendButton.textContent = "KI antwortet ...";
+            setStatus("Deine Frage wird bearbeitet ...");
+
             const answer = await window.StudySpaceAI.ask(question);
-            addMessage(answer || "Keine Antwort erhalten.", "assistant");
+
+            addMessage(
+                answer || "Die KI hat leider keine Antwort geliefert.",
+                "assistant"
+            );
+
+            setStatus("Dein Lernassistent ist bereit.");
+
+            const label = document.querySelector(".tutor-chat-label");
+            if (label) label.textContent = "BEREIT";
+
         } catch (error) {
-            console.error("Chatfehler:", error);
-            addMessage("Es ist ein Fehler aufgetreten. Bitte versuche es erneut.", "assistant");
+            console.error("StudySpace Chatfehler:", error);
+
+            addMessage(
+                "Es ist ein Fehler aufgetreten: " + error.message,
+                "assistant"
+            );
+
+            setStatus("Fehler bei der KI-Verbindung. Bitte Konsole prüfen.");
         }
 
+        busy = false;
         sendButton.disabled = false;
-        sendButton.textContent = "Senden";
+        sendButton.textContent = "Senden ↗";
+    }
+
+    sendButton.disabled = false;
+    sendButton.addEventListener("click", sendMessage);
+
+    input.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
     });
 
-    clearButton?.addEventListener("click", () => {
-        window.StudySpaceAI.clear();
-        messages.replaceChildren();
+    setStatus("Dein Lernassistent ist bereit. Stelle deine erste Frage!");
 
-        addMessage("Der Chat wurde geleert. Was möchtest du lernen?", "assistant");
-    });
+    console.log("StudySpace KI-Chat 2.0 verbunden.");
 
-    console.log("StudySpace KI-Chat verbunden.");
 })();
-
 
 
 /* ======================================================
