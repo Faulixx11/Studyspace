@@ -1908,3 +1908,136 @@ button.calendar-day:hover {
         max-width: 100%;
     }
 }
+
+
+/* =====================================================
+   STUDYSPACE – KI-LERNBLÄTTER DESIGN 1.0
+===================================================== */
+
+.ai-sheets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.ai-sheet-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    transition: 0.2s ease;
+}
+
+.ai-sheet-card:hover {
+    border-color: rgba(115, 120, 255, 0.45);
+    transform: translateY(-2px);
+}
+
+.ai-sheet-card-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(120, 110, 255, 0.13);
+    color: #a99cff;
+    font-size: 24px;
+}
+
+.ai-sheet-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ai-sheet-card-info h3 {
+    margin: 7px 0;
+    font-size: 17px;
+}
+
+.ai-sheet-card-info p {
+    margin: 0;
+    color: #888da5;
+    font-size: 13px;
+}
+
+.ai-sheet-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(105, 115, 255, 0.13);
+    color: #aaaaff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ai-sheet-card-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.ai-sheet-viewer {
+    margin-top: 24px;
+}
+
+.ai-sheet-open {
+    padding: 28px;
+    background: linear-gradient(
+        145deg,
+        rgba(35, 39, 68, 0.95),
+        rgba(22, 25, 43, 0.98)
+    );
+    border: 1px solid rgba(135, 125, 255, 0.25);
+    border-radius: 20px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+}
+
+.ai-sheet-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.ai-sheet-top h2 {
+    margin: 12px 0 7px;
+    font-size: 27px;
+}
+
+.ai-sheet-content {
+    padding-top: 25px;
+    line-height: 1.9;
+    color: #e1e3f0;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 650px) {
+    .ai-sheet-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ai-sheet-card-actions {
+        width: 100%;
+    }
+
+    .ai-sheet-card-actions button {
+        flex: 1;
+    }
+
+    .ai-sheet-top {
+        flex-direction: column;
+    }
+
+    .ai-sheet-open {
+        padding: 18px;
+    }
+}
