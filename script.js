@@ -180,7 +180,6 @@ function renderSubjects() {
         button.addEventListener("click", () => openPage("materials"));
     });
 }
-
 // ==========================================
 // FÄCHER IN AUSWAHLLISTEN
 // ==========================================
@@ -195,6 +194,10 @@ function updateSubjectSelects() {
 
     selects.forEach(id => {
         const select = document.getElementById(id);
+
+        // Überspringen, falls das Element auf dieser Seite fehlt
+        if (!select) return;
+
         const previous = select.value;
 
         select.innerHTML = `<option value="">Fach auswählen</option>` +
@@ -207,7 +210,6 @@ function updateSubjectSelects() {
         }
     });
 }
-
 // ==========================================
 // MATERIALIEN UND HEFTER
 // ==========================================
