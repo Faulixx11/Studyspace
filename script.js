@@ -3875,3 +3875,166 @@ Arbeite fachlich sorgfältig und pädagogisch sinnvoll.
     );
 
 })();
+
+
+/* =====================================================
+   STUDYSPACE – KI-LERNBLÄTTER SYSTEM 1.0
+   Eigenständiges Zusatzmodul
+===================================================== */
+
+(function () {
+    "use strict";
+
+    const STORAGE_KEY = "studySpaceAiSheets";
+
+    function loadSheets() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch {
+            return [];
+        }
+    }
+
+    function saveSheets(sheets) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sheets));
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[char]);
+    }
+
+    function createSheet(data) {
+        if (!data || !data.title || !data.content) {
+            return null;
+        }
+
+        const sheets = loadSheets();
+
+        const sheet = {
+            id: Date.now().toString(),
+            title: data.title,
+            subject: data.subject || "Allgemein",
+            content: data.content,
+            createdAt: new Date().toISOString()
+        };
+
+        sheets.unshift(sheet);
+        saveSheets(sheets);
+        render();
+
+        return sheet.id;
+    }
+
+    function deleteSheet(id) {
+        if (!confirm("Möchtest du dieses Lernblatt wirklich löschen?")) {
+            return;
+        }
+
+        saveSheets(loadSheets().filter(sheet => sheet.id !== id));
+        render();
+
+        const viewer = document.getElementById("aiSheetViewer");
+        if (viewer) {
+            viewer.hidden = true;
+            viewer.innerHTML = "";
+        }
+    }
+
+    function openSheet(id) {
+        const sheet = loadSheets().find(item => item.id === id);
+        const viewer = document.getElementById("aiSheetViewer");
+
+        if (!sheet || !viewer) return;
+
+        viewer.hidden = false;
+        viewer.innerHTML = `
+            <div class="ai-sheet-open">
+                <div class="ai-sheet-top">
+                    <div>
+                        <span class="ai-sheet-tag">${escapeHTML(sheet.subject)}</span>
+                        <h2>${escapeHTML(sheet.title)}</h2>
+                        <p class="muted">
+                            Erstellt am ${new Date(sheet.createdAt).toLocaleDateString("de-DE")}
+                        </p>
+                    </div>
+                    <button class="secondary-button" id="closeAiSheet">Schließen</button>
+                </div>
+
+                <div class="ai-sheet-content">${escapeHTML(sheet.content).replace(/\n/g, "<br>")}</div>
+            </div>
+        `;
+
+        document.getElementById("closeAiSheet").addEventListener("click", () => {
+            viewer.hidden = true;
+            viewer.innerHTML = "";
+        });
+
+        viewer.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function render() {
+        const container = document.getElementById("aiSheetsList");
+        if (!container) return;
+
+        const sheets = loadSheets();
+
+        if (sheets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    Noch keine Lernblätter vorhanden.
+                    <p>Deine erstellten Lernübersichten erscheinen hier.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = sheets.map(sheet => `
+            <article class="ai-sheet-card">
+                <div class="ai-sheet-card-icon">✦</div>
+                <div class="ai-sheet-card-info">
+                    <span class="ai-sheet-tag">${escapeHTML(sheet.subject)}</span>
+                    <h3>${escapeHTML(sheet.title)}</h3>
+                    <p>${new Date(sheet.createdAt).toLocaleDateString("de-DE")}</p>
+                </div>
+                <div class="ai-sheet-card-actions">
+                    <button class="primary-button" data-open-sheet="${escapeHTML(sheet.id)}">
+                        Öffnen
+                    </button>
+                    <button class="danger-button" data-delete-sheet="${escapeHTML(sheet.id)}">
+                        Löschen
+                    </button>
+                </div>
+            </article>
+        `).join("");
+
+        container.querySelectorAll("[data-open-sheet]").forEach(button => {
+            button.addEventListener("click", () => openSheet(button.dataset.openSheet));
+        });
+
+        container.querySelectorAll("[data-delete-sheet]").forEach(button => {
+            button.addEventListener("click", () => deleteSheet(button.dataset.deleteSheet));
+        });
+    }
+
+    window.StudySpaceSheets = {
+        create: createSheet,
+        delete: deleteSheet,
+        open: openSheet,
+        render: render,
+        getAll: loadSheets
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", render);
+    } else {
+        render();
+    }
+
+    console.log("StudySpace KI-Lernblätter 1.0 geladen.");
+})();
