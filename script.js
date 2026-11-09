@@ -2029,12 +2029,11 @@ applySettings();
 
 
 // ======================================================
-// STUDYSPACE KI-TUTOR 1.0 – NEUE TUTOR-OBERFLÄCHE
+// STUDYSPACE KI-TUTOR – VERBINDUNG MIT DER NEUEN OBERFLÄCHE
 // ======================================================
 
 (() => {
-    const tutorPage = document.getElementById("page-tutor");
-    if (!tutorPage) return;
+    "use strict";
 
     const tutorSettingsKey = "studyspaceTutorSettings";
 
@@ -2047,206 +2046,39 @@ applySettings();
         selectedMaterials: []
     };
 
-    let tutorSettings = {
+    // Gespeicherte Einstellungen sicher laden
+    let savedSettings = {};
+
+    try {
+        savedSettings = JSON.parse(
+            localStorage.getItem(tutorSettingsKey) || "{}"
+        );
+    } catch (error) {
+        console.warn("Tutor-Einstellungen konnten nicht gelesen werden.", error);
+    }
+
+    const tutorSettings = {
         ...defaultTutorSettings,
-        ...JSON.parse(localStorage.getItem(tutorSettingsKey) || "{}")
+        ...savedSettings,
+        selectedMaterials: Array.isArray(savedSettings.selectedMaterials)
+            ? savedSettings.selectedMaterials
+            : []
     };
 
     const sourceDescriptions = {
-        notebook: "Die KI soll ausschließlich deine ausgewählten Unterrichtsmaterialien verwenden.",
-        combined: "Die KI darf deine Unterlagen verwenden und zusätzliche Informationen ergänzen. Ergänzungen werden gekennzeichnet.",
-        general: "Die KI darf allgemeines Wissen verwenden und ist nicht auf deine Hefter beschränkt."
+        notebook: "Die KI verwendet deine Unterrichtsmaterialien als Grundlage.",
+        combined: "Die KI verwendet deine Unterlagen und darf zusätzliche Informationen ergänzen. Diese werden gekennzeichnet.",
+        general: "Die KI verwendet allgemeines Wissen und ist nicht auf deinen Hefter beschränkt."
     };
 
-    tutorPage.innerHTML = `
-        <div class="page-intro tutor-intro">
-            <div>
-                <span class="tutor-eyebrow">DEIN PERSÖNLICHER LERNASSISTENT</span>
-                <h1>KI-Tutor</h1>
-                <p>Lerne gezielter, verstehe schwierige Themen und verbessere deinen Wissensstand.</p>
-            </div>
-            <div class="tutor-status">
-                <span class="tutor-status-dot"></span>
-                KI-Verbindung noch nicht eingerichtet
-            </div>
-        </div>
-
-        <div class="tutor-workspace">
-
-            <aside class="tutor-settings-panel">
-                <div class="tutor-panel-heading">
-                    <div>
-                        <span class="tutor-eyebrow">PERSONALISIERUNG</span>
-                        <h3>Deine Lerneinstellungen</h3>
-                    </div>
-                    <span class="tutor-heading-icon">⚙</span>
-                </div>
-
-                <div class="tutor-field">
-                    <label for="aiSubject">Fach</label>
-                    <select id="aiSubject"></select>
-                </div>
-
-                <div class="tutor-field">
-                    <label for="aiTopic">Lernthema</label>
-                    <input id="aiTopic" type="text"
-                        placeholder="z. B. Französische Revolution">
-                </div>
-
-                <div class="tutor-field">
-                    <label>Wissensquelle</label>
-                    <div class="tutor-source-options">
-                        <label class="tutor-source-option">
-                            <input type="radio" name="aiSource" value="notebook">
-                            <span>
-                                <strong>Nur mein Hefter</strong>
-                                <small>Ausschließlich eigene Unterlagen</small>
-                            </span>
-                        </label>
-
-                        <label class="tutor-source-option">
-                            <input type="radio" name="aiSource" value="combined">
-                            <span>
-                                <strong>Hefter + Wissen</strong>
-                                <small>Ergänzungen werden markiert</small>
-                            </span>
-                        </label>
-
-                        <label class="tutor-source-option">
-                            <input type="radio" name="aiSource" value="general">
-                            <span>
-                                <strong>Allgemeinwissen</strong>
-                                <small>Unabhängig von deinem Hefter</small>
-                            </span>
-                        </label>
-                    </div>
-                    <p id="aiSourceDescription" class="tutor-field-hint"></p>
-                </div>
-
-                <div class="tutor-field">
-                    <label for="aiDifficulty">Schwierigkeitsgrad</label>
-                    <select id="aiDifficulty">
-                        <option>Einfach</option>
-                        <option>Mittel</option>
-                        <option>Anspruchsvoll</option>
-                        <option>Abitur-Niveau</option>
-                    </select>
-                </div>
-
-                <div class="tutor-field">
-                    <label for="aiMethod">Lernmethode</label>
-                    <select id="aiMethod">
-                        <option value="Erklären">Schrittweise erklären</option>
-                        <option value="Dialog">Fragen und Antworten</option>
-                        <option value="Üben">Übungsaufgaben</option>
-                        <option value="Prüfung">Prüfungssimulation</option>
-                        <option value="Zusammenfassung">Lernzettel erstellen</option>
-                        <option value="Karteikarten">Karteikarten erstellen</option>
-                    </select>
-                </div>
-
-                <div class="tutor-material-selection">
-                    <div class="tutor-material-heading">
-                        <strong>Meine Hefter</strong>
-                        <span id="aiMaterialCount">0 ausgewählt</span>
-                    </div>
-                    <div id="aiMaterialList"></div>
-                </div>
-
-                <button id="aiSaveSettings" class="primary-button tutor-save-button">
-                    Einstellungen speichern
-                </button>
-                <p id="aiSaveStatus" class="tutor-field-hint"></p>
-            </aside>
-
-            <div class="tutor-main">
-
-                <div class="tutor-chat-panel">
-                    <div class="tutor-chat-header">
-                        <div class="tutor-avatar">✦</div>
-                        <div>
-                            <h3>Dein Lernassistent</h3>
-                            <p>Dein persönlicher Lernbereich</p>
-                        </div>
-                        <span class="tutor-chat-label">VORBEREITET</span>
-                    </div>
-
-                    <div id="aiChatMessages" class="tutor-chat-messages">
-                        <div class="tutor-welcome">
-                            <div class="tutor-welcome-icon">✧</div>
-                            <h2>Was möchtest du heute lernen?</h2>
-                            <p>
-                                Wähle links deine Einstellungen und bereite
-                                deine nächste Lerneinheit vor.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="tutor-chat-composer">
-                        <textarea id="aiChatInput"
-                            placeholder="Schreibe deine Frage oder deinen Lernauftrag ..."
-                            rows="3"></textarea>
-                        <div class="tutor-composer-bottom">
-                            <span>Die KI-Anbindung wird im nächsten Schritt eingerichtet.</span>
-                            <button id="aiSendButton" disabled>
-                                Senden ↗
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tutor-tools-grid">
-                    <button class="tutor-tool-card" data-ai-tool="explain">
-                        <span class="tutor-tool-icon">✧</span>
-                        <strong>Thema erklären</strong>
-                        <small>Inhalte verständlich aufarbeiten</small>
-                    </button>
-
-                    <button class="tutor-tool-card" data-ai-tool="quiz">
-                        <span class="tutor-tool-icon">◇</span>
-                        <strong>Wissen testen</strong>
-                        <small>Fragen und Aufgaben erstellen</small>
-                    </button>
-
-                    <button class="tutor-tool-card" data-ai-tool="summary">
-                        <span class="tutor-tool-icon">▤</span>
-                        <strong>Lernzettel</strong>
-                        <small>Die wichtigsten Inhalte sammeln</small>
-                    </button>
-
-                    <button class="tutor-tool-card" data-ai-tool="cards">
-                        <span class="tutor-tool-icon">▣</span>
-                        <strong>Karteikarten</strong>
-                        <small>Wissen langfristig festigen</small>
-                    </button>
-                </div>
-
-                <div class="tutor-info-panel">
-                    <div class="tutor-info-icon">ⓘ</div>
-                    <div>
-                        <strong>Deine Einstellungen bleiben erhalten</strong>
-                        <p>
-                            Fach, Thema, Wissensquelle und Lernmethode werden
-                            lokal in deinem Browser gespeichert. Die KI ist
-                            noch nicht verbunden. Deshalb werden noch keine
-                            echten KI-Antworten erzeugt.
-                        </p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    `;
-
-    const $ = id => document.getElementById(id);
+    const get = id => document.getElementById(id);
 
     function saveTutorSettings() {
-        tutorSettings.subjectId = $("aiSubject").value;
-        tutorSettings.topic = $("aiTopic").value.trim();
-        tutorSettings.source =
-            document.querySelector('input[name="aiSource"]:checked')?.value || "notebook";
-        tutorSettings.difficulty = $("aiDifficulty").value;
-        tutorSettings.method = $("aiMethod").value;
+        tutorSettings.subjectId = get("tutorSubject")?.value || "";
+        tutorSettings.topic = get("tutorTopic")?.value.trim() || "";
+        tutorSettings.source = get("learningSource")?.value || "notebook";
+        tutorSettings.difficulty = get("difficulty")?.value || "Mittel";
+        tutorSettings.method = get("learningMethod")?.value || "Erklären";
 
         tutorSettings.selectedMaterials = [
             ...document.querySelectorAll(".ai-material-checkbox:checked")
@@ -2256,53 +2088,102 @@ applySettings();
             tutorSettingsKey,
             JSON.stringify(tutorSettings)
         );
+
+        // Für die Material-KI verfügbar machen
+        window.StudySpaceTutorSettings = tutorSettings;
     }
 
-    function renderTutorSubjects() {
-        const select = $("aiSubject");
-        const previous = tutorSettings.subjectId;
+    function renderSubjects() {
+        const select = get("tutorSubject");
+        if (!select) return;
+
+        const previousValue = tutorSettings.subjectId;
 
         select.innerHTML = `
-            <option value="">Fach auswählen</option>
-            ${data.subjects.map(subject => `
+            <option value="">Alle Fächer</option>
+            ${(data.subjects || []).map(subject => `
                 <option value="${escapeHTML(subject.id)}">
                     ${escapeHTML(subject.name)}
                 </option>
             `).join("")}
         `;
 
-        if (data.subjects.some(subject => subject.id === previous)) {
-            select.value = previous;
+        if ((data.subjects || []).some(subject => subject.id === previousValue)) {
+            select.value = previousValue;
         }
     }
 
-    function renderTutorMaterials() {
-        const container = $("aiMaterialList");
+    function createMaterialSelection() {
+        const settingsPanel = document.querySelector(".tutor-settings-panel");
+        if (!settingsPanel) {
+            console.warn("StudySpace: Einstellungsbereich des Tutors nicht gefunden.");
+            return;
+        }
 
-        const availableMaterials = (data.materials || []).filter(item => {
+        let container = get("aiMaterialSelection");
+
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "aiMaterialSelection";
+            container.className = "tutor-material-selection";
+
+            container.innerHTML = `
+                <div class="tutor-material-heading">
+                    <strong>Meine Lernmaterialien</strong>
+                    <span id="aiMaterialCount">0 ausgewählt</span>
+                </div>
+                <div id="aiMaterialList"></div>
+            `;
+
+            settingsPanel.appendChild(container);
+        }
+
+        // Speicher-Button nur anlegen, falls die HTML-Seite keinen enthält
+        if (!get("aiSaveSettings")) {
+            const saveButton = document.createElement("button");
+            saveButton.id = "aiSaveSettings";
+            saveButton.className = "primary-button tutor-save-button";
+            saveButton.type = "button";
+            saveButton.textContent = "Einstellungen speichern";
+            settingsPanel.appendChild(saveButton);
+        }
+
+        if (!get("aiSaveStatus")) {
+            const status = document.createElement("p");
+            status.id = "aiSaveStatus";
+            status.className = "tutor-field-hint";
+            settingsPanel.appendChild(status);
+        }
+    }
+
+    function renderMaterials() {
+        const container = get("aiMaterialList");
+        if (!container) return;
+
+        const availableMaterials = (data.materials || []).filter(material => {
             return !tutorSettings.subjectId ||
-                item.subjectId === tutorSettings.subjectId;
+                material.subjectId === tutorSettings.subjectId;
         });
 
         if (!availableMaterials.length) {
             container.innerHTML = `
                 <p class="tutor-empty-materials">
-                    Noch keine passenden Materialien vorhanden.
+                    Für dieses Fach sind noch keine Materialien vorhanden.
                 </p>
             `;
         } else {
-            container.innerHTML = availableMaterials.map(item => `
+            container.innerHTML = availableMaterials.map(material => `
                 <label class="ai-material-item">
                     <input
                         type="checkbox"
                         class="ai-material-checkbox"
-                        value="${escapeHTML(item.id)}"
-                        ${tutorSettings.selectedMaterials.includes(item.id) ? "checked" : ""}
+                        value="${escapeHTML(material.id)}"
+                        ${tutorSettings.selectedMaterials.includes(material.id) ? "checked" : ""}
                     >
                     <span class="ai-material-file">▧</span>
                     <span class="ai-material-name">
-                        <strong>${escapeHTML(item.name)}</strong>
-                        <small>${escapeHTML(item.fileName || "Material")}</small>
+                        <strong>${escapeHTML(material.name)}</strong>
+                        <small>${escapeHTML(material.fileName || "Lernmaterial")}</small>
                     </span>
                 </label>
             `).join("");
@@ -2312,83 +2193,157 @@ applySettings();
     }
 
     function updateMaterialCount() {
+        const countElement = get("aiMaterialCount");
+        if (!countElement) return;
+
         const count = document.querySelectorAll(
             ".ai-material-checkbox:checked"
         ).length;
 
-        $("aiMaterialCount").textContent = `${count} ausgewählt`;
+        countElement.textContent = `${count} ausgewählt`;
     }
 
     function updateSourceDescription() {
-        const source =
-            document.querySelector('input[name="aiSource"]:checked')?.value
-            || "notebook";
+        const source = get("learningSource")?.value || "notebook";
+        let description = get("aiSourceDescription");
 
-        $("aiSourceDescription").textContent =
-            sourceDescriptions[source];
+        if (!description) {
+            description = document.createElement("p");
+            description.id = "aiSourceDescription";
+            description.className = "tutor-field-hint";
+
+            get("learningSource")?.insertAdjacentElement(
+                "afterend",
+                description
+            );
+        }
+
+        if (description) {
+            description.textContent =
+                sourceDescriptions[source] || sourceDescriptions.notebook;
+        }
     }
 
     function loadTutorSettings() {
-        renderTutorSubjects();
+        renderSubjects();
 
-        $("aiTopic").value = tutorSettings.topic;
-        $("aiDifficulty").value = tutorSettings.difficulty;
-        $("aiMethod").value = tutorSettings.method;
+        if (get("tutorTopic")) {
+            get("tutorTopic").value = tutorSettings.topic;
+        }
 
-        const radio = document.querySelector(
-            `input[name="aiSource"][value="${tutorSettings.source}"]`
-        );
+        if (get("learningSource")) {
+            get("learningSource").value = tutorSettings.source;
+        }
 
-        if (radio) radio.checked = true;
+        if (get("difficulty")) {
+            get("difficulty").value = tutorSettings.difficulty;
+        }
+
+        if (get("learningMethod")) {
+            get("learningMethod").value = tutorSettings.method;
+        }
 
         updateSourceDescription();
-        renderTutorMaterials();
+        renderMaterials();
+
+        window.StudySpaceTutorSettings = tutorSettings;
     }
 
-    $("aiSubject").addEventListener("change", () => {
-        tutorSettings.subjectId = $("aiSubject").value;
-        tutorSettings.selectedMaterials = [];
-        renderTutorMaterials();
-    });
+    function initializeTutor() {
+        if (!get("page-tutor")) return;
 
-    document.querySelectorAll('input[name="aiSource"]').forEach(input => {
-        input.addEventListener("change", updateSourceDescription);
-    });
+        const requiredFields = [
+            "tutorSubject",
+            "tutorTopic",
+            "learningSource",
+            "difficulty",
+            "learningMethod"
+        ];
 
-    $("aiMaterialList").addEventListener("change", event => {
-        if (event.target.matches(".ai-material-checkbox")) {
-            updateMaterialCount();
+        const missingFields = requiredFields.filter(id => !get(id));
+
+        if (missingFields.length) {
+            console.error(
+                "StudySpace Tutor: Diese HTML-Elemente fehlen:",
+                missingFields
+            );
+            return;
         }
-    });
 
-    $("aiSaveSettings").addEventListener("click", () => {
-        saveTutorSettings();
-        $("aiSaveStatus").textContent =
-            "Deine Lerneinstellungen wurden gespeichert.";
-    });
+        createMaterialSelection();
+        loadTutorSettings();
 
-    document.querySelectorAll("[data-ai-tool]").forEach(button => {
-        button.addEventListener("click", () => {
-            const actions = {
-                explain: "Ich möchte ein Thema erklärt bekommen.",
-                quiz: "Ich möchte mein Wissen mit Übungsfragen testen.",
-                summary: "Ich möchte einen Lernzettel erstellen.",
-                cards: "Ich möchte Karteikarten erstellen."
-            };
-
-            $("aiChatInput").value = actions[button.dataset.aiTool];
-            $("aiChatInput").focus();
+        get("tutorSubject").addEventListener("change", () => {
+            tutorSettings.subjectId = get("tutorSubject").value;
+            tutorSettings.selectedMaterials = [];
+            renderMaterials();
+            saveTutorSettings();
         });
-    });
 
-    loadTutorSettings();
+        get("learningSource").addEventListener("change", () => {
+            updateSourceDescription();
+            saveTutorSettings();
+        });
 
-    // Fachauswahl und Materialauswahl bei späteren Änderungen aktualisieren
-    window.addEventListener("studyspaceTutorRefresh", () => {
-        renderTutorSubjects();
-        renderTutorMaterials();
-    });
+        [
+            "tutorTopic",
+            "difficulty",
+            "learningMethod"
+        ].forEach(id => {
+            get(id).addEventListener("change", saveTutorSettings);
+        });
 
+        get("tutorTopic").addEventListener("input", saveTutorSettings);
+
+        get("aiMaterialList")?.addEventListener("change", event => {
+            if (event.target.matches(".ai-material-checkbox")) {
+                updateMaterialCount();
+                saveTutorSettings();
+            }
+        });
+
+        get("aiSaveSettings")?.addEventListener("click", () => {
+            saveTutorSettings();
+
+            if (get("aiSaveStatus")) {
+                get("aiSaveStatus").textContent =
+                    "Deine Lerneinstellungen wurden gespeichert.";
+            }
+        });
+
+        document.querySelectorAll("[data-ai-tool]").forEach(button => {
+            button.addEventListener("click", () => {
+                const actions = {
+                    explain: "Erkläre mir das ausgewählte Thema Schritt für Schritt.",
+                    quiz: "Teste mein Wissen mit passenden Übungsfragen.",
+                    summary: "Erstelle einen übersichtlichen Lernzettel zum Thema.",
+                    cards: "Erstelle Karteikarten zu diesem Thema."
+                };
+
+                const input = get("aiChatInput");
+
+                if (input) {
+                    input.value = actions[button.dataset.aiTool] || "";
+                    input.focus();
+                }
+            });
+        });
+
+        window.addEventListener("studyspaceTutorRefresh", () => {
+            renderSubjects();
+            renderMaterials();
+        });
+
+        console.log("StudySpace Tutor: Neue Oberfläche verbunden.");
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeTutor, {
+            once: true
+        });
+    } else {
+        initializeTutor();
+    }
 })();
 
 
@@ -2938,9 +2893,19 @@ Antworte auf Deutsch.
             document.getElementById("tutorTopic")?.value || ""
         ).trim().toLowerCase();
 
-        let materials = data.materials.filter(material => {
-            return !subjectId || material.subjectId === subjectId;
-        });
+        const selectedMaterials =
+    window.StudySpaceTutorSettings?.selectedMaterials || [];
+
+let materials = (data.materials || []).filter(material => {
+    const matchesSubject =
+        !subjectId || material.subjectId === subjectId;
+
+    const matchesSelection =
+        selectedMaterials.length === 0 ||
+        selectedMaterials.includes(material.id);
+
+    return matchesSubject && matchesSelection;
+});
 
         if (topic) {
             const matching = materials.filter(material => {
