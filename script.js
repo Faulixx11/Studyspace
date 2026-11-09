@@ -4126,3 +4126,479 @@ Arbeite fachlich sorgfältig und pädagogisch sinnvoll.
 
     console.log("StudySpace KI-Lernblätter-Seite integriert.");
 })();
+
+
+
+/* =====================================================
+   STUDYSPACE – AUTOMATISCHER LERNBLATT-GENERATOR 1.0
+   Ohne KI – nutzt vorhandene Materialien und OCR-Texte
+===================================================== */
+
+(function () {
+    "use strict";
+
+    const DB_NAME = "StudySpaceFilesDB";
+    const STORE_NAME = "files";
+
+    const waitForPage = () => {
+        const page = document.getElementById("page-ai-sheets");
+
+        if (!page) {
+            setTimeout(waitForPage, 300);
+            return;
+        }
+
+        if (document.getElementById("sheetGenerator")) return;
+
+        buildGenerator(page);
+    };
+
+    function getStudyData() {
+        try {
+            return JSON.parse(localStorage.getItem("studyspaceData")) || {};
+        } catch {
+            return {};
+        }
+    }
+
+    function getFiles() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME);
+
+            request.onerror = () => reject(request.error);
+
+            request.onsuccess = () => {
+                const db = request.result;
+
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.close();
+                    resolve([]);
+                    return;
+                }
+
+                const transaction = db.transaction(STORE_NAME, "readonly");
+                const get = transaction.objectStore(STORE_NAME).getAll();
+
+                get.onsuccess = () => {
+                    resolve(get.result || []);
+                    db.close();
+                };
+
+                get.onerror = () => {
+                    db.close();
+                    reject(get.error);
+                };
+            };
+        });
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[char]);
+    }
+
+    function findFile(material, files, materials) {
+        const stored = material.fileStored;
+
+        if (stored) {
+            const match = files.find(file =>
+                String(file.id) === String(stored)
+            );
+
+            if (match) return match;
+        }
+
+        const byId = files.find(file =>
+            String(file.id) === String(material.id)
+        );
+
+        if (byId) return byId;
+
+        // Sicherer Rückgriff, wenn genau eine Datei
+        // genau einem Material zugeordnet ist.
+        if (files.length === 1 && materials.length === 1) {
+            return files[0];
+        }
+
+        return null;
+    }
+
+    function cleanText(text) {
+        return String(text || "")
+            .replace(/\r/g, "\n")
+            .replace(/[ \t]+/g, " ")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+    }
+
+    function extractLines(text) {
+        return cleanText(text)
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.length >= 3)
+            .filter(line => !/^(seite \d+|\d{1,2}:\d{2})$/i.test(line));
+    }
+
+    function createStructuredSheet(materials, subjectName) {
+        const definitions = [];
+        const formulas = [];
+        const questions = [];
+        const examples = [];
+        const other = [];
+
+        let originalText = "";
+
+        materials.forEach(material => {
+            const text = cleanText(material.text);
+
+            if (!text) return;
+
+            originalText +=
+                `\n\n--- ${material.name} ---\n\n${text}`;
+
+            const lines = extractLines(text);
+
+            lines.forEach(line => {
+                if (
+                    /^(wie|warum|weshalb|was|welcher|welche|wodurch)\b/i.test(line) ||
+                    /\?$/.test(line)
+                ) {
+                    questions.push(line);
+                } else if (
+                    /formel|gleichung|berechnung/i.test(line) ||
+                    /[a-zA-Z]\s*=\s*[-\d]/.test(line) ||
+                    /[²³]/.test(line)
+                ) {
+                    formulas.push(line);
+                } else if (
+                    /beispiel|zum beispiel|z\.?\s*b\.?/i.test(line)
+                ) {
+                    examples.push(line);
+                } else if (
+                    /definition|bezeichnet man|versteht man unter|ist eine|ist die|bedeutet/i.test(line)
+                ) {
+                    definitions.push(line);
+                } else {
+                    other.push(line);
+                }
+            });
+        });
+
+        const section = (title, entries) => {
+            if (!entries.length) {
+                return `${title}\nKeine eindeutigen Einträge erkannt.\n`;
+            }
+
+            return `${title}\n${entries
+                .map(entry => "• " + entry)
+                .join("\n")}\n`;
+        };
+
+        return `
+LERNBLATT: ${subjectName}
+
+QUELLEN
+${materials.map(item => "• " + item.name).join("\n")}
+
+========================================
+1. GRUNDBEGRIFFE UND DEFINITIONEN
+========================================
+
+${section("", definitions)}
+
+========================================
+2. FORMELN UND BERECHNUNGEN
+========================================
+
+${section("", formulas)}
+
+========================================
+3. BEISPIELE
+========================================
+
+${section("", examples)}
+
+========================================
+4. MÖGLICHE LERNFRAGEN
+========================================
+
+${section("", questions)}
+
+========================================
+5. WEITERE INHALTE AUS DEINEM MATERIAL
+========================================
+
+${section("", other)}
+
+========================================
+6. ORIGINALTEXT ZUR KONTROLLE
+========================================
+
+${originalText}
+
+========================================
+HINWEIS
+========================================
+
+Dieses Lernblatt wurde automatisch anhand deiner
+gespeicherten Materialien strukturiert.
+
+Es wurde keine KI-Zusammenfassung erstellt.
+Die Erkennung und Zuordnung von Begriffen kann
+fehlerhaft sein. Vergleiche wichtige Angaben
+mit deinem Originalhefter.
+        `.trim();
+    }
+
+    function buildGenerator(page) {
+        const panel = document.createElement("div");
+        panel.id = "sheetGenerator";
+        panel.className = "panel sheet-generator";
+
+        panel.innerHTML = `
+            <div class="section-heading">
+                <div>
+                    <h2>Lernblatt erstellen</h2>
+                    <p class="muted">
+                        Erstelle strukturierte Lernblätter aus deinen
+                        vorhandenen Heftern und StudySpace-Materialien.
+                    </p>
+                </div>
+            </div>
+
+            <div class="sheet-generator-fields">
+                <label for="sheetSubject">Fach</label>
+                <select id="sheetSubject">
+                    <option value="all">Alle Fächer</option>
+                </select>
+
+                <label for="sheetTitle">Titel des Lernblatts</label>
+                <input
+                    id="sheetTitle"
+                    type="text"
+                    placeholder="z. B. Dynamik und Kräfte"
+                />
+            </div>
+
+            <div class="sheet-source-heading">
+                <h3>Materialien auswählen</h3>
+                <button type="button" class="secondary-button"
+                    id="reloadSheetSources">
+                    Aktualisieren
+                </button>
+            </div>
+
+            <div id="sheetSourceList" class="sheet-source-list">
+                Materialien werden geladen ...
+            </div>
+
+            <div id="sheetGeneratorStatus" class="muted"></div>
+
+            <button id="generateSheetButton" class="primary-button">
+                Lernblatt erstellen
+            </button>
+        `;
+
+        const listPanel = page.querySelector(".panel");
+
+        if (listPanel) {
+            page.insertBefore(panel, listPanel);
+        } else {
+            page.prepend(panel);
+        }
+
+        const data = getStudyData();
+        const subjectSelect = panel.querySelector("#sheetSubject");
+
+        (data.subjects || []).forEach(subject => {
+            const option = document.createElement("option");
+            option.value = subject.id;
+            option.textContent = subject.name;
+            subjectSelect.appendChild(option);
+        });
+
+        let availableMaterials = [];
+
+        async function loadSources() {
+            const list = panel.querySelector("#sheetSourceList");
+            const status = panel.querySelector("#sheetGeneratorStatus");
+
+            list.textContent = "Materialien werden geladen ...";
+            status.textContent = "";
+
+            try {
+                const currentData = getStudyData();
+                const files = await getFiles();
+
+                availableMaterials = (currentData.materials || []).map(material => {
+                    const file = findFile(
+                        material,
+                        files,
+                        currentData.materials || []
+                    );
+
+                    const subject = (currentData.subjects || []).find(
+                        item => String(item.id) === String(material.subjectId)
+                    );
+
+                    return {
+                        ...material,
+                        subjectName: subject?.name || "Allgemein",
+                        text: cleanText(
+                            file?.extractedText || material.description || ""
+                        ),
+                        fileAvailable: Boolean(file),
+                        hasText: Boolean(
+                            file?.extractedText || material.description
+                        )
+                    };
+                });
+
+                renderSources();
+            } catch (error) {
+                console.error("Lernblatt-Quellen:", error);
+                list.textContent =
+                    "Die gespeicherten Materialien konnten nicht geladen werden.";
+            }
+        }
+
+        function renderSources() {
+            const list = panel.querySelector("#sheetSourceList");
+            const selectedSubject = subjectSelect.value;
+
+            const filtered = availableMaterials.filter(material =>
+                selectedSubject === "all" ||
+                String(material.subjectId) === selectedSubject
+            );
+
+            if (!filtered.length) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        Keine passenden Materialien gefunden.
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(material => `
+                <label class="sheet-source-item">
+                    <input
+                        type="checkbox"
+                        value="${escapeHTML(material.id)}"
+                        ${material.hasText ? "checked" : "disabled"}
+                    />
+                    <span class="sheet-source-info">
+                        <strong>${escapeHTML(material.name)}</strong>
+                        <small>
+                            ${escapeHTML(material.subjectName)}
+                            ·
+                            ${material.hasText
+                                ? "Text verfügbar"
+                                : "Kein ausgelesener Text"}
+                        </small>
+                    </span>
+                    <span class="sheet-source-status">
+                        ${material.hasText ? "✓" : "–"}
+                    </span>
+                </label>
+            `).join("");
+        }
+
+        subjectSelect.addEventListener("change", renderSources);
+
+        panel.querySelector("#reloadSheetSources")
+            .addEventListener("click", loadSources);
+
+        panel.querySelector("#generateSheetButton")
+            .addEventListener("click", () => {
+                const selectedIds = [
+                    ...panel.querySelectorAll(
+                        "#sheetSourceList input:checked"
+                    )
+                ].map(input => input.value);
+
+                const selected = availableMaterials.filter(material =>
+                    selectedIds.includes(String(material.id)) &&
+                    material.hasText
+                );
+
+                const title = panel.querySelector("#sheetTitle")
+                    .value.trim();
+
+                const status = panel.querySelector("#sheetGeneratorStatus");
+
+                if (!selected.length) {
+                    status.textContent =
+                        "Bitte wähle mindestens ein Material mit erkanntem Text aus.";
+                    return;
+                }
+
+                if (!title) {
+                    status.textContent =
+                        "Bitte gib deinem Lernblatt einen Titel.";
+                    panel.querySelector("#sheetTitle").focus();
+                    return;
+                }
+
+                const subjectNames = [
+                    ...new Set(selected.map(item => item.subjectName))
+                ];
+
+                const subjectName = subjectNames.join(", ");
+
+                const content = createStructuredSheet(
+                    selected,
+                    subjectName
+                );
+
+                if (!window.StudySpaceSheets) {
+                    status.textContent =
+                        "Die Lernblattverwaltung wurde nicht gefunden.";
+                    return;
+                }
+
+                const id = window.StudySpaceSheets.create({
+                    title,
+                    subject: subjectName,
+                    content
+                });
+
+                if (id) {
+                    status.textContent =
+                        "Lernblatt erfolgreich erstellt und gespeichert.";
+
+                    panel.querySelector("#sheetTitle").value = "";
+
+                    if (subjectNames.length === 1) {
+                        subjectSelect.value = selected[0].subjectId;
+                    }
+
+                    window.StudySpaceSheets.render();
+
+                    const viewer = document.getElementById("aiSheetViewer");
+
+                    if (viewer) {
+                        window.StudySpaceSheets.open(id);
+                    }
+                } else {
+                    status.textContent =
+                        "Das Lernblatt konnte nicht erstellt werden.";
+                }
+            });
+
+        loadSources();
+
+        console.log("StudySpace Lernblatt-Generator 1.0 geladen.");
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", waitForPage);
+    } else {
+        waitForPage();
+    }
+})();
