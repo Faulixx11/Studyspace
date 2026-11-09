@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySpace – Deine Lernplattform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <span class="logo-icon">S</span>
+            <span class="logo-text">StudySpace</span>
+        </div>
+
+        <button class="toggle-button" id="toggleButton" title="Menü einklappen">☰</button>
+
+        <nav class="navigation">
+            <button class="nav-item active" data-page="dashboard">
+                <span class="nav-icon">⌂</span><span class="nav-text">Dashboard</span>
+            </button>
+            <button class="nav-item" data-page="subjects">
+                <span class="nav-icon">▤</span><span class="nav-text">Meine Fächer</span>
+            </button>
+            <button class="nav-item" data-page="materials">
+                <span class="nav-icon">▧</span><span class="nav-text">Hefter & Materialien</span>
+            </button>
+            <button class="nav-item" data-page="tutor">
+                <span class="nav-icon">✧</span><span class="nav-text">KI-Tutor</span>
+            </button>
+            <button class="nav-item" data-page="flashcards">
+                <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
+            </button>
+            <button class="nav-item" data-page="planner">
+                <span class="nav-icon">◷</span><span class="nav-text">Lernplan</span>
+            </button>
+            <button class="nav-item" data-page="progress">
+                <span class="nav-icon">▥</span><span class="nav-text">Fortschritt</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙</span><span class="nav-text">Einstellungen</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <p class="topbar-label">DEIN PERSÖNLICHER LERNBEREICH</p>
+                <h2 id="pageTitle">Dashboard</h2>
+            </div>
+            <div class="profile">
+                <span class="profile-dot"></span>
+                <span>Mein Lernbereich</span>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <section class="page active" id="page-dashboard">
+            <div class="welcome">
+                <p class="welcome-label">WILLKOMMEN BEI STUDYSPACE</p>
+                <h1>Bereit, etwas Neues zu lernen?</h1>
+                <p>Organisiere dein Wissen und erreiche deine Lernziele.</p>
+                <button class="primary-button" data-goto="subjects">Meine Fächer öffnen →</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Meine Fächer</span>
+                    <strong id="dashboardSubjectCount">0</strong>
+                    <span class="stat-description">Angelegte Schulfächer</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Karteikarten</span>
+                    <strong id="dashboardCardCount">0</strong>
+                    <span class="stat-description">Gespeicherte Lernkarten</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Lernaufgaben</span>
+                    <strong id="dashboardTaskCount">0</strong>
+                    <span class="stat-description">Offene Aufgaben</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-heading">
+                    <div>
+                        <h2>Deine Lernbereiche</h2>
+                        <p>Alles an einem Ort.</p>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <button class="dashboard-card" data-goto="subjects">
+                        <span class="card-icon blue">▤</span>
+                        <h3>Meine Fächer</h3>
+                        <p>Verwalte deine Schulfächer und Themen.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="tutor">
+                        <span class="card-icon purple">✧</span>
+                        <h3>KI-Tutor</h3>
+                        <p>Bereite Fragen und Lernaufträge vor.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="materials">
+                        <span class="card-icon green">▧</span>
+                        <h3>Meine Hefter</h3>
+                        <p>Organisiere Fotos und Unterrichtsmaterial.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="flashcards">
+                        <span class="card-icon orange">▣</span>
+                        <h3>Karteikarten</h3>
+                        <p>Wiederhole Inhalte und festige dein Wissen.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="planner">
+                        <span class="card-icon pink">◷</span>
+                        <h3>Lernplan</h3>
+                        <p>Plane deine nächsten Lernziele.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="progress">
+                        <span class="card-icon cyan">▥</span>
+                        <h3>Fortschritt</h3>
+                        <p>Behalte deine Entwicklung im Blick.</p>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-heading">
+                    <div>
+                        <h2>Deine nächsten Aufgaben</h2>
+                        <p>Was steht noch an?</p>
+                    </div>
+                    <button class="secondary-button" data-goto="planner">Zum Lernplan</button>
+                </div>
+                <div id="dashboardTasks" class="panel empty-state">Noch keine Aufgaben angelegt.</div>
+            </div>
+        </section>
+
+        <!-- FÄCHER -->
+        <section class="page" id="page-subjects">
+            <div class="page-intro">
+                <h1>Meine Fächer</h1>
+                <p>Erstelle deine persönliche Fächerübersicht und ordne deine Themen.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Neues Fach hinzufügen</h3>
+                <form id="subjectForm" class="form-grid">
+                    <input id="subjectName" placeholder="Name des Fachs, z. B. Mathematik" required>
+                    <select id="subjectColor">
+                        <option value="blue">Blau</option>
+                        <option value="purple">Lila</option>
+                        <option value="green">Türkis</option>
+                        <option value="orange">Orange</option>
+                        <option value="pink">Rosa</option>
+                    </select>
+                    <button class="primary-button" type="submit">+ Fach hinzufügen</button>
+                </form>
+            </div>
+
+            <div class="section-heading">
+                <h2>Deine Fächerübersicht</h2>
+                <span class="muted" id="subjectCount">0 Fächer</span>
+            </div>
+            <div class="subject-grid" id="subjectList"></div>
+        </section>
+
+        <!-- MATERIALIEN -->
+        <section class="page" id="page-materials">
+            <div class="page-intro">
+                <h1>Hefter & Materialien</h1>
+                <p>Sammle deine Unterrichtsunterlagen an einem Ort.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Material hinzufügen</h3>
+                <p class="muted">Wähle ein Fach und lade ein Foto oder Dokument hoch.</p>
+                <form id="materialForm" class="form-stack">
+                    <label>Fach
+                        <select id="materialSubject" required></select>
+                    </label>
+                    <label>Bezeichnung
+                        <input id="materialName" placeholder="z. B. Meiose – Hefterseite 12" required>
+                    </label>
+                    <label>Datei oder Foto
+                        <input id="materialFile" type="file" accept="image/*,.pdf,.doc,.docx,.txt" required>
+                    </label>
+                    <button class="primary-button" type="submit">Material vormerken</button>
+                </form>
+                <p class="info-note">Hinweis: Diese erste Version speichert Dateiname und Zuordnung. Die eigentliche Datei und automatische Texterkennung werden später technisch ergänzt.</p>
+            </div>
+
+            <div class="section-heading">
+                <h2>Meine Materialien</h2>
+            </div>
+            <div id="materialList" class="material-list"></div>
+        </section>
+
+        <!-- KI-TUTOR -->
+        <section class="page" id="page-tutor">
+            <div class="page-intro">
+                <h1>KI-Tutor</h1>
+                <p>Bereite deine Lernsession vor und lege fest, wie du lernen möchtest.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Deine Lernsession</h3>
+                <form id="tutorForm" class="form-stack">
+                    <label>Was möchtest du lernen?
+                        <input id="tutorTopic" placeholder="z. B. Die Französische Revolution">
+                    </label>
+                    <label>Fach
+                        <select id="tutorSubject"></select>
+                    </label>
+                    <label>Welche Wissensquelle?
+                        <select id="learningSource">
+                            <option value="notebook">Nur mein Hefter</option>
+                            <option value="combined">Hefter + allgemeines Wissen</option>
+                            <option value="general">Nur allgemeines Wissen</option>
+                        </select>
+                    </label>
+                    <label>Schwierigkeitsgrad
+                        <select id="difficulty">
+                            <option>Einfach</option>
+                            <option selected>Mittel</option>
+                            <option>Anspruchsvoll</option>
+                        </select>
+                    </label>
+                    <label>Wie möchtest du lernen?
+                        <select id="learningMethod">
+                            <option>Schrittweise Erklärung</option>
+                            <option>Fragen und Antworten</option>
+                            <option>Übungsaufgaben</option>
+                            <option>Prüfungssimulation</option>
+                            <option>Lernzettel erstellen</option>
+                        </select>
+                    </label>
+                    <button class="primary-button" type="submit">Lernsession vorbereiten</button>
+                </form>
+            </div>
+            <div class="panel" id="tutorResult">
+                <h3>Deine Lernsession</h3>
+                <p class="muted">Hier erscheint deine gewählte Lerneinstellung.</p>
+            </div>
+            <div class="info-note">Der KI-Tutor ist derzeit eine vorbereitete Oberfläche. Für echte KI-Erklärungen benötigen wir später eine sichere KI-Anbindung.</div>
+        </section>
+
+        <!-- KARTEIKARTEN -->
+        <section class="page" id="page-flashcards">
+            <div class="page-intro">
+                <h1>Karteikarten</h1>
+                <p>Erstelle eigene Karten und wiederhole dein Wissen.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Neue Karteikarte erstellen</h3>
+                <form id="flashcardForm" class="form-stack">
+                    <label>Fach
+                        <select id="flashcardSubject"></select>
+                    </label>
+                    <label>Frage oder Begriff
+                        <input id="flashcardQuestion" placeholder="Was möchtest du wissen?" required>
+                    </label>
+                    <label>Antwort
+                        <textarea id="flashcardAnswer" placeholder="Schreibe die Antwort..." required></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Karteikarte speichern</button>
+                </form>
+            </div>
+
+            <div class="panel" id="reviewPanel">
+                <div class="section-heading">
+                    <h3>Wiederholen</h3>
+                    <span class="muted" id="reviewCounter">0 Karten</span>
+                </div>
+                <div id="reviewCard" class="review-card empty-state">Erstelle deine erste Karteikarte.</div>
+                <div class="button-row">
+                    <button class="secondary-button" id="showAnswerButton" type="button">Antwort zeigen</button>
+                    <button class="primary-button" id="knownButton" type="button">Gewusst ✓</button>
+                </div>
+                <p class="muted" id="reviewAnswer"></p>
+            </div>
+
+            <div class="section-heading"><h2>Alle Karteikarten</h2></div>
+            <div id="flashcardList" class="material-list"></div>
+        </section>
+
+        <!-- LERNPLAN -->
+        <section class="page" id="page-planner">
+            <div class="page-intro">
+                <h1>Mein Lernplan</h1>
+                <p>Plane Aufgaben und behalte anstehende Lernziele im Blick.</p>
+            </div>
+
+            <div class="panel">
+                <h3>Neue Lernaufgabe</h3>
+                <form id="taskForm" class="form-grid">
+                    <input id="taskName" placeholder="Was möchtest du lernen?" required>
+                    <select id="taskSubject"></select>
+                    <input id="taskDate" type="date">
+                    <button class="primary-button" type="submit">Aufgabe hinzufügen</button>
+                </form>
+            </div>
+            <div class="section-heading"><h2>Deine Aufgaben</h2></div>
+            <div id="taskList" class="material-list"></div>
+        </section>
+
+        <!-- FORTSCHRITT -->
+        <section class="page" id="page-progress">
+            <div class="page-intro">
+                <h1>Dein Fortschritt</h1>
+                <p>Behalte deine Lernaktivitäten im Überblick.</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><span class="stat-label">Fächer</span><strong id="progressSubjects">0</strong><span class="stat-description">Angelegt</span></div>
+                <div class="stat-card"><span class="stat-label">Karteikarten</span><strong id="progressCards">0</strong><span class="stat-description">Erstellt</span></div>
+                <div class="stat-card"><span class="stat-label">Erledigte Aufgaben</span><strong id="progressTasks">0</strong><span class="stat-description">Abgeschlossen</span></div>
+            </div>
+            <div class="panel">
+                <h3>Deine Fächer</h3>
+                <div id="progressSubjectList"></div>
+            </div>
+        </section>
+
+        <!-- EINSTELLUNGEN -->
+        <section class="page" id="page-settings">
+            <div class="page-intro">
+                <h1>Einstellungen</h1>
+                <p>Gestalte StudySpace nach deinen Vorstellungen.</p>
+            </div>
+            <div class="panel">
+                <h3>Darstellung</h3>
+                <label class="setting-row">Akzentfarbe
+                    <select id="accentSetting">
+                        <option value="blue">Blau</option>
+                        <option value="purple">Lila</option>
+                        <option value="green">Türkis</option>
+                        <option value="pink">Rosa</option>
+                    </select>
+                </label>
+                <label class="setting-row">Schriftgröße
+                    <select id="fontSetting">
+                        <option value="15px">Klein</option>
+                        <option value="16px" selected>Normal</option>
+                        <option value="18px">Groß</option>
+                    </select>
+                </label>
+                <button class="primary-button" id="saveSettingsButton">Einstellungen speichern</button>
+            </div>
+            <div class="panel">
+                <h3>Deine Daten</h3>
+                <p class="muted">Deine Daten liegen zunächst lokal in diesem Browser.</p>
+                <button class="secondary-button" id="exportButton">Daten exportieren</button>
+                <button class="danger-button" id="resetButton">Alle Daten löschen</button>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script src="script.js"></script>
+
+<script type="module" src="https://esm.run/@mlc-ai/web-llm"></script>
+</body>
+</html>
+
+
+
