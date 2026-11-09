@@ -3102,14 +3102,11 @@ Antworte auf Deutsch.
     console.log("StudySpace Material-Texterkennung 1.1 geladen.");
 })();
 
-
 /* =========================================
-   STUDYSPACE KI-CHAT VERBINDUNG 5.0
+   STUDYSPACE KI-CHAT VERBINDUNG 6.0
 ========================================= */
 
-(() => {
-    "use strict";
-
+window.addEventListener("DOMContentLoaded", () => {
     const startButton = document.getElementById("aiStartButton");
     const stopButton = document.getElementById("aiStopButton");
     const form = document.getElementById("aiChatForm");
@@ -3117,11 +3114,10 @@ Antworte auf Deutsch.
     const sendButton = document.getElementById("aiSendButton");
     const messages = document.getElementById("aiChatMessages");
     const clearButton = document.getElementById("aiClearButton");
-
     const status = document.getElementById("aiEngineStatus");
 
-    if (!form || !input || !sendButton || !messages) {
-        console.error("StudySpace Chat: HTML-Elemente fehlen.");
+    if (!startButton || !stopButton || !form || !input || !sendButton || !messages) {
+        console.error("StudySpace Chat: HTML-Elemente fehlen weiterhin.");
         return;
     }
 
@@ -3137,7 +3133,7 @@ Antworte auf Deutsch.
         messages.scrollTop = messages.scrollHeight;
     }
 
-    startButton?.addEventListener("click", async () => {
+    startButton.addEventListener("click", async () => {
         startButton.disabled = true;
         setStatus("KI-Modell wird gestartet ...");
 
@@ -3152,10 +3148,17 @@ Antworte auf Deutsch.
         startButton.disabled = false;
     });
 
-    stopButton?.addEventListener("click", async () => {
+    stopButton.addEventListener("click", async () => {
         stopButton.disabled = true;
-        await window.StudySpaceAI.stop();
-        setStatus("KI wurde beendet.");
+
+        try {
+            await window.StudySpaceAI.stop();
+            setStatus("KI wurde beendet.");
+        } catch (error) {
+            console.error(error);
+            setStatus("Fehler beim Beenden.");
+        }
+
         stopButton.disabled = false;
     });
 
@@ -3173,13 +3176,11 @@ Antworte auf Deutsch.
 
         try {
             setStatus("Deine Frage wird bearbeitet ...");
-
             const answer = await window.StudySpaceAI.ask(question);
             addMessage(answer || "Keine Antwort erhalten.", "assistant");
-
             setStatus("StudySpace KI ist bereit.");
         } catch (error) {
-            console.error("Chatfehler:", error);
+            console.error(error);
             addMessage("Fehler: " + error.message, "assistant");
             setStatus("Fehler bei der KI-Verbindung.");
         }
@@ -3194,5 +3195,5 @@ Antworte auf Deutsch.
         addMessage("Chat geleert. Was möchtest du lernen?", "assistant");
     });
 
-    console.log("StudySpace KI-Chat 5.0 verbunden.");
-})();
+    console.log("StudySpace KI-Chat 6.0 verbunden.");
+});
