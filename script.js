@@ -2390,99 +2390,126 @@ applySettings();
 })();
 
 
+
+
 /* =========================================
-   STUDYSPACE AI ENGINE 1.0
-   Lokale KI mit WebLLM
+   STUDYSPACE AI ENGINE 3.0
+   WebLLM - lokale KI im Browser
 ========================================= */
 
 (() => {
     "use strict";
 
-    const AI_CONFIG = {
-        model: "Qwen3-4B-Instruct-2507-q4f16_1-MLC",
-        temperature: 0.7,
+    const CONFIG = {
+        model: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
+        temperature: 0.65,
         maxTokens: 1200
     };
 
-    const AI_STATE = {
+    const state = {
         engine: null,
+        module: null,
         loading: false,
         ready: false,
-        enabled: false,
-        messages: [],
-        error: null
+        messages: []
     };
 
-    // KI-Status
-    function aiStatus(message, type = "info") {
-        const status = document.getElementById("aiEngineStatus");
-        if (!status) return;
+    function status(message, type = "info") {
+        const element = document.getElementById("aiEngineStatus");
+        if (!element) {
+            console.log("[StudySpace AI]", message);
+            return;
+        }
 
-        status.textContent = message;
-        status.dataset.type = type;
+        element.textContent = message;
+        element.dataset.type = type;
     }
 
-    // Ladeanzeige
-    function aiProgress(progress) {
+    function progress(info) {
         const bar = document.getElementById("aiProgressBar");
-        const text = document.getElementById("aiProgressText");
+        const label = document.getElementById("aiProgressText");
 
-        if (bar) bar.style.width =
-            `${Math.round(progress.progress * 100)}%`;
+        if (bar) {
+            bar.style.width =
+                `${Math.round((info.progress || 0) * 100)}%`;
+        }
 
-        if (text) text.textContent =
-            progress.text || "KI wird geladen...";
+        if (label) {
+            label.textContent =
+                info.text || "Modell wird geladen...";
+        }
     }
 
-    // KI initialisieren
-    async function initializeStudySpaceAI() {
-        if (AI_STATE.ready) return true;
-        if (AI_STATE.loading) return false;
+    async function loadLibrary() {
+        if (state.module) return state.module;
 
-        AI_STATE.loading = true;
-        AI_STATE.error = null;
+        status("KI-Bibliothek wird geladen...");
 
-        aiStatus("KI wird vorbereitet...");
+        state.module = await import(
+            "https://esm.run/@mlc-ai/web-llm"
+        );
+
+        return state.module;
+    }
+
+    async function initialize() {
+        if (state.ready) return true;
+        if (state.loading) return false;
+
+        state.loading = true;
 
         try {
-            if (!window.webllm) {
+            if (!navigator.gpu) {
                 throw new Error(
-                    "WebLLM wurde nicht geladen. Prüfe deine Internetverbindung."
+                    "WebGPU wird von deinem Browser nicht unterstützt."
                 );
             }
 
-            const { CreateMLCEngine } = window.webllm;
+            status("KI-Bibliothek wird vorbereitet...");
 
-            AI_STATE.engine = await CreateMLCEngine(
-                AI_CONFIG.model,
+            const module = await loadLibrary();
+
+            const available = module.prebuiltAppConfig.model_list
+                .some(model => model.model_id === CONFIG.model);
+
+            if (!available) {
+                throw new Error(
+                    "Das ausgewählte KI-Modell ist nicht verfügbar."
+                );
+            }
+
+            status("KI-Modell wird geladen...");
+
+            state.engine = await module.CreateMLCEngine(
+                CONFIG.model,
                 {
-                    initProgressCallback: aiProgress,
-                    logLevel: "WARN"
+                    initProgressCallback: progress
                 }
             );
 
-            AI_STATE.ready = true;
-            AI_STATE.enabled = true;
+            state.ready = true;
+            status("StudySpace KI ist bereit!", "success");
 
-            aiStatus("KI ist bereit", "success");
+            console.log("StudySpace KI gestartet:", CONFIG.model);
 
             return true;
 
         } catch (error) {
             console.error("StudySpace AI:", error);
 
-            AI_STATE.error = error.message;
-            aiStatus("KI konnte nicht gestartet werden", "error");
+            status("Fehler: " + error.message, "error");
+
+            state.engine = null;
+            state.ready = false;
 
             return false;
 
         } finally {
-            AI_STATE.loading = false;
+            state.loading = false;
         }
     }
 
-    // Systemanweisung
-    function createSystemPrompt() {
+    function getSystemPrompt() {
         const subject =
             document.getElementById("tutorSubject")?.value || "Allgemein";
 
@@ -2490,70 +2517,64 @@ applySettings();
             document.getElementById("tutorTopic")?.value || "Allgemein";
 
         const difficulty =
-            document.getElementById("tutorDifficulty")?.value || "Mittel";
+            document.getElementById("difficulty")?.value || "Mittel";
 
         const method =
-            document.getElementById("tutorMethod")?.value || "Erklären";
+            document.getElementById("learningMethod")?.value || "Erklären";
 
         return `
 Du bist der StudySpace-Lernassistent.
 
-Deine Aufgabe:
-- Erkläre schulische Inhalte verständlich.
-- Passe dich an das Niveau des Schülers an.
-- Stelle bei Bedarf Rückfragen.
-- Verwende Beispiele.
-- Erkenne Verständnisprobleme.
-- Erkläre schwierige Begriffe.
-- Erfinde keine Fakten oder Quellen.
-- Gib nicht sofort die Lösung, wenn der Schüler üben möchte.
-
 Fach: ${subject}
 Thema: ${topic}
-Schwierigkeitsgrad: ${difficulty}
+Niveau: ${difficulty}
 Lernmethode: ${method}
 
-Antworte auf Deutsch und strukturiert.
+Erkläre schulische Inhalte verständlich und strukturiert.
+Passe deine Sprache an einen Schüler der Sekundarstufe an.
+Nutze Beispiele und stelle Verständnisfragen.
+Erstelle auf Wunsch Übungsaufgaben.
+Erkläre Fehler konstruktiv.
+Erfinde keine Fakten.
+Antworte auf Deutsch.
 `;
     }
 
-    // Nachricht an KI senden
-    async function askStudySpaceAI(question) {
-        if (!question.trim()) return null;
+    async function ask(question) {
+        if (!question || !question.trim()) return null;
 
-        if (!AI_STATE.ready) {
-            const started = await initializeStudySpaceAI();
+        if (!state.ready) {
+            const started = await initialize();
 
             if (!started) {
-                return "Die KI konnte leider nicht gestartet werden.";
+                return "Die KI konnte nicht gestartet werden.";
             }
         }
 
-        AI_STATE.messages.push({
+        state.messages.push({
             role: "user",
-            content: question
+            content: question.trim()
         });
 
         try {
-            const messages = [
-                {
-                    role: "system",
-                    content: createSystemPrompt()
-                },
-                ...AI_STATE.messages.slice(-12)
-            ];
-
-            const response = await AI_STATE.engine.chat.completions.create({
-                messages,
-                temperature: AI_CONFIG.temperature,
-                max_tokens: AI_CONFIG.maxTokens
-            });
+            const response =
+                await state.engine.chat.completions.create({
+                    messages: [
+                        {
+                            role: "system",
+                            content: getSystemPrompt()
+                        },
+                        ...state.messages.slice(-12)
+                    ],
+                    temperature: CONFIG.temperature,
+                    max_tokens: CONFIG.maxTokens
+                });
 
             const answer =
                 response.choices?.[0]?.message?.content ||
-                "Ich konnte keine Antwort erstellen.";
+                "Keine Antwort erhalten.";
 
-            AI_STATE.messages.push({
+            state.messages.push({
                 role: "assistant",
                 content: answer
             });
@@ -2561,40 +2582,608 @@ Antworte auf Deutsch und strukturiert.
             return answer;
 
         } catch (error) {
-            console.error(error);
-            return "Bei der Antwort ist ein Fehler aufgetreten.";
+            console.error("Antwortfehler:", error);
+            return "Bei der KI-Antwort ist ein Fehler aufgetreten.";
         }
     }
 
-    // Chatverlauf löschen
-    function clearStudySpaceAIChat() {
-        AI_STATE.messages = [];
+    function clear() {
+        state.messages = [];
     }
 
-    // KI stoppen
-    async function stopStudySpaceAI() {
-        if (AI_STATE.engine) {
+    async function stop() {
+        if (state.engine) {
             try {
-                await AI_STATE.engine.unload();
+                await state.engine.unload();
             } catch (error) {
                 console.warn(error);
             }
         }
 
-        AI_STATE.engine = null;
-        AI_STATE.ready = false;
-        AI_STATE.enabled = false;
+        state.engine = null;
+        state.ready = false;
+        state.loading = false;
 
-        aiStatus("KI wurde beendet");
+        status("KI beendet.");
     }
 
-    // Funktionen global verfügbar machen
     window.StudySpaceAI = {
-        initialize: initializeStudySpaceAI,
-        ask: askStudySpaceAI,
-        clear: clearStudySpaceAIChat,
-        stop: stopStudySpaceAI,
-        getState: () => ({ ...AI_STATE })
+        initialize,
+        ask,
+        clear,
+        stop,
+        getState: () => ({
+            ready: state.ready,
+            loading: state.loading,
+            model: CONFIG.model
+        })
     };
 
+    console.log("StudySpace AI Engine 3.0 geladen.");
+
+})();
+
+
+/* =========================================
+   STUDYSPACE KI-CHAT VERBINDUNG
+========================================= */
+
+(() => {
+    "use strict";
+
+    const startButton = document.getElementById("aiStartButton");
+    const stopButton = document.getElementById("aiStopButton");
+    const form = document.getElementById("aiChatForm");
+    const input = document.getElementById("aiChatInput");
+    const messages = document.getElementById("aiChatMessages");
+    const sendButton = document.getElementById("aiSendButton");
+    const clearButton = document.getElementById("aiClearButton");
+
+    if (!startButton || !form || !input || !messages) {
+        console.warn("StudySpace KI-Chat: HTML-Elemente nicht gefunden.");
+        return;
+    }
+
+    function addMessage(message, role) {
+        const element = document.createElement("div");
+        element.className = `ai-message ${role}`;
+        element.textContent = message;
+
+        messages.appendChild(element);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    startButton.addEventListener("click", async () => {
+        startButton.disabled = true;
+
+        try {
+            await window.StudySpaceAI.initialize();
+        } catch (error) {
+            console.error("KI-Startfehler:", error);
+        }
+
+        startButton.disabled = false;
+    });
+
+    stopButton?.addEventListener("click", async () => {
+        stopButton.disabled = true;
+
+        try {
+            await window.StudySpaceAI.stop();
+        } catch (error) {
+            console.error("KI-Stoppfehler:", error);
+        }
+
+        stopButton.disabled = false;
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const question = input.value.trim();
+
+        if (!question) return;
+
+        input.value = "";
+        addMessage(question, "user");
+
+        sendButton.disabled = true;
+        sendButton.textContent = "KI antwortet...";
+
+        try {
+            const answer = await window.StudySpaceAI.ask(question);
+            addMessage(answer || "Keine Antwort erhalten.", "assistant");
+        } catch (error) {
+            console.error("Chatfehler:", error);
+            addMessage("Es ist ein Fehler aufgetreten. Bitte versuche es erneut.", "assistant");
+        }
+
+        sendButton.disabled = false;
+        sendButton.textContent = "Senden";
+    });
+
+    clearButton?.addEventListener("click", () => {
+        window.StudySpaceAI.clear();
+        messages.replaceChildren();
+
+        addMessage("Der Chat wurde geleert. Was möchtest du lernen?", "assistant");
+    });
+
+    console.log("StudySpace KI-Chat verbunden.");
+})();
+
+
+
+/* ======================================================
+   STUDYSPACE – MATERIALTEXTE UND TEXTERKENNUNG 1.1
+   TXT + PDF + Bilder (OCR)
+====================================================== */
+
+(() => {
+    "use strict";
+
+    const DB_NAME = "StudySpaceFilesDB";
+    const STORE_NAME = "files";
+
+    let pdfModule = null;
+    let ocrModule = null;
+    let ocrWorker = null;
+
+    // --------------------------------------------------
+    // STATUSANZEIGE
+    // --------------------------------------------------
+
+    function setStatus(message) {
+        let element = document.getElementById("aiMaterialStatus");
+
+        if (!element) {
+            const chat = document.querySelector(".ai-chat-panel");
+            const messages = document.getElementById("aiChatMessages");
+
+            if (!chat || !messages) return;
+
+            element = document.createElement("p");
+            element.id = "aiMaterialStatus";
+            element.className = "muted";
+
+            chat.insertBefore(element, messages);
+        }
+
+        element.textContent = message;
+        console.log("[StudySpace Materialien]", message);
+    }
+
+    // --------------------------------------------------
+    // INDEXEDDB
+    // --------------------------------------------------
+
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function getFileRecord(id) {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, "readonly");
+            const request = transaction.objectStore(STORE_NAME).get(id);
+
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+
+            transaction.oncomplete = () => db.close();
+            transaction.onerror = () => db.close();
+        });
+    }
+
+    async function saveExtractedText(id, extractedText) {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                if (!request.result) {
+                    transaction.abort();
+                    return;
+                }
+
+                store.put({
+                    ...request.result,
+                    extractedText,
+                    extractedAt: new Date().toISOString()
+                });
+            };
+
+            transaction.oncomplete = () => {
+                db.close();
+                resolve(true);
+            };
+
+            transaction.onerror = () => {
+                db.close();
+                reject(transaction.error);
+            };
+
+            transaction.onabort = () => {
+                db.close();
+                reject(transaction.error || new Error("Speichern abgebrochen."));
+            };
+        });
+    }
+
+    // --------------------------------------------------
+    // TXT-DATEIEN
+    // --------------------------------------------------
+
+    async function readTextFile(file) {
+        return file.text();
+    }
+
+    // --------------------------------------------------
+    // PDF-DATEIEN
+    // --------------------------------------------------
+
+    async function loadPdfLibrary() {
+        if (pdfModule) return pdfModule;
+
+        setStatus("PDF-Leser wird geladen ...");
+
+        pdfModule = await import(
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs"
+        );
+
+        pdfModule.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+        return pdfModule;
+    }
+
+    async function readPdf(file) {
+        const pdfjs = await loadPdfLibrary();
+
+        setStatus("PDF wird untersucht ...");
+
+        const buffer = await file.arrayBuffer();
+
+        const pdf = await pdfjs.getDocument({
+            data: buffer
+        }).promise;
+
+        const pageLimit = Math.min(pdf.numPages, 40);
+        const pages = [];
+
+        for (let number = 1; number <= pageLimit; number++) {
+            setStatus(
+                `PDF: Seite ${number} von ${pageLimit} wird gelesen ...`
+            );
+
+            const page = await pdf.getPage(number);
+            const content = await page.getTextContent();
+
+            const pageText = content.items
+                .map(item => item.str || "")
+                .join(" ");
+
+            pages.push(`Seite ${number}:\n${pageText}`);
+        }
+
+        let result = pages.join("\n\n");
+
+        if (pdf.numPages > pageLimit) {
+            result +=
+                `\n\nHinweis: Nur die ersten ${pageLimit} von ${pdf.numPages} Seiten wurden gelesen.`;
+        }
+
+        return result;
+    }
+
+    // --------------------------------------------------
+    // BILDER – OCR
+    // --------------------------------------------------
+
+    async function loadOcrLibrary() {
+        if (ocrModule) return ocrModule;
+
+        setStatus("OCR-Bibliothek wird geladen ...");
+
+        ocrModule = await import(
+            "https://esm.sh/tesseract.js@5"
+        );
+
+        return ocrModule;
+    }
+
+    async function getOcrWorker() {
+        if (ocrWorker) return ocrWorker;
+
+        const tesseract = await loadOcrLibrary();
+
+        setStatus("Deutsche Texterkennung wird vorbereitet ...");
+
+        ocrWorker = await tesseract.createWorker(
+            "deu+eng",
+            1,
+            {
+                workerPath:
+                    "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js",
+
+                corePath:
+                    "https://cdn.jsdelivr.net/npm/tesseract.js-core@5",
+
+                langPath:
+                    "https://tessdata.projectnaptha.com/4.0.0",
+
+                logger: info => {
+                    if (info.status === "recognizing text") {
+                        const percent = Math.round(
+                            (info.progress || 0) * 100
+                        );
+
+                        setStatus(`Foto wird erkannt: ${percent} %`);
+                    }
+                }
+            }
+        );
+
+        return ocrWorker;
+    }
+
+    async function readImage(file) {
+        const worker = await getOcrWorker();
+
+        setStatus("Text auf dem Foto wird erkannt ...");
+
+        const result = await worker.recognize(file);
+
+        return result.data.text || "";
+    }
+
+    // --------------------------------------------------
+    // MATERIAL AUSLESEN
+    // --------------------------------------------------
+
+    async function extractMaterialText(materialId) {
+        const material = data.materials.find(
+            item => item.id === materialId
+        );
+
+        if (!material) {
+            throw new Error("Material wurde nicht gefunden.");
+        }
+
+        const record = await getFileRecord(materialId);
+
+        if (!record || !record.file) {
+            throw new Error("Originaldatei wurde nicht gefunden.");
+        }
+
+        if (record.extractedText) {
+            return record.extractedText;
+        }
+
+        const file = record.file;
+
+        const fileName = (material.fileName || "").toLowerCase();
+        const fileType = (
+            file.type || material.fileType || ""
+        ).toLowerCase();
+
+        let extractedText = "";
+
+        if (
+            fileType.startsWith("text/") ||
+            /\.(txt|md|csv|json)$/i.test(fileName)
+        ) {
+            extractedText = await readTextFile(file);
+
+        } else if (
+            fileType === "application/pdf" ||
+            fileName.endsWith(".pdf")
+        ) {
+            extractedText = await readPdf(file);
+
+        } else if (fileType.startsWith("image/")) {
+            extractedText = await readImage(file);
+
+        } else {
+            throw new Error(
+                "Dieser Dateityp wird noch nicht unterstützt."
+            );
+        }
+
+        extractedText = extractedText.trim();
+
+        if (!extractedText) {
+            throw new Error(
+                "Es wurde kein Text erkannt. Möglicherweise ist das PDF ein Scan."
+            );
+        }
+
+        await saveExtractedText(materialId, extractedText);
+
+        return extractedText;
+    }
+
+    // --------------------------------------------------
+    // PASSENDE MATERIALIEN FINDEN
+    // --------------------------------------------------
+
+    async function getRelevantMaterialContext() {
+        const subjectId =
+            document.getElementById("tutorSubject")?.value || "";
+
+        const topic = (
+            document.getElementById("tutorTopic")?.value || ""
+        ).trim().toLowerCase();
+
+        let materials = data.materials.filter(material => {
+            return !subjectId || material.subjectId === subjectId;
+        });
+
+        if (topic) {
+            const matching = materials.filter(material => {
+                const searchable = [
+                    material.name,
+                    material.topic,
+                    material.subtopic,
+                    material.description
+                ].join(" ").toLowerCase();
+
+                return searchable.includes(topic);
+            });
+
+            if (matching.length) {
+                materials = matching;
+            }
+        }
+
+        materials = materials.slice(0, 5);
+
+        if (!materials.length) {
+            return {
+                text: "",
+                count: 0,
+                note: "Keine passenden Materialien gefunden."
+            };
+        }
+
+        const sections = [];
+        let successfulCount = 0;
+
+        for (let index = 0; index < materials.length; index++) {
+            const material = materials[index];
+
+            try {
+                setStatus(
+                    `Lese Material ${index + 1} von ${materials.length}: ${material.name}`
+                );
+
+                const text = await extractMaterialText(material.id);
+
+                sections.push(
+                    `MATERIAL: ${material.name}\n` +
+                    `THEMA: ${material.topic || "Nicht angegeben"}\n` +
+                    `UNTERTHEMA: ${material.subtopic || "Nicht angegeben"}\n` +
+                    `INHALT:\n${text.slice(0, 4000)}`
+                );
+
+                successfulCount++;
+
+            } catch (error) {
+                console.error(
+                    "Material konnte nicht gelesen werden:",
+                    material.name,
+                    error
+                );
+            }
+        }
+
+        return {
+            text: sections.join("\n\n--------------------\n\n").slice(0, 9000),
+            count: successfulCount,
+            note: `${successfulCount} von ${materials.length} Materialien erfolgreich gelesen.`
+        };
+    }
+
+    // --------------------------------------------------
+    // KI MIT MATERIALIEN VERBINDEN
+    // --------------------------------------------------
+
+    function connectMaterialsToAI() {
+        if (!window.StudySpaceAI) return;
+
+        if (window.StudySpaceAI.materialsConnected) return;
+
+        const originalAsk = window.StudySpaceAI.ask.bind(
+            window.StudySpaceAI
+        );
+
+        window.StudySpaceAI.ask = async function(question) {
+            const source =
+                document.getElementById("learningSource")?.value || "notebook";
+
+            if (source === "general") {
+                setStatus("Der Tutor verwendet allgemeines Wissen.");
+                return originalAsk(question);
+            }
+
+            setStatus("Passende Lernmaterialien werden gesucht ...");
+
+            let context;
+
+            try {
+                context = await getRelevantMaterialContext();
+            } catch (error) {
+                console.error(error);
+
+                context = {
+                    text: "",
+                    count: 0,
+                    note: "Materialien konnten nicht gelesen werden."
+                };
+            }
+
+            let instruction;
+
+            if (source === "notebook") {
+                instruction =
+                    "Der Nutzer hat ausschließlich seinen Hefter als Quelle gewählt. " +
+                    "Verwende nur die bereitgestellten Unterrichtsmaterialien. " +
+                    "Wenn die Antwort dort nicht enthalten ist, sage ausdrücklich, " +
+                    "dass die Materialien keine ausreichende Information enthalten. " +
+                    "Ergänze keine Fakten aus deinem Allgemeinwissen.";
+            } else {
+                instruction =
+                    "Der Nutzer hat Hefter und allgemeines Wissen als Quelle gewählt. " +
+                    "Nutze zuerst die bereitgestellten Unterrichtsmaterialien. " +
+                    "Kennzeichne zusätzliche Informationen aus deinem Allgemeinwissen deutlich.";
+            }
+
+            const materialText = context.text ||
+                "Es konnten keine passenden Unterrichtsmaterialien ausgelesen werden.";
+
+            const enhancedQuestion =
+                instruction +
+                "\n\nUNTERRICHTSMATERIALIEN:\n" +
+                materialText +
+                "\n\nFRAGE:\n" +
+                question;
+
+            setStatus(context.note);
+
+            return originalAsk(enhancedQuestion);
+        };
+
+        window.StudySpaceAI.materialsConnected = true;
+
+        console.log("StudySpace: Materialien mit KI verbunden.");
+    }
+
+    connectMaterialsToAI();
+
+    // --------------------------------------------------
+    // ÖFFENTLICHE FUNKTIONEN
+    // --------------------------------------------------
+
+    window.StudySpaceMaterialsAI = {
+        extractMaterialText,
+        getRelevantMaterialContext,
+
+        clearOcrWorker: async () => {
+            if (ocrWorker) {
+                await ocrWorker.terminate();
+                ocrWorker = null;
+            }
+        }
+    };
+
+    console.log("StudySpace Material-Texterkennung 1.1 geladen.");
 })();

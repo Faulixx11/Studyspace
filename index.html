@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -244,11 +245,50 @@
                     <button class="primary-button" type="submit">Lernsession vorbereiten</button>
                 </form>
             </div>
+
             <div class="panel" id="tutorResult">
                 <h3>Deine Lernsession</h3>
                 <p class="muted">Hier erscheint deine gewählte Lerneinstellung.</p>
             </div>
-            <div class="info-note">Der KI-Tutor ist derzeit eine vorbereitete Oberfläche. Für echte KI-Erklärungen benötigen wir später eine sichere KI-Anbindung.</div>
+
+            <!-- KI-CHAT -->
+            <div class="panel ai-chat-panel">
+                <div class="ai-chat-header">
+                    <div>
+                        <h3>StudySpace KI-Tutor</h3>
+                        <p class="muted">Dein persönlicher Lernassistent – läuft lokal im Browser.</p>
+                    </div>
+                    <div class="ai-engine-actions">
+                        <button type="button" class="primary-button" id="aiStartButton">KI starten</button>
+                        <button type="button" class="small-button" id="aiStopButton">KI beenden</button>
+                    </div>
+                </div>
+
+                <div id="aiEngineStatus" class="ai-engine-status" data-type="info">
+                    KI noch nicht gestartet.
+                </div>
+
+                <div class="ai-progress-track">
+                    <div id="aiProgressBar" class="ai-progress-bar"></div>
+                </div>
+
+                <p id="aiProgressText" class="muted">
+                    Beim ersten Start wird das Modell heruntergeladen.
+                </p>
+
+                <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite">
+                    <div class="ai-message assistant">
+                        Hallo! Starte zuerst die KI, dann können wir gemeinsam lernen.
+                    </div>
+                </div>
+
+                <form id="aiChatForm" class="ai-chat-form">
+                    <textarea id="aiChatInput" rows="2" placeholder="Stelle eine Frage..." required></textarea>
+                    <button type="submit" class="primary-button" id="aiSendButton">Senden</button>
+                </form>
+
+                <button type="button" class="small-button" id="aiClearButton">Chat leeren</button>
+            </div>
         </section>
 
         <!-- KARTEIKARTEN -->
@@ -366,9 +406,5 @@
 
 <script src="script.js"></script>
 
-<script type="module" src="https://esm.run/@mlc-ai/web-llm"></script>
 </body>
 </html>
-
-
-
