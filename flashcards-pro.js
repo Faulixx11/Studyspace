@@ -231,7 +231,7 @@
         textOut+="\n\n--- "+u.name+" · Erkannte Sprache: "+(labels[best.lang]||"unbekannt")+" · OCR-Sicherheit: "+Math.round(best.confidence)+" % ---\n"+best.text;
       }
       $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
-      status.textContent="Erkennung abgeschlossen. Kontrolliere den Text. Beim Erstellen werden nur erkannte Vokabelpaare berücksichtigt.";
+      status.textContent="Erkennung abgeschlossen. Kontrolliere jedes Zeichen. Unsichere Wörter nicht ungeprüft übernehmen; die OCR kann Akzente und Handschrift verwechseln.";
     }catch(e){console.error(e);status.textContent="Fehler: "+e.message;}
     finally{button.disabled=!uploads.length||!selectedSet();}
   }
@@ -269,12 +269,35 @@
     $("fcx-candidates").scrollIntoView({behavior:"smooth",block:"start"});
     if(!candidates.length)$("fcx-ocr-status").textContent="Keine eindeutigen Vokabelpaare gefunden. Achte beim Hefterfoto auf zwei klar getrennte Spalten oder Paare mit Doppelpunkt, Gedankenstrich oder Gleichheitszeichen.";
   }
-    function renderCandidates() {
+    async function checkDictionaryEntry(word, lang) {
+    const wiki = lang==="fra"||lang==="fr" ? "fr" : lang==="eng"||lang==="en" ? "en" : "de";
+    const url="https://"+wiki+".wiktionary.org/w/api.php?action=query&titles="+encodeURIComponent(word)+"&format=json&origin=*";
+    const response=await fetch(url);
+    if(!response.ok) throw new Error("Wörterbuch momentan nicht erreichbar ("+response.status+").");
+    const data=await response.json();
+    const pages=Object.values(data.query?.pages||{});
+    return pages.length>0 && !pages[0].missing;
+  }
+
+  function renderCandidates() {
     $("fcx-candidate-count").textContent=candidates.length+" Vorschläge";
-    $("fcx-candidate-list").innerHTML=candidates.length?candidates.map((c,i)=>'<article class="fcx-candidate"><label class="fcx-check"><input type="checkbox" data-candidate-check="'+i+'" '+(c.checked?"checked":"")+'> Übernehmen</label><label class="fcx-field">Frage<textarea data-candidate-q="'+i+'" rows="2">'+esc(c.question)+'</textarea></label><label class="fcx-field">Antwort<textarea data-candidate-a="'+i+'" rows="3">'+esc(c.answer)+'</textarea></label></article>').join(""):'<div class="fcx-empty">Aus dem erkannten Text konnten keine sicheren Vorschläge gebildet werden. Du kannst Karten rechts manuell erstellen.</div>';
+    $("fcx-candidate-list").innerHTML=candidates.length?candidates.map((c,i)=>'<article class="fcx-candidate"><label class="fcx-check"><input type="checkbox" data-candidate-check="'+i+'" '+(c.checked?"checked":"")+'> Übernehmen</label><label class="fcx-field">Vokabel<textarea data-candidate-q="'+i+'" rows="2" spellcheck="false" lang="'+( $("fcx-language").value==="auto"?"fr":$("fcx-language").value==="fra"?"fr":$("fcx-language").value==="eng"?"en":"de")+'">'+esc(c.question)+'</textarea></label><label class="fcx-field">Übersetzung<textarea data-candidate-a="'+i+'" rows="2">'+esc(c.answer)+'</textarea></label><div class="fcx-dictionary-row"><button class="fcx-btn" type="button" data-dictionary-check="'+i+'">Wörterbucheintrag prüfen</button><small id="fcx-dictionary-status-'+i+'" aria-live="polite">Schreibweise unverändert übernommen – noch nicht geprüft.</small></div></article>').join(""):'<div class="fcx-empty">Aus dem erkannten Text konnten keine sicheren Vorschläge gebildet werden. Du kannst Karten rechts manuell erstellen.</div>';
     candidates.forEach((c,i)=>{
       const q=$("fcx-candidate-list").querySelector("[data-candidate-q='"+i+"']");const a=$("fcx-candidate-list").querySelector("[data-candidate-a='"+i+"']");const check=$("fcx-candidate-list").querySelector("[data-candidate-check='"+i+"']");
       if(q)q.addEventListener("input",()=>c.question=q.value);if(a)a.addEventListener("input",()=>c.answer=a.value);if(check)check.addEventListener("change",()=>c.checked=check.checked);
+      const dict=$("fcx-candidate-list").querySelector("[data-dictionary-check='"+i+"']");
+      if(dict)dict.addEventListener("click",async()=>{
+        const status=$("fcx-dictionary-status-"+i);dict.disabled=true;status.textContent="Wird im Wiktionary nachgeschlagen …";
+        try{
+          const mode=$("fcx-language").value;
+          const langs=mode==="auto"?["fra","eng","deu"]:[mode];
+          const results=[];
+          for(const lang of langs){const found=await checkDictionaryEntry(c.question.trim(),lang);if(found)results.push(lang);}
+          if(results.length)status.textContent="Ein passender Seiteneintrag wurde gefunden ("+results.join(", ")+"). Das bestätigt die Schreibweise als Eintrag, nicht automatisch die Übersetzung.";
+          else status.textContent="Kein exakter Seiteneintrag gefunden. Akzente und Schreibweise bitte anhand des Fotos prüfen.";
+        }catch(error){status.textContent=error.message;}
+        finally{dict.disabled=false;}
+      });
     });
   }
   function saveCandidates() {
@@ -283,7 +306,7 @@
     if(!chosen.length)return alert("Wähle mindestens einen gültigen Vorschlag aus.");
     chosen.forEach(c=>addCard(c.question.trim(),c.answer.trim(),set.id));
     candidates=[];$("fcx-candidates").hidden=true;render();
-    alert(chosen.length+" Karteikarten wurden dem Set hinzugefügt.");
+    alert(chosen.length+" einzelne Karteikarten wurden dem Set hinzugefügt. Die Wörterbuchprüfung bestätigt nur, ob ein Eintrag existiert – kontrolliere die Übersetzung weiterhin selbst.");
   }
 
   function openCrop(index) {
