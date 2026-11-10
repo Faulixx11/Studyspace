@@ -5454,3 +5454,694 @@ mit deinem Originalhefter.
 
     console.log("StudySpace Lernwerkstatt 1.0 geladen.");
 })();
+
+/* ==========================================================
+   STUDYSPACE – LERNCOCKPIT 1.0
+   Lernzeit · Tagesziele · Aufgaben · Wochenplan · Statistik
+   Eigenständiges Zusatzmodul
+========================================================== */
+
+(() => {
+    "use strict";
+
+    const KEY = "studySpaceLearningCockpit";
+    const $ = id => document.getElementById(id);
+
+    const today = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    const uid = () =>
+        "lc_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    })[c]);
+
+    const defaultData = {
+        goal: 60,
+        tasks: [],
+        sessions: [],
+        timer: {
+            running: false,
+            startedAt: null,
+            elapsedBeforePause: 0,
+            taskId: ""
+        }
+    };
+
+    let state = load();
+    let tickInterval = null;
+
+    function load() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+            return {
+                ...defaultData,
+                ...saved,
+                tasks: Array.isArray(saved.tasks) ? saved.tasks : [],
+                sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
+                timer: { ...defaultData.timer, ...(saved.timer || {}) }
+            };
+        } catch {
+            return JSON.parse(JSON.stringify(defaultData));
+        }
+    }
+
+    function save() {
+        try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+            return true;
+        } catch (error) {
+            console.error("Lerncockpit konnte nicht speichern:", error);
+            alert("Speichern fehlgeschlagen. Möglicherweise ist dein Browserspeicher voll.");
+            return false;
+        }
+    }
+
+    function formatTime(milliseconds) {
+        const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const rest = seconds % 60;
+
+        return [hours, minutes, rest]
+            .map(number => String(number).padStart(2, "0"))
+            .join(":");
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return "Ohne Termin";
+        return new Date(dateString + "T12:00:00").toLocaleDateString("de-DE", {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit"
+        });
+    }
+
+    function getElapsed() {
+        const timer = state.timer;
+        if (!timer.running || !timer.startedAt) {
+            return timer.elapsedBeforePause || 0;
+        }
+
+        return (timer.elapsedBeforePause || 0) +
+            (Date.now() - timer.startedAt);
+    }
+
+    function minutesToday() {
+        return state.sessions
+            .filter(session => session.date === today())
+            .reduce((sum, session) => sum + session.minutes, 0);
+    }
+
+    function minutesThisWeek() {
+        const now = new Date();
+        const monday = new Date(now);
+        const day = (now.getDay() + 6) % 7;
+        monday.setDate(now.getDate() - day);
+        monday.setHours(0, 0, 0, 0);
+
+        const start = monday.toISOString().slice(0, 10);
+
+        return state.sessions
+            .filter(session => session.date >= start)
+            .reduce((sum, session) => sum + session.minutes, 0);
+    }
+
+    function createPage() {
+        if ($("page-cockpit")) return;
+
+        const nav = document.querySelector(".navigation");
+        const main = document.querySelector(".main-content");
+
+        if (!nav || !main) {
+            console.error("Lerncockpit: Navigation oder Hauptbereich nicht gefunden.");
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.className = "nav-item";
+        button.dataset.page = "cockpit";
+        button.innerHTML = `
+            <span class="nav-icon">◷</span>
+            <span class="nav-text">Lerncockpit</span>
+        `;
+
+        nav.appendChild(button);
+
+        const page = document.createElement("section");
+        page.className = "page";
+        page.id = "page-cockpit";
+
+        page.innerHTML = `
+            <div class="page-intro">
+                <h1>Lerncockpit</h1>
+                <p>Plane deine Lernzeit, behalte Aufgaben im Blick und verfolge deinen Fortschritt.</p>
+            </div>
+
+            <div class="lc-stat-grid" id="lcStats"></div>
+
+            <div class="lc-grid">
+                <section class="panel lc-timer-panel">
+                    <div class="lc-heading">
+                        <div>
+                            <h2>Fokus-Timer</h2>
+                            <p class="muted">Miss deine tatsächliche Lernzeit.</p>
+                        </div>
+                        <span class="lc-live-indicator" id="lcTimerStatus">Bereit</span>
+                    </div>
+
+                    <div class="lc-timer-display" id="lcTimerDisplay">00:00:00</div>
+
+                    <label class="lc-label" for="lcTimerTask">Woran möchtest du arbeiten?</label>
+                    <select id="lcTimerTask">
+                        <option value="">Freies Lernen</option>
+                    </select>
+
+                    <div class="lc-timer-actions">
+                        <button class="primary-button" id="lcStart">Start</button>
+                        <button class="secondary-button" id="lcPause" disabled>Pause</button>
+                        <button class="secondary-button" id="lcStop" disabled>Beenden</button>
+                    </div>
+
+                    <p class="muted lc-small">
+                        Die Zeit läuft auch weiter, wenn du die Seite wechselst.
+                        Beim Beenden wird deine Lernzeit gespeichert.
+                    </p>
+                </section>
+
+                <section class="panel">
+                    <div class="lc-heading">
+                        <div>
+                            <h2>Dein Tagesziel</h2>
+                            <p class="muted">Lege fest, wie lange du heute lernen möchtest.</p>
+                        </div>
+                    </div>
+
+                    <div class="lc-goal-number">
+                        <strong id="lcTodayMinutes">0</strong>
+                        <span>von <b id="lcGoalNumber">60</b> Minuten</span>
+                    </div>
+
+                    <div class="lc-progress-track">
+                        <div id="lcGoalBar"></div>
+                    </div>
+
+                    <p id="lcGoalMessage" class="muted"></p>
+
+                    <div class="lc-goal-edit">
+                        <input type="number" id="lcGoalInput" min="5" max="600" step="5">
+                        <button class="secondary-button" id="lcSaveGoal">Ziel ändern</button>
+                    </div>
+                </section>
+            </div>
+
+            <section class="panel">
+                <div class="lc-heading">
+                    <div>
+                        <h2>Aufgabenplanung</h2>
+                        <p class="muted">Erstelle Lernaufgaben und setze dir Termine.</p>
+                    </div>
+                </div>
+
+                <form id="lcTaskForm" class="lc-task-form">
+                    <input id="lcTaskTitle" required maxlength="100"
+                        placeholder="Was musst du lernen oder erledigen?">
+
+                    <select id="lcTaskPriority">
+                        <option value="normal">Normal</option>
+                        <option value="high">Wichtig</option>
+                        <option value="urgent">Sehr wichtig</option>
+                    </select>
+
+                    <input type="date" id="lcTaskDate">
+
+                    <button class="primary-button" type="submit">Aufgabe hinzufügen</button>
+                </form>
+
+                <div class="lc-task-filters">
+                    <button class="lc-filter active" data-filter="open">Offen</button>
+                    <button class="lc-filter" data-filter="all">Alle</button>
+                    <button class="lc-filter" data-filter="done">Erledigt</button>
+                </div>
+
+                <div id="lcTaskList"></div>
+            </section>
+
+            <div class="lc-grid">
+                <section class="panel">
+                    <div class="lc-heading">
+                        <div>
+                            <h2>Deine nächsten sieben Tage</h2>
+                            <p class="muted">Anstehende Aufgaben auf einen Blick.</p>
+                        </div>
+                    </div>
+                    <div id="lcWeek"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="lc-heading">
+                        <div>
+                            <h2>Deine Lernstatistik</h2>
+                            <p class="muted">Wie viel Zeit hast du in dein Lernen investiert?</p>
+                        </div>
+                    </div>
+                    <div id="lcWeeklyStats"></div>
+                    <div id="lcHistory" class="lc-history"></div>
+                </section>
+            </div>
+
+            <section class="panel">
+                <div class="lc-heading">
+                    <div>
+                        <h2>Datensicherung</h2>
+                        <p class="muted">Sichere deine Aufgaben und Lernzeiten als Datei.</p>
+                    </div>
+                </div>
+                <button class="secondary-button" id="lcExport">Lerncockpit exportieren</button>
+                <label class="lc-import-label">
+                    Sicherung importieren
+                    <input type="file" id="lcImport" accept=".json,application/json">
+                </label>
+            </section>
+        `;
+
+        main.appendChild(page);
+
+        button.addEventListener("click", () => {
+            document.querySelectorAll(".page").forEach(item =>
+                item.classList.remove("active")
+            );
+            document.querySelectorAll(".nav-item").forEach(item =>
+                item.classList.remove("active")
+            );
+
+            page.classList.add("active");
+            button.classList.add("active");
+
+            const title = $("pageTitle");
+            if (title) title.textContent = "Lerncockpit";
+
+            renderAll();
+        });
+
+        bindEvents();
+        renderAll();
+        startTicker();
+    }
+
+    let taskFilter = "open";
+
+    function bindEvents() {
+        $("lcStart").addEventListener("click", startTimer);
+        $("lcPause").addEventListener("click", pauseTimer);
+        $("lcStop").addEventListener("click", stopTimer);
+
+        $("lcSaveGoal").addEventListener("click", () => {
+            const value = Number($("lcGoalInput").value);
+
+            if (!Number.isFinite(value) || value < 5 || value > 600) {
+                alert("Bitte gib ein Tagesziel zwischen 5 und 600 Minuten ein.");
+                return;
+            }
+
+            state.goal = value;
+            save();
+            renderAll();
+        });
+
+        $("lcTaskForm").addEventListener("submit", event => {
+            event.preventDefault();
+
+            const title = $("lcTaskTitle").value.trim();
+            if (!title) return;
+
+            state.tasks.unshift({
+                id: uid(),
+                title,
+                priority: $("lcTaskPriority").value,
+                date: $("lcTaskDate").value || "",
+                done: false,
+                createdAt: today()
+            });
+
+            save();
+            event.target.reset();
+            renderAll();
+        });
+
+        document.querySelectorAll(".lc-filter").forEach(button => {
+            button.addEventListener("click", () => {
+                taskFilter = button.dataset.filter;
+
+                document.querySelectorAll(".lc-filter").forEach(item =>
+                    item.classList.toggle("active", item === button)
+                );
+
+                renderTasks();
+            });
+        });
+
+        $("lcTaskList").addEventListener("click", event => {
+            const doneButton = event.target.closest("[data-task-done]");
+            const deleteButton = event.target.closest("[data-task-delete]");
+
+            if (doneButton) {
+                const task = state.tasks.find(item =>
+                    item.id === doneButton.dataset.taskDone
+                );
+
+                if (task) task.done = !task.done;
+                save();
+                renderAll();
+            }
+
+            if (deleteButton) {
+                const id = deleteButton.dataset.taskDelete;
+
+                if (!confirm("Möchtest du diese Aufgabe löschen?")) return;
+
+                state.tasks = state.tasks.filter(item => item.id !== id);
+                save();
+                renderAll();
+            }
+        });
+
+        $("lcExport").addEventListener("click", exportData);
+
+        $("lcImport").addEventListener("change", importData);
+    }
+
+    function startTimer() {
+        if (state.timer.running) return;
+
+        state.timer.running = true;
+        state.timer.startedAt = Date.now();
+
+        save();
+        updateTimerButtons();
+        startTicker();
+    }
+
+    function pauseTimer() {
+        if (!state.timer.running) return;
+
+        state.timer.elapsedBeforePause = getElapsed();
+        state.timer.running = false;
+        state.timer.startedAt = null;
+
+        save();
+        updateTimerButtons();
+        renderTimer();
+    }
+
+    function stopTimer() {
+        const elapsed = getElapsed();
+        const minutes = Math.floor(elapsed / 60000);
+
+        if (minutes < 1) {
+            if (!confirm("Die Lernzeit beträgt weniger als eine Minute. Trotzdem beenden?")) {
+                return;
+            }
+        }
+
+        if (minutes > 0) {
+            const task = state.tasks.find(item =>
+                item.id === state.timer.taskId
+            );
+
+            state.sessions.unshift({
+                id: uid(),
+                date: today(),
+                minutes,
+                taskTitle: task?.title || "Freies Lernen",
+                createdAt: new Date().toISOString()
+            });
+        }
+
+        state.timer = {
+            running: false,
+            startedAt: null,
+            elapsedBeforePause: 0,
+            taskId: ""
+        };
+
+        save();
+        renderAll();
+        updateTimerButtons();
+    }
+
+    function startTicker() {
+        if (tickInterval) clearInterval(tickInterval);
+
+        tickInterval = setInterval(() => {
+            renderTimer();
+            renderGoal();
+        }, 1000);
+    }
+
+    function updateTimerButtons() {
+        const running = state.timer.running;
+        const hasTime = getElapsed() > 0;
+
+        $("lcStart").disabled = running;
+        $("lcPause").disabled = !running;
+        $("lcStop").disabled = !running && !hasTime;
+
+        $("lcTimerStatus").textContent = running
+            ? "Läuft"
+            : hasTime ? "Pausiert" : "Bereit";
+    }
+
+    function renderTimer() {
+        if (!$("lcTimerDisplay")) return;
+        $("lcTimerDisplay").textContent = formatTime(getElapsed());
+        updateTimerButtons();
+    }
+
+    function renderGoal() {
+        const minutes = minutesToday() +
+            (state.timer.running ? Math.floor(getElapsed() / 60000) : 0);
+
+        const goal = Number(state.goal) || 60;
+        const percentage = Math.min(100, Math.round(minutes / goal * 100));
+
+        $("lcTodayMinutes").textContent = minutes;
+        $("lcGoalNumber").textContent = goal;
+        $("lcGoalBar").style.width = percentage + "%";
+        $("lcGoalInput").value = goal;
+
+        $("lcGoalMessage").textContent = minutes >= goal
+            ? "Tagesziel erreicht. Gute Arbeit!"
+            : `Noch ${Math.max(0, goal - minutes)} Minuten bis zu deinem Tagesziel.`;
+    }
+
+    function renderStats() {
+        const todayMinutesValue = minutesToday();
+        const weekMinutes = minutesThisWeek();
+        const completed = state.tasks.filter(task => task.done).length;
+        const open = state.tasks.filter(task => !task.done).length;
+
+        $("lcStats").innerHTML = `
+            <div class="lc-stat">
+                <span>Heute gelernt</span>
+                <strong>${todayMinutesValue} min</strong>
+            </div>
+            <div class="lc-stat">
+                <span>Diese Woche</span>
+                <strong>${weekMinutes} min</strong>
+            </div>
+            <div class="lc-stat">
+                <span>Offene Aufgaben</span>
+                <strong>${open}</strong>
+            </div>
+            <div class="lc-stat">
+                <span>Erledigte Aufgaben</span>
+                <strong>${completed}</strong>
+            </div>
+        `;
+
+        $("lcWeeklyStats").innerHTML = `
+            <div class="lc-week-total">
+                <strong>${Math.floor(weekMinutes / 60)} h ${weekMinutes % 60} min</strong>
+                <span>gelernte Zeit in dieser Woche</span>
+            </div>
+        `;
+
+        const history = state.sessions.slice(0, 8);
+
+        $("lcHistory").innerHTML = history.length
+            ? history.map(session => `
+                <div class="lc-history-item">
+                    <span>${esc(formatDate(session.date))}</span>
+                    <strong>${session.minutes} min</strong>
+                    <small>${esc(session.taskTitle)}</small>
+                </div>
+            `).join("")
+            : `<p class="muted">Noch keine Lernzeiten gespeichert.</p>`;
+    }
+
+    function renderTasks() {
+        const list = state.tasks.filter(task => {
+            if (taskFilter === "open") return !task.done;
+            if (taskFilter === "done") return task.done;
+            return true;
+        });
+
+        if (!list.length) {
+            $("lcTaskList").innerHTML =
+                `<div class="lc-empty">Hier gibt es momentan keine Aufgaben.</div>`;
+            return;
+        }
+
+        $("lcTaskList").innerHTML = list.map(task => `
+            <article class="lc-task ${task.done ? "is-done" : ""}">
+                <button class="lc-task-check" data-task-done="${esc(task.id)}"
+                    aria-label="${task.done ? "Als offen markieren" : "Als erledigt markieren"}">
+                    ${task.done ? "✓" : ""}
+                </button>
+                <div class="lc-task-info">
+                    <strong>${esc(task.title)}</strong>
+                    <small>
+                        ${task.date ? esc(formatDate(task.date)) : "Kein Termin"}
+                        · ${task.priority === "urgent" ? "Sehr wichtig" :
+                            task.priority === "high" ? "Wichtig" : "Normal"}
+                    </small>
+                </div>
+                <button class="lc-delete" data-task-delete="${esc(task.id)}"
+                    aria-label="Aufgabe löschen">×</button>
+            </article>
+        `).join("");
+    }
+
+    function renderWeek() {
+        const start = new Date();
+        start.setHours(12, 0, 0, 0);
+
+        const days = [];
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+
+            const key = [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, "0"),
+                String(date.getDate()).padStart(2, "0")
+            ].join("-");
+
+            const tasks = state.tasks.filter(task =>
+                task.date === key && !task.done
+            );
+
+            days.push(`
+                <div class="lc-day">
+                    <div class="lc-day-date">
+                        <strong>${i === 0 ? "Heute" : esc(formatDate(key))}</strong>
+                        <span>${tasks.length} ${tasks.length === 1 ? "Aufgabe" : "Aufgaben"}</span>
+                    </div>
+                    <div class="lc-day-tasks">
+                        ${tasks.length
+                            ? tasks.map(task => `<span>${esc(task.title)}</span>`).join("")
+                            : `<small class="muted">Keine Aufgaben</small>`}
+                    </div>
+                </div>
+            `);
+        }
+
+        $("lcWeek").innerHTML = days.join("");
+    }
+
+    function renderTaskSelect() {
+        const select = $("lcTimerTask");
+        const previous = state.timer.taskId;
+
+        select.innerHTML = `<option value="">Freies Lernen</option>` +
+            state.tasks.filter(task => !task.done).map(task => `
+                <option value="${esc(task.id)}">${esc(task.title)}</option>
+            `).join("");
+
+        select.value = previous;
+
+        select.onchange = () => {
+            state.timer.taskId = select.value;
+            save();
+        };
+    }
+
+    function renderAll() {
+        if (!$("page-cockpit")) return;
+
+        renderStats();
+        renderGoal();
+        renderTimer();
+        renderTasks();
+        renderWeek();
+        renderTaskSelect();
+        updateTimerButtons();
+    }
+
+    function exportData() {
+        const blob = new Blob(
+            [JSON.stringify(state, null, 2)],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "studyspace-lern cockpit.json".replace(" ", "");
+        link.click();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function importData(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const imported = JSON.parse(await file.text());
+
+            if (
+                !imported ||
+                !Array.isArray(imported.tasks) ||
+                !Array.isArray(imported.sessions)
+            ) {
+                throw new Error("Die Datei hat nicht das erwartete Format.");
+            }
+
+            if (!confirm("Möchtest du die aktuellen Lerncockpit-Daten ersetzen?")) {
+                return;
+            }
+
+            state = {
+                ...defaultData,
+                ...imported,
+                timer: { ...defaultData.timer, ...(imported.timer || {}) }
+            };
+
+            save();
+            renderAll();
+            alert("Import erfolgreich.");
+        } catch (error) {
+            alert("Import fehlgeschlagen: " + error.message);
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    function start() {
+        createPage();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+
+    console.log("StudySpace Lerncockpit 1.0 geladen.");
+})();

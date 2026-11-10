@@ -2464,3 +2464,435 @@ button.calendar-day:hover {
         flex: 1 1 40%;
     }
 }
+
+/* ==========================================================
+   STUDYSPACE – LERNCOCKPIT DESIGN 1.0
+========================================================== */
+
+.lc-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 22px 0;
+}
+
+.lc-stat {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.lc-stat span,
+.lc-stat strong {
+    display: block;
+}
+
+.lc-stat span {
+    color: var(--muted, #9ca3af);
+    font-size: 13px;
+}
+
+.lc-stat strong {
+    margin-top: 9px;
+    font-size: 27px;
+    font-weight: 750;
+    letter-spacing: -0.8px;
+}
+
+.lc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.lc-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.lc-heading h2 {
+    margin: 0 0 6px;
+}
+
+.lc-heading p {
+    margin: 0;
+}
+
+.lc-timer-panel {
+    text-align: center;
+}
+
+.lc-timer-panel .lc-heading {
+    text-align: left;
+}
+
+.lc-timer-display {
+    margin: 28px 0;
+    font-size: clamp(38px, 7vw, 58px);
+    font-weight: 750;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.lc-live-indicator {
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--muted, #a1a1aa);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.lc-label {
+    display: block;
+    margin-bottom: 8px;
+    text-align: left;
+    color: var(--muted, #a1a1aa);
+    font-size: 13px;
+}
+
+#lcTimerTask {
+    width: 100%;
+    margin-bottom: 18px;
+}
+
+.lc-timer-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.lc-timer-actions button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.lc-small {
+    margin-top: 17px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.lc-goal-number {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 25px 0 18px;
+}
+
+.lc-goal-number strong {
+    font-size: 42px;
+    font-weight: 750;
+    letter-spacing: -1px;
+}
+
+.lc-goal-number span {
+    color: var(--muted, #a1a1aa);
+    font-size: 14px;
+}
+
+.lc-progress-track {
+    height: 11px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lc-progress-track > div {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent, #8b5cf6);
+    transition: width 0.3s ease;
+}
+
+#lcGoalMessage {
+    margin: 12px 0 20px;
+    font-size: 13px;
+}
+
+.lc-goal-edit {
+    display: flex;
+    gap: 9px;
+}
+
+.lc-goal-edit input {
+    width: 110px;
+}
+
+.lc-task-form {
+    display: grid;
+    grid-template-columns: minmax(180px, 2fr) minmax(110px, 0.8fr) minmax(135px, 1fr) auto;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.lc-task-form input,
+.lc-task-form select,
+.lc-goal-edit input {
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.045);
+    color: inherit;
+    font: inherit;
+}
+
+.lc-task-form input:focus,
+.lc-task-form select:focus,
+.lc-goal-edit input:focus {
+    outline: 2px solid var(--accent, #8b5cf6);
+    outline-offset: 1px;
+}
+
+.lc-task-form input::placeholder {
+    color: var(--muted, #a1a1aa);
+}
+
+.lc-task-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.lc-filter {
+    padding: 8px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.lc-filter.active {
+    border-color: var(--accent, #8b5cf6);
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.lc-task {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.lc-task:last-child {
+    border-bottom: 0;
+}
+
+.lc-task-check {
+    display: grid;
+    flex: 0 0 23px;
+    width: 23px;
+    height: 23px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 7px;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+}
+
+.lc-task.is-done .lc-task-check {
+    border-color: var(--accent, #8b5cf6);
+    background: var(--accent, #8b5cf6);
+}
+
+.lc-task-info {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lc-task-info strong {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.lc-task-info small {
+    color: var(--muted, #a1a1aa);
+    font-size: 12px;
+}
+
+.lc-task.is-done .lc-task-info strong {
+    opacity: 0.55;
+    text-decoration: line-through;
+}
+
+.lc-delete {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255, 80, 80, 0.08);
+    color: #ff8585;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.lc-empty {
+    padding: 25px 15px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: var(--muted, #a1a1aa);
+    text-align: center;
+    font-size: 13px;
+}
+
+.lc-day {
+    display: grid;
+    grid-template-columns: 115px minmax(0, 1fr);
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.lc-day:last-child {
+    border-bottom: 0;
+}
+
+.lc-day-date {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lc-day-date strong {
+    font-size: 13px;
+}
+
+.lc-day-date span,
+.lc-day-tasks small {
+    color: var(--muted, #a1a1aa);
+    font-size: 11px;
+}
+
+.lc-day-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lc-day-tasks span {
+    padding: 6px 9px;
+    border-left: 2px solid var(--accent, #8b5cf6);
+    border-radius: 4px;
+    background: rgba(139, 92, 246, 0.08);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.lc-week-total {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 15px 0 20px;
+}
+
+.lc-week-total strong {
+    font-size: 27px;
+}
+
+.lc-week-total span {
+    color: var(--muted, #a1a1aa);
+    font-size: 12px;
+}
+
+.lc-history {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.lc-history-item {
+    display: grid;
+    grid-template-columns: 85px 60px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+}
+
+.lc-history-item span,
+.lc-history-item small {
+    color: var(--muted, #a1a1aa);
+}
+
+.lc-history-item small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lc-import-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 12px;
+    color: var(--muted, #a1a1aa);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.lc-import-label input {
+    max-width: 190px;
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .lc-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lc-task-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .lc-task-form input:first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 650px) {
+    .lc-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lc-task-form {
+        grid-template-columns: 1fr;
+    }
+
+    .lc-task-form input:first-child {
+        grid-column: auto;
+    }
+
+    .lc-day {
+        grid-template-columns: 90px minmax(0, 1fr);
+    }
+
+    .lc-history-item {
+        grid-template-columns: 75px 55px minmax(0, 1fr);
+    }
+
+    .lc-goal-edit {
+        flex-wrap: wrap;
+    }
+
+    .lc-import-label {
+        display: flex;
+        margin: 15px 0 0;
+    }
+}
