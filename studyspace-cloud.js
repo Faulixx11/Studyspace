@@ -3,7 +3,7 @@
 "use strict";
 const CONFIG_KEY="studyspaceCloudConfig", META_KEY="studyspaceCloudMeta", TABLE="studyspace_backups", BUCKET="studyspace-files", DB_NAME="StudySpaceFilesDB", STORE="files";
 const $=id=>document.getElementById(id);
-let client=null,user=null,busy=false,restoring=false,debounce=null;
+let client=null,user=null,busy=false,restoring=false,dirty=false,debounce=null,initializing=false;
 const excluded=k=>k===CONFIG_KEY||k===META_KEY||k.startsWith("sb-");
 const appKey=k=>!excluded(k);
 const status=(message,error=false)=>{const el=$("ss-cloud-status");if(el){el.textContent=message;el.style.color=error?"#fca5a5":"";}};
@@ -68,7 +68,7 @@ function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open
 async function getFiles(){const db=await openDB();return new Promise((resolve,reject)=>{if(!db.objectStoreNames.contains(STORE)){db.close();resolve([]);return;}const tx=db.transaction(STORE,"readonly"),req=tx.objectStore(STORE).getAll();req.onsuccess=()=>{const rows=req.result||[];db.close();resolve(rows);};req.onerror=()=>{db.close();reject(req.error);};});}
 async function replaceFiles(files){
  const db=await openDB();if(!db.objectStoreNames.contains(STORE)){db.close();throw new Error("Lokale Dateidatenbank fehlt.");}
- await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE);store.clear();for(const item of files){if(!(item.blob instanceof Blob))continue;let file=item.blob;if(item.name){try{file=new File([item.blob],item.name,{type:item.type||item.blob.type,lastModified:item.lastModified||Date.now()});}catch{}}store.put({id:item.id,file,savedAt:item.savedAt||new Date().toISOString()});}tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
+ await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE);store.clear();for(const item of files){if(!(item.blob instanceof Blob))continue;let file=item.blob;if(item.name){try{file=new File([item.blob],item.name,{type:item.type||item.blob.type,lastModified:item.lastModified||Date.now()});}catch{}}store.put({...item.metadata,id:item.id,file,savedAt:item.savedAt||new Date().toISOString()});}tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
 }
 function collectLocal(){const values={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&appKey(k))values[k]=localStorage.getItem(k);}return values;}
 async function pushCloud(){
@@ -76,9 +76,9 @@ async function pushCloud(){
  try{
   status("Dateien und Lerndaten werden in die Cloud übertragen …");
   const rows=await getFiles(),manifest=[];
-  for(const row of rows){const blob=row.file instanceof Blob?row.file:(row.file?.blob instanceof Blob?row.file.blob:null);if(!blob)continue;const id=String(row.id).replace(/[^a-zA-Z0-9_-]/g,"_"),path=user.id+"/"+id;const {error}=await client.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:blob.type||"application/octet-stream"});if(error)throw error;manifest.push({id:row.id,path,name:row.file?.name||row.name||"",type:blob.type||"application/octet-stream",lastModified:row.file?.lastModified||null,savedAt:row.savedAt||null});}
+  for(const row of rows){const blob=row.file instanceof Blob?row.file:(row.file?.blob instanceof Blob?row.file.blob:null);if(!blob)continue;const id=String(row.id).replace(/[^a-zA-Z0-9_-]/g,"_"),path=user.id+"/"+id;const {error}=await client.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:blob.type||"application/octet-stream"});if(error)throw error;const metadata={...row};delete metadata.file;manifest.push({id:row.id,path,name:row.file?.name||row.name||"",type:blob.type||"application/octet-stream",lastModified:row.file?.lastModified||null,savedAt:row.savedAt||null,metadata});}
   const payload={localStorage:collectLocal(),files:manifest,version:1};const syncedAt=new Date().toISOString();const {error}=await client.from(TABLE).upsert({user_id:user.id,payload,updated_at:syncedAt},{onConflict:"user_id"});if(error)throw error;
-  saveMeta({...readMeta(),lastSync:syncedAt,lastRemoteAt:syncedAt,accountId:user.id});status("Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.");
+  saveMeta({...readMeta(),lastSync:syncedAt,lastRemoteAt:syncedAt,accountId:user.id});dirty=false;status("Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.");
  }catch(e){console.error("StudySpace Cloud Sync",e);status("Synchronisierung fehlgeschlagen: "+e.message,true);}finally{busy=false;}
 }
 async function fetchRemote(){const {data,error}=await client.from(TABLE).select("payload,updated_at").eq("user_id",user.id).maybeSingle();if(error)throw error;return data||null;}
@@ -96,7 +96,8 @@ async function downloadCloud(confirmReplace){
  }catch(e){console.error(e);status("Cloud-Daten konnten nicht geladen werden: "+e.message,true);}finally{restoring=false;busy=false;}
 }
 async function initialSync(){
- if(!client||!user||busy)return;
+ if(!client||!user||busy||initializing)return;
+ initializing=true;
  try{
   const remote=await fetchRemote();if(!remote){status("Noch keine Cloud-Sicherung vorhanden. Dieses Gerät wird als erstes synchronisiert.");await pushCloud();startAutoSync();return;}
   const meta=readMeta();if(meta.accountId===user.id&&meta.lastRemoteAt===remote.updated_at){status("Cloud ist aktuell · "+user.email);startAutoSync();return;}
@@ -104,16 +105,16 @@ async function initialSync(){
   if(hasLocal&&meta.accountId!==user.id){const useCloud=confirm("Für dieses Konto gibt es bereits eine Cloud-Sicherung. OK = Cloud-Daten auf dieses Gerät laden. Abbrechen = lokale Daten behalten und in die Cloud hochladen.");if(useCloud)await downloadCloud(false);else await pushCloud();}
   else await downloadCloud(false);
   saveMeta({...readMeta(),accountId:user.id});startAutoSync();
- }catch(e){console.error(e);status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}
+ }catch(e){console.error(e);status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}finally{initializing=false;}
 }
 async function syncNow(show=true){if(!client||!user){status("Bitte zuerst anmelden.",true);return;}if(show)status("Synchronisierung wird gestartet …");await pushCloud();}
-function scheduleSync(){if(restoring||!client||!user)return;clearTimeout(debounce);debounce=setTimeout(()=>syncNow(false),1800);}
+function scheduleSync(){if(restoring||!client||!user)return;dirty=true;clearTimeout(debounce);debounce=setTimeout(()=>syncNow(false),1800);}
 function startAutoSync(){
  if(window.__studySpaceAutoSync)return;window.__studySpaceAutoSync=true;
  const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){const result=original.call(this,key,value);if(this===localStorage&&appKey(String(key)))scheduleSync();return result;};
  ["put","add","delete","clear"].forEach(name=>{const originalMethod=IDBObjectStore.prototype[name];if(typeof originalMethod!=="function")return;IDBObjectStore.prototype[name]=function(...args){const result=originalMethod.apply(this,args);if(this.name===STORE)scheduleSync();return result;};});
- window.addEventListener("focus",async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce)await downloadCloud(false);}catch(e){console.warn(e);}});
- setInterval(async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce)await downloadCloud(false);}catch(e){console.warn(e);}},30000);
+ window.addEventListener("focus",async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){if(dirty){status("Auf diesem Gerät gibt es noch nicht synchronisierte Änderungen. Bitte synchronisiere zuerst, bevor du Cloud-Daten lädst.");}else await downloadCloud(false);}}catch(e){console.warn(e);}});
+ setInterval(async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){if(dirty){status("Auf diesem Gerät gibt es noch nicht synchronisierte Änderungen. Bitte synchronisiere zuerst, bevor du Cloud-Daten lädst.");}else await downloadCloud(false);}}catch(e){console.warn(e);}},30000);
 }
 function init(){addStyles();addPanel();const cfg=readConfig();if(cfg.url&&cfg.key)connect();}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
