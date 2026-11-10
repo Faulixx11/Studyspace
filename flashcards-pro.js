@@ -353,7 +353,7 @@
             }
           }
         }finally{await worker.terminate();}
-        textOut+="\\n\\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Bildoptimierung: "+best.variant+" · Layout: "+best.psm+" ---\\n"+best.text;
+        textOut+="\n\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Bildoptimierung: "+best.variant+" · Layout: "+best.psm+" ---\n"+best.text;
         variants.forEach(v=>{try{URL.revokeObjectURL(v.blob);}catch{}});
       }
       $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
