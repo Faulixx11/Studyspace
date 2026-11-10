@@ -1688,6 +1688,15 @@ applySettings();
             if (topicFilter && item.topic !== topicFilter) return false;
 
             return true;
+        }).sort((a, b) => {
+            if (a.subjectId !== b.subjectId) {
+                const ai = data.subjects.findIndex(subject => subject.id === a.subjectId);
+                const bi = data.subjects.findIndex(subject => subject.id === b.subjectId);
+                return ai - bi;
+            }
+            const ao = Number.isFinite(a.materialOrder) ? a.materialOrder : data.materials.indexOf(a);
+            const bo = Number.isFinite(b.materialOrder) ? b.materialOrder : data.materials.indexOf(b);
+            return ao - bo;
         });
 
         document.getElementById("materialResultCount").textContent =
@@ -1737,6 +1746,16 @@ applySettings();
                     </div>
 
                     <div class="smart-material-actions">
+                        <button type="button" class="small-button material-move-button"
+                            data-smart-material-up="${escapeHTML(item.id)}"
+                            ${data.materials.filter(m => m.subjectId === item.subjectId).sort((a,b)=>(a.materialOrder ?? data.materials.indexOf(a))-(b.materialOrder ?? data.materials.indexOf(b))).findIndex(m => m.id === item.id) === 0 ? "disabled" : ""}>
+                            ↑ Nach oben
+                        </button>
+                        <button type="button" class="small-button material-move-button"
+                            data-smart-material-down="${escapeHTML(item.id)}"
+                            ${(() => { const g=data.materials.filter(m=>m.subjectId===item.subjectId).sort((a,b)=>(a.materialOrder ?? data.materials.indexOf(a))-(b.materialOrder ?? data.materials.indexOf(b))); return g.findIndex(m=>m.id===item.id)===g.length-1; })() ? "disabled" : ""}>
+                            ↓ Nach unten
+                        </button>
                         <button class="small-button"
                             data-material-open="${escapeHTML(item.id)}">
                             Öffnen
@@ -1755,6 +1774,25 @@ applySettings();
                 </article>
             `;
         }).join("");
+
+        // Sortierung direkt an den tatsächlich angezeigten Materialkarten.
+        materialList.querySelectorAll("[data-smart-material-up], [data-smart-material-down]").forEach(button => {
+            button.addEventListener("click", () => {
+                const id = button.dataset.smartMaterialUp || button.dataset.smartMaterialDown;
+                const item = data.materials.find(material => String(material.id) === String(id));
+                if (!item) return;
+                const group = data.materials
+                    .filter(material => material.subjectId === item.subjectId)
+                    .sort((a, b) => (a.materialOrder ?? data.materials.indexOf(a)) - (b.materialOrder ?? data.materials.indexOf(b)));
+                const index = group.findIndex(material => String(material.id) === String(id));
+                const next = index + (button.hasAttribute("data-smart-material-up") ? -1 : 1);
+                if (index < 0 || next < 0 || next >= group.length) return;
+                [group[index], group[next]] = [group[next], group[index]];
+                group.forEach((material, position) => material.materialOrder = position);
+                saveData();
+                renderSmartMaterials();
+            });
+        });
 
         materialList.querySelectorAll("[data-material-open]").forEach(button => {
             button.addEventListener("click", () => {
