@@ -72,7 +72,7 @@
       '<div class="fcx-columns"><section class="fcx-panel"><div class="fcx-panel-head"><div><h2>Material in Karten umwandeln</h2><p>Fotos, Screenshots oder Bildausschnitte hinzufügen.</p></div><span class="fcx-chip">OCR im Browser</span></div>' +
       '<label class="fcx-drop" id="fcx-drop"><input id="fcx-files" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" multiple><span class="fcx-upload-icon">＋</span><strong>Bilder hier ablegen oder auswählen</strong><small>JPG, PNG, WEBP · mehrere Bilder gleichzeitig</small></label>' +
       '<div id="fcx-upload-list" class="fcx-upload-list"></div>' +
-      '<div class="fcx-ocr-options"><label class="fcx-field">Sprache erkennen<select id="fcx-language"><option value="auto">Automatisch: Deutsch oder Englisch</option><option value="deu">Deutsch</option><option value="eng">Englisch</option><option value="fra">Französisch</option></select></label><p>Die Texterkennung läuft lokal in deinem Browser. Beim ersten Start werden die Sprachdaten geladen. Handschrift kann Fehler enthalten.</p></div>' +
+      '<div class="fcx-ocr-options"><label class="fcx-field">Sprache erkennen<select id="fcx-language"><option value="auto">Automatisch: Sprache erkennen</option><option value="deu">Deutsch</option><option value="eng">Englisch</option><option value="fra">Französisch</option><option value="spa">Spanisch</option><option value="ita">Italienisch</option></select></label><p>Die Sprache wird automatisch anhand mehrerer Sprachmodelle geschätzt. Aus den erkannten Zeilen werden nur passende Vokabelpaare übernommen – keine Sätze oder Sachtexte. Handschrift kann Fehler enthalten.</p></div>' +
       '<button class="fcx-btn fcx-primary fcx-block" id="fcx-run-ocr" disabled>Text aus Bildern erkennen</button><div id="fcx-ocr-status" class="fcx-status" aria-live="polite"></div>' +
       '<div id="fcx-text-review" class="fcx-text-review" hidden><label class="fcx-field">Erkannter Text – bitte Fehler korrigieren<textarea id="fcx-recognized-text" rows="8"></textarea></label><button class="fcx-btn" id="fcx-make-cards">Lernkarten vorschlagen</button></div>' +
       '</section><section class="fcx-panel"><div class="fcx-panel-head"><div><h2>Karte manuell erstellen</h2><p>Ergänze oder korrigiere Karten selbst.</p></div></div>' +
@@ -206,53 +206,70 @@
   async function runOCR() {
     if(!selectedSet())return alert("Bitte zuerst ein Lernset auswählen.");
     if(!uploads.length)return;
-    const status=$("fcx-ocr-status"); const button=$("fcx-run-ocr"); button.disabled=true;
-    status.textContent="Texterkennung wird vorbereitet …";
+    const status=$("fcx-ocr-status"),button=$("fcx-run-ocr");button.disabled=true;
+    status.textContent="Texterkennung und Spracherkennung werden vorbereitet …";
     try {
-      const mode=$("fcx-language").value; let textOut="";
-      const langs=mode==="auto"?["deu","eng"]:[mode];
+      const mode=$("fcx-language").value;
+      const languages=mode==="auto"?["deu","eng","fra","spa","ita"]:[mode];
+      let textOut="";
+      const labels={deu:"Deutsch",eng:"Englisch",fra:"Französisch",spa:"Spanisch",ita:"Italienisch"};
       for(let i=0;i<uploads.length;i++){
-        const u=uploads[i]; status.textContent="Bild "+(i+1)+" von "+uploads.length+" wird erkannt …";
-        const source=u.crop||u.blob;
-        let best={text:"",confidence:-1};
-        for(const lang of langs){
-          const worker=await getWorker(lang,m=>{if(m.status==="recognizing text")status.textContent="Erkenne "+(lang==="deu"?"Deutsch":lang==="eng"?"Englisch":"Französisch")+" · "+Math.round((m.progress||0)*100)+" %";});
-          try {const result=await worker.recognize(source); if((result.data.confidence||0)>best.confidence)best={text:result.data.text||"",confidence:result.data.confidence||0,lang};}
-          finally {await worker.terminate();}
+        const u=uploads[i];status.textContent="Bild "+(i+1)+" von "+uploads.length+": Sprache wird erkannt …";
+        const source=u.crop||u.blob;let best={text:"",confidence:-1,lang:null};
+        for(const lang of languages){
+          const worker=await getWorker(lang,m=>{if(m.status==="recognizing text")status.textContent="Bild "+(i+1)+"/"+uploads.length+" · prüfe "+labels[lang]+" · "+Math.round((m.progress||0)*100)+" %";});
+          try{
+            const result=await worker.recognize(source);
+            const confidence=Number(result.data.confidence)||0;
+            const candidate=(result.data.text||"").trim();
+            // Bei annähernd gleicher Sicherheit bevorzugen wir den Text mit mehr lesbaren Buchstaben.
+            const quality=confidence+(candidate.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length/Math.max(1,candidate.length)*4;
+            const bestQuality=best.confidence+(best.text.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length/Math.max(1,best.text.length)*4;
+            if(!best.lang||quality>bestQuality)best={text:candidate,confidence,lang};
+          }finally{await worker.terminate();}
         }
-        textOut+="\n\n--- "+u.name+" · "+(best.lang||mode)+" · "+Math.round(best.confidence)+" % Sicherheit ---\n"+best.text;
+        textOut+="\n\n--- "+u.name+" · Erkannte Sprache: "+(labels[best.lang]||"unbekannt")+" · OCR-Sicherheit: "+Math.round(best.confidence)+" % ---\n"+best.text;
       }
-      $("fcx-recognized-text").value=textOut.trim(); $("fcx-text-review").hidden=false;
-      status.textContent="Erkennung abgeschlossen. Bitte korrigiere den Text, bevor du Karten vorschlägst.";
-    } catch(e) {console.error(e);status.textContent="Fehler: "+e.message;}
-    finally {button.disabled=!uploads.length||!selectedSet();}
+      $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
+      status.textContent="Erkennung abgeschlossen. Kontrolliere den Text. Beim Erstellen werden nur erkannte Vokabelpaare berücksichtigt.";
+    }catch(e){console.error(e);status.textContent="Fehler: "+e.message;}
+    finally{button.disabled=!uploads.length||!selectedSet();}
   }
 
   function proposeCards(raw) {
-    const text=String(raw||"").replace(/\r/g,"").trim(); if(text.length<15){alert("Es wurde zu wenig Text erkannt. Ergänze oder korrigiere ihn zuerst.");return;}
-    const lines=text.split("\n").map(x=>x.trim()).filter(x=>x.length>2&&!/^---/.test(x));
-    const found=[]; const seen=new Set();
-    const add=(q,a)=>{
-      q=q.replace(/^[\s•\-–:]+|[\s:]+$/g,"").trim();a=a.replace(/^[\s•\-–:]+|[\s:]+$/g,"").trim();
-      if(q.length<4||a.length<3||q.length>180||a.length>350)return;
-      const key=(q+"|"+a).toLowerCase();if(seen.has(key))return;seen.add(key);found.push({question:q,answer:a,checked:true});
+    const text=String(raw||"").replace(/\r/g,"").trim();
+    if(text.length<3){alert("Es wurde kein verwertbarer Text erkannt.");return;}
+    const lines=text.split("\n").map(x=>x.trim()).filter(x=>x&&!/^---/.test(x));
+    const found=[],seen=new Set();
+    const clean=value=>String(value||"").replace(/^[\s•*\-–—:;,.]+|[\s•*\-–—:;,.]+$/g,"").replace(/\s+/g," ").trim();
+    const looksLikeVocab=value=>{
+      const words=value.split(/\s+/);
+      if(!value||words.length>5||value.length>55)return false;
+      if(/[.!?;。！？]/.test(value))return false;
+      if(/^(der|die|das|ein|eine|the|a|an|le|la|les|un|une|el|la|los|las)\s+.+\s+(ist|sind|war|waren|are|is|was|were|est|sont)$/i.test(value))return false;
+      return /[A-Za-zÀ-ÿÄÖÜäöüß]/.test(value);
     };
-    lines.forEach((line,i)=>{
-      const colon=line.match(/^(.{4,90}?):\s*(.{5,250})$/);
-      if(colon)add("Was bedeutet "+colon[1]+"?",colon[2]);
-      const def=line.match(/^(.{3,70}?)\s+(ist|sind|bezeichnet|nennt man|bedeutet)\s+(.{5,220})[.!]?$/i);
-      if(def)add("Was "+def[2]==="ist"?"ist "+def[1]+"?":"bedeutet "+def[1]+"?",def[3]);
-      if(/^(definition|begriff|merkmale|ursachen|folgen|aufgaben|funktion|ziel|vorteile|nachteile)\b/i.test(line)&&lines[i+1])add("Was steht zu: "+line+"?",lines[i+1]);
+    const add=(left,right)=>{
+      const q=clean(left),a=clean(right);
+      if(!looksLikeVocab(q)||!looksLikeVocab(a))return;
+      const key=(q+"|"+a).toLocaleLowerCase();
+      if(seen.has(key))return;
+      seen.add(key);
+      // Eine Karte enthält exakt einen Eintrag und seine Übersetzung.
+      found.push({question:q,answer:a,checked:true});
+    };
+    lines.forEach(line=>{
+      let pair=line.match(/^(.{1,65}?)\s*(?:\t+|\s+[=→↔]\s+|\s+[–—-]\s+|\s*:\s*|\s*;\s*)\s*(.{1,65})$/);
+      if(!pair)pair=line.match(/^(.{1,55}?)\s{2,}(.{1,55})$/);
+      if(pair)add(pair[1],pair[2]);
     });
-    if(found.length<3){
-      const chunks=text.split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(x=>x.length>=35&&x.length<=300);
-      chunks.slice(0,12).forEach((sentence,i)=>add("Was ist wichtig über diesen Inhalt? ("+(i+1)+")",sentence));
-    }
-    candidates=found.slice(0,30); renderCandidates();
+    candidates=found.slice(0,100);
+    renderCandidates();
     $("fcx-candidates").hidden=false;
     $("fcx-candidates").scrollIntoView({behavior:"smooth",block:"start"});
+    if(!candidates.length)$("fcx-ocr-status").textContent="Keine eindeutigen Vokabelpaare gefunden. Achte beim Hefterfoto auf zwei klar getrennte Spalten oder Paare mit Doppelpunkt, Gedankenstrich oder Gleichheitszeichen.";
   }
-  function renderCandidates() {
+    function renderCandidates() {
     $("fcx-candidate-count").textContent=candidates.length+" Vorschläge";
     $("fcx-candidate-list").innerHTML=candidates.length?candidates.map((c,i)=>'<article class="fcx-candidate"><label class="fcx-check"><input type="checkbox" data-candidate-check="'+i+'" '+(c.checked?"checked":"")+'> Übernehmen</label><label class="fcx-field">Frage<textarea data-candidate-q="'+i+'" rows="2">'+esc(c.question)+'</textarea></label><label class="fcx-field">Antwort<textarea data-candidate-a="'+i+'" rows="3">'+esc(c.answer)+'</textarea></label></article>').join(""):'<div class="fcx-empty">Aus dem erkannten Text konnten keine sicheren Vorschläge gebildet werden. Du kannst Karten rechts manuell erstellen.</div>';
     candidates.forEach((c,i)=>{
