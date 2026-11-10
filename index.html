@@ -148,7 +148,7 @@
 
             <div class="panel">
                 <h3>Material hinzufügen</h3>
-                <p class="muted">Wähle ein Fach und lade ein Foto oder Dokument hoch.</p>
+                <p class="muted">Wähle ein Fach und lade mehrere Fotos oder Dokumente gleichzeitig hoch.</p>
                 <form id="materialForm" class="form-stack">
                     <label>Fach
                         <select id="materialSubject" required></select>
@@ -157,11 +157,11 @@
                         <input id="materialName" placeholder="z. B. Meiose – Hefterseite 12" required>
                     </label>
                     <label>Datei oder Foto
-                        <input id="materialFile" type="file" accept="image/*,.pdf,.doc,.docx,.txt" required>
+                        <input id="materialFile" type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple required>
                     </label>
                     <button class="primary-button" type="submit">Material vormerken</button>
                 </form>
-                <p class="info-note">Hinweis: Diese erste Version speichert Dateiname und Zuordnung. Die eigentliche Datei und automatische Texterkennung werden später technisch ergänzt.</p>
+                <p class="info-note">Mehrere Dateien können gleichzeitig ausgewählt werden. Bilder und PDFs lassen sich im digitalen Hefter Seite für Seite durchgehen.</p>
             </div>
 
             <div class="section-heading">
@@ -340,7 +340,9 @@
 </div>
 
 <script src="studyspace-sync.js?v=2"></script>
-<script src="script.js?v=5"></script>
+<link rel="stylesheet" href="material-reader.css?v=1">
+<script src="script.js?v=6"></script>
+<script src="material-reader.js?v=1"></script>
 <script src="flashcards-pro.js?v=2"></script>
 
 </body>
