@@ -3349,3 +3349,9 @@ button.calendar-day:hover {
 .material-library-actions button:disabled{opacity:.3;cursor:not-allowed}
 .material-library-actions .material-open-button{border-color:rgba(90,160,255,.45)}
 @media(max-width:650px){.material-library-item{align-items:flex-start}.material-library-actions{width:100%;justify-content:flex-start}.material-library-actions button{padding:7px 9px;font-size:12px}}
+
+/* Material-Reihenfolge: Drag-and-drop und Touch-Pfeile */
+.material-library-item[draggable="true"]{cursor:grab}
+.material-library-item.material-dragging{opacity:.45}
+.material-library-item.material-drop-target{outline:2px dashed var(--accent,#579cff);outline-offset:3px}
+.material-library-actions button:disabled{opacity:.28;cursor:not-allowed}
