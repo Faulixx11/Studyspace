@@ -3066,7 +3066,7 @@ Beantworte die konkrete Frage vollständig.
         const printUseful = printedText.replace(/[^\p{L}\p{N}]/gu, "").length >= 8;
 
         if (handwritingUseful && (!printUseful || confidence < 62)) {
-            setStatus("Deutsche Handschrifterkennung abgeschlossen. Bitte erkennte Wörter mit dem Foto vergleichen.");
+            setStatus("Deutsche Handschrifterkennung abgeschlossen. Bitte erkannte Wörter mit dem Foto vergleichen.");
             return handwritingText;
         }
 
