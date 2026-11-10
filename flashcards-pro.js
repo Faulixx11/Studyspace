@@ -125,31 +125,52 @@
   }
 
   function parseText(raw) {
-    const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    const lines=raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
     const pairs=[];
-    const labelPattern=/^(?:französisch|franzosisch|français|francais|deutsch|englisch|english|french|german|vokabel|übersetzung|uebersetzung|wort|begriff)\s*[:：]\s*(.+)$/i;
     let pending=null;
-    for(const line of lines) {
-      const inlineLabels=[...line.matchAll(/(französisch|franzosisch|français|francais|deutsch|englisch|english|french|german)\s*[:：]\s*(.*?)(?=\s+(?:französisch|franzosisch|français|francais|deutsch|englisch|english|french|german)\s*[:：]|$)/gi)];
-      if(inlineLabels.length >= 2) {
-        pairs.push([inlineLabels[0][2].trim(), inlineLabels[1][2].trim()]);
+    const clean=value=>value
+      .replace(/^\s*(?:[-*•‣▪]|\d+[.)])\s*/,"")
+      .replace(/\s+/g," ")
+      .trim();
+
+    for(const original of lines) {
+      const line=clean(original);
+      if(!line) continue;
+
+      // ChatGPT-/Listenformat: „Vokabel … Deutsch: Übersetzung“
+      const germanMatch=line.match(/^(.*?)\s*(?:…|\.{2,}|—|–)\s*(?:deutsch|german)\s*[:：]\s*(.+)$/i);
+      if(germanMatch) {
+        const question=clean(germanMatch[1]);
+        const answer=clean(germanMatch[2]);
+        if(question&&answer) pairs.push([question,answer]);
         continue;
       }
-      const labelled=line.match(labelPattern);
+
+      // Allgemeine Paare mit expliziten Sprachlabels auf einer Zeile.
+      const inline=line.match(/^(?:französisch|français|francais|french)\s*[:：]\s*(.+?)\s+(?:deutsch|german)\s*[:：]\s*(.+)$/i);
+      if(inline) {
+        pairs.push([clean(inline[1]),clean(inline[2])]);
+        continue;
+      }
+
+      // Zwei Zeilen mit Sprachlabels.
+      const labelled=line.match(/^(französisch|franzosisch|français|francais|deutsch|englisch|english|french|german|vokabel|übersetzung|uebersetzung|wort|begriff)\s*[:：]\s*(.+)$/i);
       if(labelled) {
-        const label=line.slice(0,line.indexOf(":")>=0?line.indexOf(":"):line.indexOf("：")).toLowerCase();
-        const value=labelled[1].trim();
+        const label=labelled[1].toLocaleLowerCase();
+        const value=clean(labelled[2]);
         if(!pending) pending={label,value};
         else if(label!==pending.label) { pairs.push([pending.value,value]); pending=null; }
-        else { pending={label,value}; }
+        else pending={label,value};
         continue;
       }
+
       if(pending) { pairs.push([pending.value,line]); pending=null; continue; }
-      let parts=line.split(/\s*(?:\t|\s+[–—=|]\s+|\s+-\s+)\s*/).filter(Boolean);
-      if(parts.length===2) pairs.push([parts[0].trim(),parts[1].trim()]);
-      else if(line.includes("\t")) { parts=line.split("\t").map(x=>x.trim()).filter(Boolean); if(parts.length>=2)pairs.push([parts[0],parts.slice(1).join(" ") ]); }
+
+      // Tabulator, Gedankenstrich, Gleichheitszeichen oder senkrechter Strich.
+      const parts=line.split(/\s*(?:\t|\s+[–—=|]\s+|\s+-\s+)\s*/).filter(Boolean);
+      if(parts.length===2) pairs.push([clean(parts[0]),clean(parts[1])]);
     }
-    return pairs.filter(p=>p[0]&&p[1]);
+    return pairs.filter(pair=>pair[0]&&pair[1]);
   }
 
   function importText() {
