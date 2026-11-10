@@ -238,98 +238,75 @@ document.getElementById("materialForm").addEventListener("submit", event => {
 });
 
 function renderMaterials() {
-    const container = document.getElementById("materialList");
+ const container=document.getElementById("materialList");
+ if(!container)return;
+ if(!data.materials.length){container.innerHTML='<div class="panel empty-state">Noch keine Materialien vorhanden.</div>';return;}
+ const ids=[...new Set(data.materials.map(x=>x.subjectId||""))];
+ ids.forEach(subjectId=>{
+  const group=data.materials.filter(x=>(x.subjectId||"")===subjectId)
+   .sort((a,b)=>(Number.isFinite(a.materialOrder)?a.materialOrder:Infinity)-(Number.isFinite(b.materialOrder)?b.materialOrder:Infinity));
+  group.forEach((x,i)=>x.materialOrder=i);
+ });
+ const sorted=[...data.materials].sort((a,b)=>{
+  const ai=data.subjects.findIndex(x=>x.id===a.subjectId),bi=data.subjects.findIndex(x=>x.id===b.subjectId);
+  return ai===bi?(a.materialOrder??0)-(b.materialOrder??0):ai-bi;
+ });
+ container.innerHTML=sorted.map(item=>{
+  const subject=data.subjects.find(x=>x.id===item.subjectId);
+  const group=sorted.filter(x=>x.subjectId===item.subjectId),index=group.findIndex(x=>x.id===item.id);
+  const label=item.name||item.fileName||"Material",ext=(item.fileName||"").split(".").pop().toUpperCase();
+  return `<div class="material-item material-library-item" data-material-row="${escapeHTML(item.id)}" draggable="true">
+   <div class="material-library-title"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(subject?.name||"Kein Fach")} · ${escapeHTML(ext||"DATEI")} · ${escapeHTML(item.fileName||"")}</p></div>
+   <div class="material-library-actions">
+    <button type="button" class="small-button" data-material-rename="${escapeHTML(item.id)}">✎ Name</button>
+    <button type="button" class="small-button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} title="Nach oben">↑</button>
+    <button type="button" class="small-button" data-material-down="${escapeHTML(item.id)}" ${index===group.length-1?"disabled":""} title="Nach unten">↓</button>
+    <button type="button" class="small-button material-open-button" data-material-open="${escapeHTML(item.id)}">Öffnen</button>
+    <button type="button" class="small-button delete" data-material-delete="${escapeHTML(item.id)}">Entfernen</button>
+   </div></div>`;
+ }).join("");
 
-    if (!data.materials.length) {
-        container.innerHTML = `<div class="panel empty-state">Noch keine Materialien vorhanden.</div>`;
-        return;
-    }
-
-    // Initiale Reihenfolge sichern, ohne bestehende Daten zu verwerfen.
-    data.subjects.forEach(subject => {
-        const group = data.materials.filter(item => item.subjectId === subject.id);
-        group.forEach((item, index) => {
-            if (!Number.isFinite(item.materialOrder)) item.materialOrder = index;
-        });
-    });
-
-    const sorted = [...data.materials].sort((a, b) => {
-        const subjectA = data.subjects.findIndex(s => s.id === a.subjectId);
-        const subjectB = data.subjects.findIndex(s => s.id === b.subjectId);
-        if (subjectA !== subjectB) return subjectA - subjectB;
-        return (a.materialOrder ?? 0) - (b.materialOrder ?? 0);
-    });
-
-    container.innerHTML = sorted.map(item => {
-        const subject = data.subjects.find(s => s.id === item.subjectId);
-        const group = sorted.filter(x => x.subjectId === item.subjectId);
-        const index = group.findIndex(x => x.id === item.id);
-        const label = item.name || item.fileName || "Material";
-        const ext = (item.fileName || "").split(".").pop().toUpperCase();
-        return `
-            <div class="material-item material-library-item">
-                <div class="material-library-title">
-                    <strong>${escapeHTML(label)}</strong>
-                    <p>${escapeHTML(subject?.name || "Kein Fach")} · ${escapeHTML(ext || "DATEI")} · ${escapeHTML(item.fileName || "")}</p>
-                </div>
-                <div class="material-library-actions">
-                    <button class="small-button" data-material-rename="${item.id}" title="Material umbenennen">✎ Name</button>
-                    <button class="small-button" data-material-up="${item.id}" title="Eine Position nach oben" ${index===0?"disabled":""}>↑</button>
-                    <button class="small-button" data-material-down="${item.id}" title="Eine Position nach unten" ${index===group.length-1?"disabled":""}>↓</button>
-                    <button class="small-button material-open-button" data-material-open="${item.id}">Öffnen</button>
-                    <button class="small-button delete" data-material-delete="${item.id}">Entfernen</button>
-                </div>
-            </div>
-        `;
-    }).join("");
-
-    container.querySelectorAll("[data-material-open]").forEach(button => {
-        button.addEventListener("click", () => {
-            window.dispatchEvent(new CustomEvent("studyspace:open-material", { detail: { id: button.dataset.materialOpen } }));
-        });
-    });
-
-    container.querySelectorAll("[data-material-rename]").forEach(button => {
-        button.addEventListener("click", () => {
-            const item = data.materials.find(x => x.id === button.dataset.materialRename);
-            if (!item) return;
-            const next = prompt("Neuer Name für dieses Material:", item.name || item.fileName || "");
-            if (next === null) return;
-            const clean = next.trim();
-            if (!clean) { alert("Bitte gib einen Namen ein."); return; }
-            item.name = clean;
-            saveData();
-            renderMaterials();
-        });
-    });
-
-    function moveMaterial(id, direction) {
-        const item = data.materials.find(x => x.id === id);
-        if (!item) return;
-        const group = data.materials
-            .filter(x => x.subjectId === item.subjectId)
-            .sort((a,b) => (a.materialOrder ?? 0) - (b.materialOrder ?? 0));
-        const index = group.findIndex(x => x.id === id);
-        const other = group[index + direction];
-        if (!other) return;
-        const currentOrder = item.materialOrder ?? index;
-        item.materialOrder = other.materialOrder ?? index + direction;
-        other.materialOrder = currentOrder;
-        saveData();
-        renderMaterials();
-    }
-    container.querySelectorAll("[data-material-up]").forEach(button =>
-        button.addEventListener("click", () => moveMaterial(button.dataset.materialUp, -1)));
-    container.querySelectorAll("[data-material-down]").forEach(button =>
-        button.addEventListener("click", () => moveMaterial(button.dataset.materialDown, 1)));
-
-    container.querySelectorAll("[data-material-delete]").forEach(button => {
-        button.addEventListener("click", () => {
-            data.materials = data.materials.filter(item => item.id !== button.dataset.materialDelete);
-            saveData();
-            renderAll();
-        });
-    });
+ container.onclick=event=>{
+  const b=event.target.closest("button");if(!b||!container.contains(b))return;
+  const id=b.dataset.materialUp||b.dataset.materialDown||b.dataset.materialRename||b.dataset.materialOpen||b.dataset.materialDelete;
+  if(!id)return;
+  if(b.hasAttribute("data-material-open")){event.preventDefault();window.dispatchEvent(new CustomEvent("studyspace:open-material",{detail:{id}}));return;}
+  if(b.hasAttribute("data-material-rename")){
+   const item=data.materials.find(x=>x.id===id);if(!item)return;
+   const value=prompt("Neuer Name für dieses Material:",item.name||item.fileName||"");
+   if(value===null)return;if(!value.trim()){alert("Bitte gib einen Namen ein.");return;}
+   item.name=value.trim();saveData();renderMaterials();return;
+  }
+  if(b.hasAttribute("data-material-delete")){data.materials=data.materials.filter(x=>x.id!==id);saveData();renderAll();return;}
+  moveMaterialInList(id,b.hasAttribute("data-material-up")?-1:1);
+ };
+ container.ondragstart=event=>{
+  const row=event.target.closest("[data-material-row]");if(!row)return;
+  event.dataTransfer.setData("text/plain",row.dataset.materialRow);event.dataTransfer.effectAllowed="move";
+ };
+ container.ondragover=event=>{if(event.target.closest("[data-material-row]"))event.preventDefault();};
+ container.ondrop=event=>{
+  const row=event.target.closest("[data-material-row]");if(!row)return;event.preventDefault();
+  const from=event.dataTransfer.getData("text/plain"),to=row.dataset.materialRow;
+  if(from&&to&&from!==to)reorderMaterialBefore(from,to);
+ };
+}
+function orderedMaterials(subjectId){
+ return data.materials.filter(x=>(x.subjectId||"")===(subjectId||""))
+  .sort((a,b)=>(a.materialOrder??0)-(b.materialOrder??0));
+}
+function saveMaterialOrder(group){group.forEach((x,i)=>x.materialOrder=i);saveData();}
+function moveMaterialInList(id,direction){
+ const item=data.materials.find(x=>x.id===id);if(!item)return;
+ const group=orderedMaterials(item.subjectId),i=group.findIndex(x=>x.id===id),j=i+direction;
+ if(i<0||j<0||j>=group.length)return;
+ [group[i],group[j]]=[group[j],group[i]];saveMaterialOrder(group);renderMaterials();
+}
+function reorderMaterialBefore(fromId,toId){
+ const from=data.materials.find(x=>x.id===fromId),to=data.materials.find(x=>x.id===toId);
+ if(!from||!to||from.subjectId!==to.subjectId)return;
+ const group=orderedMaterials(from.subjectId),i=group.findIndex(x=>x.id===fromId),j=group.findIndex(x=>x.id===toId);
+ if(i<0||j<0)return;const [moved]=group.splice(i,1);group.splice(j,0,moved);saveMaterialOrder(group);renderMaterials();
 }
 
 // ==========================================
