@@ -240,21 +240,45 @@ document.getElementById("materialForm").addEventListener("submit", event => {
 function renderMaterials() {
     const container = document.getElementById("materialList");
 
-    if (data.materials.length === 0) {
+    if (!data.materials.length) {
         container.innerHTML = `<div class="panel empty-state">Noch keine Materialien vorhanden.</div>`;
         return;
     }
 
-    container.innerHTML = data.materials.map(item => {
+    // Initiale Reihenfolge sichern, ohne bestehende Daten zu verwerfen.
+    data.subjects.forEach(subject => {
+        const group = data.materials.filter(item => item.subjectId === subject.id);
+        group.forEach((item, index) => {
+            if (!Number.isFinite(item.materialOrder)) item.materialOrder = index;
+        });
+    });
+
+    const sorted = [...data.materials].sort((a, b) => {
+        const subjectA = data.subjects.findIndex(s => s.id === a.subjectId);
+        const subjectB = data.subjects.findIndex(s => s.id === b.subjectId);
+        if (subjectA !== subjectB) return subjectA - subjectB;
+        return (a.materialOrder ?? 0) - (b.materialOrder ?? 0);
+    });
+
+    container.innerHTML = sorted.map(item => {
         const subject = data.subjects.find(s => s.id === item.subjectId);
+        const group = sorted.filter(x => x.subjectId === item.subjectId);
+        const index = group.findIndex(x => x.id === item.id);
+        const label = item.name || item.fileName || "Material";
+        const ext = (item.fileName || "").split(".").pop().toUpperCase();
         return `
-            <div class="material-item">
-                <div>
-                    <strong>${escapeHTML(item.name)}</strong>
-                    <p>${escapeHTML(subject?.name || "Kein Fach")} · ${escapeHTML(item.fileName)}</p>
+            <div class="material-item material-library-item">
+                <div class="material-library-title">
+                    <strong>${escapeHTML(label)}</strong>
+                    <p>${escapeHTML(subject?.name || "Kein Fach")} · ${escapeHTML(ext || "DATEI")} · ${escapeHTML(item.fileName || "")}</p>
                 </div>
-                <button class="small-button" data-material-open="${item.id}">Hefter öffnen</button>
-                <button class="small-button delete" data-material-delete="${item.id}">Entfernen</button>
+                <div class="material-library-actions">
+                    <button class="small-button" data-material-rename="${item.id}" title="Material umbenennen">✎ Name</button>
+                    <button class="small-button" data-material-up="${item.id}" title="Eine Position nach oben" ${index===0?"disabled":""}>↑</button>
+                    <button class="small-button" data-material-down="${item.id}" title="Eine Position nach unten" ${index===group.length-1?"disabled":""}>↓</button>
+                    <button class="small-button material-open-button" data-material-open="${item.id}">Öffnen</button>
+                    <button class="small-button delete" data-material-delete="${item.id}">Entfernen</button>
+                </div>
             </div>
         `;
     }).join("");
@@ -264,6 +288,40 @@ function renderMaterials() {
             window.dispatchEvent(new CustomEvent("studyspace:open-material", { detail: { id: button.dataset.materialOpen } }));
         });
     });
+
+    container.querySelectorAll("[data-material-rename]").forEach(button => {
+        button.addEventListener("click", () => {
+            const item = data.materials.find(x => x.id === button.dataset.materialRename);
+            if (!item) return;
+            const next = prompt("Neuer Name für dieses Material:", item.name || item.fileName || "");
+            if (next === null) return;
+            const clean = next.trim();
+            if (!clean) { alert("Bitte gib einen Namen ein."); return; }
+            item.name = clean;
+            saveData();
+            renderMaterials();
+        });
+    });
+
+    function moveMaterial(id, direction) {
+        const item = data.materials.find(x => x.id === id);
+        if (!item) return;
+        const group = data.materials
+            .filter(x => x.subjectId === item.subjectId)
+            .sort((a,b) => (a.materialOrder ?? 0) - (b.materialOrder ?? 0));
+        const index = group.findIndex(x => x.id === id);
+        const other = group[index + direction];
+        if (!other) return;
+        const currentOrder = item.materialOrder ?? index;
+        item.materialOrder = other.materialOrder ?? index + direction;
+        other.materialOrder = currentOrder;
+        saveData();
+        renderMaterials();
+    }
+    container.querySelectorAll("[data-material-up]").forEach(button =>
+        button.addEventListener("click", () => moveMaterial(button.dataset.materialUp, -1)));
+    container.querySelectorAll("[data-material-down]").forEach(button =>
+        button.addEventListener("click", () => moveMaterial(button.dataset.materialDown, 1)));
 
     container.querySelectorAll("[data-material-delete]").forEach(button => {
         button.addEventListener("click", () => {
