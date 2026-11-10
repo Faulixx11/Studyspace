@@ -16,7 +16,7 @@
   let currentCardId = null;
   let directionCardId = null;
   let answerShown = false;
-  let reviewDirection = "forward";
+  let reviewDirection = "reverse";
   let currentDirection = "forward";
   let difficultOnly = false;
   let recentCardIds = [];
@@ -66,8 +66,8 @@
           <section class="fcx-panel">
             <div class="fcx-panel-head"><div><h2>Einzelne Karte erstellen</h2><p>Für eigene Fragen, Antworten oder einzelne Vokabeln.</p></div></div>
             <form id="fcx-card-form" class="fcx-form">
-              <label class="fcx-field">Vorderseite / Begriff<input id="fcx-question" required placeholder="z. B. maison"></label>
-              <label class="fcx-field">Rückseite / Übersetzung<textarea id="fcx-answer" rows="3" required placeholder="z. B. Haus"></textarea></label>
+              <label class="fcx-field">Französisch<input id="fcx-question" required placeholder="z. B. maison"></label>
+              <label class="fcx-field">Deutsch<textarea id="fcx-answer" rows="3" required placeholder="z. B. Haus"></textarea></label>
               <button class="fcx-btn fcx-primary" type="submit">Karte speichern</button>
             </form>
           </section>
@@ -76,7 +76,7 @@
           <div class="fcx-panel-head"><div><h2>Adaptives Training</h2><p id="fcx-review-subtitle">Wähle deine Trainingsrichtung.</p></div><span class="fcx-chip" id="fcx-review-count">0 Karten</span></div>
           <div class="fcx-training-settings">
             <label class="fcx-field">Trainingsrichtung
-              <select id="fcx-direction"><option value="forward">Fremdsprache → Deutsch</option><option value="reverse">Deutsch → Fremdsprache</option><option value="mixed">Gemischt (beide Richtungen)</option></select>
+              <select id="fcx-direction" disabled><option value="reverse" selected>Deutsch → Französisch</option></select>
             </label>
             <div class="fcx-progress-box"><div><span>Beherrschung dieses Sets</span><strong id="fcx-mastery-percent">0 %</strong></div><div class="fcx-progress-track"><div id="fcx-mastery-bar"></div></div><small id="fcx-mastery-detail">Noch keine Antworten bewertet.</small></div>
           </div>
@@ -288,9 +288,9 @@
     if(!currentCardId || !list.some(c=>c.id===currentCardId)) currentCardId=chooseNextCard(list)?.id;
     const card=list.find(c=>c.id===currentCardId)||list[0];
     if(directionCardId!==card.id){currentDirection=reviewDirection==="mixed"?(Math.random()<0.5?"forward":"reverse"):reviewDirection;directionCardId=card.id;}
-    const question=currentDirection==="forward"?card.question:card.answer;
-    const answer=currentDirection==="forward"?card.answer:card.question;
-    $("fcx-review-label").textContent=currentDirection==="forward"?"FREMDSPRACHE → DEUTSCH":"DEUTSCH → FREMDSPRACHE";
+    const question=card.answer;
+    const answer=card.question;
+    $("fcx-review-label").textContent="DEUTSCH → FRANZÖSISCH";
     $("fcx-review-question").textContent=question;
     $("fcx-review-answer").textContent=answer;
     $("fcx-review-answer").hidden=!answerShown;
