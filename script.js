@@ -488,7 +488,7 @@ function showCurrentCard() {
         return;
     }
 
-    question.textContent = card.question;
+    question.textContent = card.answer;
 }
 
 document.getElementById("showAnswerButton").addEventListener("click", () => {
@@ -496,7 +496,7 @@ document.getElementById("showAnswerButton").addEventListener("click", () => {
     if (!card) return;
 
     answerVisible = true;
-    document.getElementById("reviewAnswer").textContent = card.answer;
+    document.getElementById("reviewAnswer").textContent = card.question;
 });
 
 document.getElementById("knownButton").addEventListener("click", () => {
@@ -996,12 +996,12 @@ applySettings();
             <div class="flip-card-inner" id="flipCardInner">
                 <div class="flip-card-face flip-card-front">
                     <span class="flip-label">${safeText(subject?.name || "Lernkarte")} · FRAGE</span>
-                    <div class="flip-card-content">${safeText(card.question)}</div>
+                    <div class="flip-card-content">${safeText(card.answer)}</div>
                     <span class="flip-hint">Drehe die Karte um, um die Antwort zu sehen</span>
                 </div>
                 <div class="flip-card-face flip-card-back">
                     <span class="flip-label">ANTWORT</span>
-                    <div class="flip-card-content">${safeText(card.answer)}</div>
+                    <div class="flip-card-content">${safeText(card.question)}</div>
                     <span class="flip-hint">Konntest du die Frage beantworten?</span>
                 </div>
             </div>`;
@@ -5190,10 +5190,10 @@ mit deinem Originalhefter.
                     <span>${esc(subjectName(selected.subjectId))}</span>
                     <span>${meta.repetitions === 0 ? "Neu" : `Wiederholung ${meta.repetitions}`}</span>
                 </div>
-                <div class="lw-review-question">${esc(selected.question)}</div>
+                <div class="lw-review-question">${esc(selected.answer)}</div>
                 <button class="primary-button" id="lwReveal">Antwort anzeigen</button>
                 <div id="lwAnswerArea" hidden>
-                    <div class="lw-review-answer">${esc(selected.answer)}</div>
+                    <div class="lw-review-answer">${esc(selected.question)}</div>
                     <p>Wie sicher konntest du die Antwort wiedergeben?</p>
                     <div class="lw-rating">
                         <button data-rating="again">Nicht gewusst</button>
@@ -5273,10 +5273,10 @@ mit deinem Originalhefter.
             <div class="lw-review-card">
                 <div class="lw-review-meta"><span>Frage ${s.index + 1} von ${s.list.length}</span><span>${esc(subjectName(q.subjectId))}</span></div>
                 <div class="lw-exam-progress"><div style="width:${s.index / s.list.length * 100}%"></div></div>
-                <div class="lw-review-question">${esc(q.question)}</div>
+                <div class="lw-review-question">${esc(q.answer)}</div>
                 <button class="primary-button" id="lwExamReveal">Musterantwort zeigen</button>
                 <div id="lwExamAnswer" hidden>
-                    <div class="lw-review-answer">${esc(q.answer)}</div>
+                    <div class="lw-review-answer">${esc(q.question)}</div>
                     <p>Hast du die Frage richtig beantwortet?</p>
                     <div class="lw-rating">
                         <button id="lwExamWrong">Nein</button>
