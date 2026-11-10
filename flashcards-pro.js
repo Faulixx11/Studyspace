@@ -89,7 +89,7 @@
       cards().push({id:makeId(),subjectId,setId,question:$("fcx-question").value.trim(),answer:$("fcx-answer").value.trim(),known:false});
       save(); e.target.reset(); currentIndex=activeCards().length-1; render();
     });
-    $("fcx-import-text").addEventListener("click", importText);
+    // Import-Button wird zentral über den Seiten-Listener behandelt.
     $("fcx-show-answer").addEventListener("click", showAnswer);
     $("fcx-next-card").addEventListener("click", nextCard);
   }
@@ -215,6 +215,22 @@
     if(!confirm("Diese Karteikarte wirklich löschen?"))return;
     data.flashcards=cards().filter(c=>c.id!==id);save();render();
   }
+
+  // Robuster Import-Klick: funktioniert auch dann, wenn andere App-Skripte
+  // einzelne Elemente neu rendern oder Event-Listener überschreiben.
+  page.addEventListener("click", event => {
+    const button = event.target.closest("#fcx-import-text");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const status = $("fcx-import-status");
+    try {
+      importText();
+    } catch (error) {
+      console.error("StudySpace Textimport fehlgeschlagen:", error);
+      if (status) status.textContent = "Beim Import ist ein Fehler aufgetreten. Bitte prüfe, ob ein Fach und ein Lernset ausgewählt sind.";
+    }
+  }, true);
 
   build();
   render();
