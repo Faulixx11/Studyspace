@@ -6149,6 +6149,7 @@ mit deinem Originalhefter.
     }
 
     function ensureOverlay() {
+        ensureStyle();
         let overlay = document.getElementById(OVERLAY_ID);
         if (overlay) return overlay;
         overlay = document.createElement("div");
