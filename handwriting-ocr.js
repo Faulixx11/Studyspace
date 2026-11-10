@@ -75,7 +75,7 @@
   function isInk(r, g, b) {
     const light = 0.299 * r + 0.587 * g + 0.114 * b;
     const blueInk = b > r + 24 && light < 226;
-    return light < 190 || blueInk;
+    return light < 215 || blueInk;
   }
 
   function findLines(canvas) {
