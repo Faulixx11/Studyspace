@@ -171,9 +171,21 @@ function openImageFullscreen(src,alt,annotationCanvas){
  });
  const image=document.createElement("img");
  image.alt=alt||"Materialbild";
- let displaySource=src;
- try{const sourceImage=new Image();sourceImage.src=src;const w=annotationCanvas?.width||sourceImage.naturalWidth||1200,h=annotationCanvas?.height||sourceImage.naturalHeight||1600;const composite=document.createElement("canvas");composite.width=w;composite.height=h;const cx=composite.getContext("2d");cx.drawImage(sourceImage,0,0,w,h);if(annotationCanvas)cx.drawImage(annotationCanvas,0,0,w,h);displaySource=composite.toDataURL("image/png");}catch(error){console.warn("Annotationen konnten nicht in die Vollbildansicht übernommen werden.",error);}
- image.src=displaySource;
+ image.src=src;
+ if(annotationCanvas){
+  image.addEventListener("load",()=>{
+   try{
+    const composite=document.createElement("canvas");
+    composite.width=annotationCanvas.width||image.naturalWidth;
+    composite.height=annotationCanvas.height||image.naturalHeight;
+    const cx=composite.getContext("2d");
+    cx.drawImage(image,0,0,composite.width,composite.height);
+    cx.drawImage(annotationCanvas,0,0,composite.width,composite.height);
+    image.src=composite.toDataURL("image/png");
+   }catch(error){console.warn("Annotationen konnten nicht in die Vollbildansicht übernommen werden.",error);}
+  },{once:true});
+ }
+
  Object.assign(image.style,{display:"block",maxWidth:"100%",maxHeight:"100%",width:"auto",height:"auto",objectFit:"contain",touchAction:"pinch-zoom"});
  const closeButton=document.createElement("button");
  closeButton.type="button";closeButton.textContent="✕ Schließen";
