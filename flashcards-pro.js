@@ -203,36 +203,120 @@
     await loadTesseract();
     return window.Tesseract.createWorker(lang,1,{logger});
   }
+
+  // Erzeugt mehrere lesefreundliche Bildvarianten. Das Original bleibt unverändert.
+  async function prepareOCRVariants(source) {
+    const bitmap = await createImageBitmap(source);
+    const maxSide = 3000;
+    const scale = Math.min(3, Math.max(1.5, 1800 / Math.max(bitmap.width, bitmap.height)));
+    const factor = Math.min(scale, maxSide / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * factor));
+    const height = Math.max(1, Math.round(bitmap.height * factor));
+    const base = document.createElement("canvas");
+    base.width=width;base.height=height;
+    const ctx=base.getContext("2d",{willReadFrequently:true});
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,width,height);
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    ctx.drawImage(bitmap,0,0,width,height);
+    bitmap.close?.();
+
+    const original = await new Promise(resolve=>base.toBlob(resolve,"image/png"));
+    const gray = ctx.getImageData(0,0,width,height);
+    let sum=0,count=0;
+    for(let i=0;i<gray.data.length;i+=4){
+      const lum=0.299*gray.data[i]+0.587*gray.data[i+1]+0.114*gray.data[i+2];
+      sum+=lum;count++;
+      gray.data[i]=gray.data[i+1]=gray.data[i+2]=lum;
+    }
+    const mean=sum/Math.max(1,count);
+    const contrast=document.createElement("canvas");contrast.width=width;contrast.height=height;
+    const cctx=contrast.getContext("2d",{willReadFrequently:true});
+    const contrastData=new ImageData(new Uint8ClampedArray(gray.data),width,height);
+    const gain=1.45;
+    for(let i=0;i<contrastData.data.length;i+=4){
+      const v=Math.max(0,Math.min(255,(contrastData.data[i]-mean)*gain+mean));
+      contrastData.data[i]=contrastData.data[i+1]=contrastData.data[i+2]=v;
+      contrastData.data[i+3]=255;
+    }
+    cctx.putImageData(contrastData,0,0);
+    const enhanced=await new Promise(resolve=>contrast.toBlob(resolve,"image/png"));
+
+    const threshold=document.createElement("canvas");threshold.width=width;threshold.height=height;
+    const tctx=threshold.getContext("2d",{willReadFrequently:true});
+    const binary=new ImageData(new Uint8ClampedArray(contrastData.data),width,height);
+    const cut=Math.max(105,Math.min(205,mean-18));
+    for(let i=0;i<binary.data.length;i+=4){
+      const v=binary.data[i]<cut?0:255;
+      binary.data[i]=binary.data[i+1]=binary.data[i+2]=v;binary.data[i+3]=255;
+    }
+    tctx.putImageData(binary,0,0);
+    const bw=await new Promise(resolve=>threshold.toBlob(resolve,"image/png"));
+    return [{name:"vergrößert",blob:original},{name:"Kontrast",blob:enhanced},{name:"Schwarzweiß",blob:bw}].filter(x=>x.blob);
+  }
+
+  function ocrQuality(result) {
+    const text=String(result.data?.text||"").trim();
+    const confidence=Number(result.data?.confidence)||0;
+    const letters=(text.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length;
+    const weird=(text.match(/[^A-Za-zÀ-ÿÄÖÜäöüß0-9\\s.,;:!?()'’‘-]/g)||[]).length;
+    const tokens=text.split(/\\s+/).filter(Boolean);
+    const noisePenalty=(weird/Math.max(1,text.length))*35+(tokens.filter(t=>t.length>24).length*4);
+    return confidence+(letters/Math.max(1,text.length))*8-noisePenalty;
+  }
+
+  async function recognizePass(worker, image, psm) {
+    await worker.setParameters({tessedit_pageseg_mode:String(psm),preserve_interword_spaces:"1"});
+    return worker.recognize(image);
+  }
+
   async function runOCR() {
     if(!selectedSet())return alert("Bitte zuerst ein Lernset auswählen.");
     if(!uploads.length)return;
     const status=$("fcx-ocr-status"),button=$("fcx-run-ocr");button.disabled=true;
-    status.textContent="Texterkennung und Spracherkennung werden vorbereitet …";
+    status.textContent="Bilder werden optimiert und mehrfach ausgewertet …";
     try {
       const mode=$("fcx-language").value;
-      const languages=mode==="auto"?["deu","eng","fra","spa","ita"]:[mode];
-      let textOut="";
+      const languages=mode==="auto"?["fra","deu","eng","spa","ita"]:[mode];
       const labels={deu:"Deutsch",eng:"Englisch",fra:"Französisch",spa:"Spanisch",ita:"Italienisch"};
+      let textOut="";
       for(let i=0;i<uploads.length;i++){
-        const u=uploads[i];status.textContent="Bild "+(i+1)+" von "+uploads.length+": Sprache wird erkannt …";
-        const source=u.crop||u.blob;let best={text:"",confidence:-1,lang:null};
-        for(const lang of languages){
-          const worker=await getWorker(lang,m=>{if(m.status==="recognizing text")status.textContent="Bild "+(i+1)+"/"+uploads.length+" · prüfe "+labels[lang]+" · "+Math.round((m.progress||0)*100)+" %";});
-          try{
-            const result=await worker.recognize(source);
-            const confidence=Number(result.data.confidence)||0;
-            const candidate=(result.data.text||"").trim();
-            // Bei annähernd gleicher Sicherheit bevorzugen wir den Text mit mehr lesbaren Buchstaben.
-            const quality=confidence+(candidate.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length/Math.max(1,candidate.length)*4;
-            const bestQuality=best.confidence+(best.text.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length/Math.max(1,best.text.length)*4;
-            if(!best.lang||quality>bestQuality)best={text:candidate,confidence,lang};
-          }finally{await worker.terminate();}
+        const u=uploads[i];status.textContent="Bild "+(i+1)+" von "+uploads.length+": Bildqualität wird verbessert …";
+        const variants=await prepareOCRVariants(u.crop||u.blob);
+        let lang=languages[0],bestDetect=-Infinity;
+        // Im Automatikmodus zunächst die Sprache auf dem kontrastverstärkten Bild bestimmen.
+        if(mode==="auto"){
+          for(const candidateLang of languages){
+            status.textContent="Bild "+(i+1)+"/"+uploads.length+" · Sprache wird verglichen: "+labels[candidateLang];
+            const worker=await getWorker(candidateLang);
+            try{
+              const result=await recognizePass(worker,variants[1]?.blob||variants[0].blob,11);
+              const quality=ocrQuality(result);
+              if(quality>bestDetect){bestDetect=quality;lang=candidateLang;}
+            }finally{await worker.terminate();}
+          }
         }
-        textOut+="\n\n--- "+u.name+" · Erkannte Sprache: "+(labels[best.lang]||"unbekannt")+" · OCR-Sicherheit: "+Math.round(best.confidence)+" % ---\n"+best.text;
+        status.textContent="Bild "+(i+1)+"/"+uploads.length+" · mehrere Erkennungsdurchläufe für "+labels[lang];
+        const worker=await getWorker(lang,m=>{
+          if(m.status==="recognizing text")status.textContent="Bild "+(i+1)+"/"+uploads.length+" · "+labels[lang]+" · "+Math.round((m.progress||0)*100)+" %";
+        });
+        let best={text:"",confidence:0,quality:-Infinity,variant:"",psm:0};
+        try{
+          for(const variant of variants){
+            for(const psm of [3,6,11]){
+              const result=await recognizePass(worker,variant.blob,psm);
+              const quality=ocrQuality(result);
+              if(quality>best.quality){
+                best={text:String(result.data?.text||"").trim(),confidence:Number(result.data?.confidence)||0,quality,variant:variant.name,psm};
+              }
+            }
+          }
+        }finally{await worker.terminate();}
+        textOut+="\\n\\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Variante: "+best.variant+" · Layout: "+best.psm+" ---\\n"+best.text;
+        variants.forEach(v=>{try{URL.revokeObjectURL(v.blob);}catch{}});
       }
       $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
-      status.textContent="Erkennung abgeschlossen. Kontrolliere jedes Zeichen. Unsichere Wörter nicht ungeprüft übernehmen; die OCR kann Akzente und Handschrift verwechseln.";
-    }catch(e){console.error(e);status.textContent="Fehler: "+e.message;}
+      status.textContent="Mehrfacherkennung abgeschlossen. Die beste Textvariante wurde ausgewählt. Bitte kontrolliere besonders Akzente, Apostrophe und Bindestriche.";
+    }catch(e){console.error(e);status.textContent="Fehler bei der Texterkennung: "+e.message;}
     finally{button.disabled=!uploads.length||!selectedSet();}
   }
 
