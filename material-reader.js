@@ -122,7 +122,7 @@ async function open(id){
  if(!selected)return;
  const items=(data.materials||[])
   .filter(x=>x.subjectId===selected.subjectId&&isSupported(x))
-  .sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+  .sort((a,b)=>(a.materialOrder??0)-(b.materialOrder??0));
  const root=makeViewer(),scroll=$("binderScroll");
  objectUrls.forEach(url=>URL.revokeObjectURL(url));objectUrls=[];
  scroll.replaceChildren();
