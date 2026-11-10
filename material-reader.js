@@ -29,6 +29,21 @@ function modal(){
  document.body.appendChild(m);
  $("binderClose").onclick=close;
  $("binderPrev").onclick=()=>move(-1);$("binderNext").onclick=()=>move(1);
+ // Touch-Gesten: links wischen = nächste Seite, rechts = vorherige Seite.
+ let swipeStart=null;
+ const swipeArea=$("binderPage");
+ swipeArea.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1)return;
+  swipeStart={x:event.touches[0].clientX,y:event.touches[0].clientY};
+ },{passive:true});
+ swipeArea.addEventListener("touchend",event=>{
+  if(!swipeStart||!event.changedTouches.length)return;
+  const dx=event.changedTouches[0].clientX-swipeStart.x;
+  const dy=event.changedTouches[0].clientY-swipeStart.y;
+  swipeStart=null;
+  if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.25)return;
+  move(dx<0?1:-1);
+ },{passive:true});
  $("binderNote").addEventListener("input",()=>{ $("binderNoteStatus").textContent="Speichert …";clearTimeout(saveTimer);saveTimer=setTimeout(saveNote,350);});
  $("binderNote").addEventListener("blur",()=>{clearTimeout(saveTimer);saveNote();});
  m.addEventListener("click",e=>{if(e.target===m)close();});
@@ -44,7 +59,7 @@ async function render(){
  const item=items[index];if(!item)return;
  const m=modal(),target=$("binderPage"),all=notes();
  $("binderTitle").textContent=item.name||item.fileName||"Hefter";
- $("binderSubtitle").textContent=item.fileName||"";
+ $("binderSubtitle").textContent=(item.fileName||"")+" · Wische nach links oder rechts zum Blättern";
  $("binderNote").value=all[item.id+":"+pageNo]||"";
  $("binderNoteStatus").textContent="Wird automatisch gespeichert";
  target.textContent="Seite wird geladen …";
