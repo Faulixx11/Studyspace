@@ -256,6 +256,7 @@ function renderMaterials() {
   const group=sorted.filter(x=>x.subjectId===item.subjectId),index=group.findIndex(x=>x.id===item.id);
   const label=item.name||item.fileName||"Material",ext=(item.fileName||"").split(".").pop().toUpperCase();
   return `<div class="material-item material-library-item" data-material-row="${escapeHTML(item.id)}" draggable="true">
+   <button type="button" class="material-touch-grip" data-material-grip="${escapeHTML(item.id)}" aria-label="Material verschieben" title="Gedrückt halten und ziehen" style="display:flex!important;visibility:visible!important;align-items:center!important;justify-content:center!important;flex:0 0 48px!important;width:48px!important;height:52px!important;border:2px solid #70b5ff!important;border-radius:10px!important;background:#203b5d!important;color:white!important;font-size:24px!important;touch-action:none!important;user-select:none!important">⠿</button>
    <div class="material-library-title"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(subject?.name||"Kein Fach")} · ${escapeHTML(ext||"DATEI")} · ${escapeHTML(item.fileName||"")}</p></div>
    <div class="material-library-actions">
     <button type="button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} aria-label="Material nach oben verschieben" style="display:inline-flex!important;visibility:visible!important;opacity:1!important;min-width:92px;min-height:44px;padding:10px 12px;border:2px solid #69a7ff;border-radius:9px;background:#203b5d;color:#fff;font-size:15px;font-weight:700;align-items:center;justify-content:center;touch-action:manipulation">↑ Nach oben</button>
@@ -286,6 +287,49 @@ function renderMaterials() {
   saveMaterialOrder(group);
   renderMaterials();
  };
+
+ // Touch-Reordering: Griff gedrückt halten, über ein anderes Material ziehen, loslassen.
+ let touchDrag=null;
+ container.querySelectorAll("[data-material-grip]").forEach(grip=>{
+  grip.addEventListener("pointerdown",event=>{
+   if(event.pointerType==="mouse"&&event.button!==0)return;
+   const row=grip.closest("[data-material-row]");if(!row)return;
+   event.preventDefault();
+   touchDrag={id:grip.dataset.materialGrip,subjectId:data.materials.find(x=>String(x.id)===String(grip.dataset.materialGrip))?.subjectId};
+   grip.setPointerCapture?.(event.pointerId);
+   row.classList.add("material-touch-dragging");
+   row.style.opacity=".55";
+  });
+  grip.addEventListener("pointermove",event=>{
+   if(!touchDrag)return;
+   event.preventDefault();
+   const target=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-material-row]");
+   container.querySelectorAll(".material-touch-over").forEach(el=>el.classList.remove("material-touch-over"));
+   if(target&&target.dataset.materialRow!==String(touchDrag.id)){
+    const targetItem=data.materials.find(x=>String(x.id)===String(target.dataset.materialRow));
+    if(targetItem&&String(targetItem.subjectId)===String(touchDrag.subjectId))target.classList.add("material-touch-over");
+   }
+  });
+  const finish=event=>{
+   if(!touchDrag)return;
+   const moving=touchDrag;touchDrag=null;
+   const row=grip.closest("[data-material-row]");
+   const target=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-material-row]");
+   if(row){row.classList.remove("material-touch-dragging");row.style.opacity="";}
+   container.querySelectorAll(".material-touch-over").forEach(el=>el.classList.remove("material-touch-over"));
+   if(target&&target.dataset.materialRow!==String(moving.id)){
+    reorderMaterialBefore(String(moving.id),String(target.dataset.materialRow));
+   }
+  };
+  grip.addEventListener("pointerup",finish);
+  grip.addEventListener("pointercancel",()=>{
+   touchDrag=null;
+   const row=grip.closest("[data-material-row]");
+   if(row){row.classList.remove("material-touch-dragging");row.style.opacity="";}
+   container.querySelectorAll(".material-touch-over").forEach(el=>el.classList.remove("material-touch-over"));
+  });
+ });
+
  container.onclick=event=>{
   const b=event.target.closest("button");if(!b||!container.contains(b))return;
   const id=b.dataset.materialUp||b.dataset.materialDown||b.dataset.materialRename||b.dataset.materialOpen||b.dataset.materialDelete;
