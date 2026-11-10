@@ -253,10 +253,17 @@ function renderMaterials() {
                     <strong>${escapeHTML(item.name)}</strong>
                     <p>${escapeHTML(subject?.name || "Kein Fach")} · ${escapeHTML(item.fileName)}</p>
                 </div>
+                <button class="small-button" data-material-open="${item.id}">Öffnen</button>
                 <button class="small-button delete" data-material-delete="${item.id}">Entfernen</button>
             </div>
         `;
     }).join("");
+
+    container.querySelectorAll("[data-material-open]").forEach(button => {
+        button.addEventListener("click", () => {
+            window.dispatchEvent(new CustomEvent("studyspace:open-material", { detail: { id: button.dataset.materialOpen } }));
+        });
+    });
 
     container.querySelectorAll("[data-material-delete]").forEach(button => {
         button.addEventListener("click", () => {
@@ -1703,66 +1710,47 @@ applySettings();
     materialForm.addEventListener("submit", async event => {
         event.preventDefault();
         event.stopImmediatePropagation();
-
         const subjectId = document.getElementById("materialSubject").value;
         const name = document.getElementById("materialName").value.trim();
-        const fileInput = document.getElementById("materialFile");
-        const file = fileInput.files[0];
-
+        const files = Array.from(document.getElementById("materialFile").files || []);
         const topic = document.getElementById("materialTopic").value.trim();
         const subtopic = document.getElementById("materialSubtopic").value.trim();
         const description = document.getElementById("materialDescription").value.trim();
-
-        if (!subjectId || !name || !file) {
-            alert("Bitte wähle ein Fach, gib einen Titel ein und lade eine Datei hoch.");
+        if (!subjectId || !name || !files.length) {
+            alert("Bitte wähle ein Fach, gib einen Titel ein und lade mindestens eine Datei hoch.");
             return;
         }
-
-        if (file.size > 30 * 1024 * 1024) {
-            alert("Die Datei ist größer als 30 MB. Bitte verwende eine kleinere Datei.");
-            return;
-        }
-
+        const oversized = files.find(file => file.size > 30 * 1024 * 1024);
+        if (oversized) { alert("Die Datei „" + oversized.name + "“ ist größer als 30 MB."); return; }
         const button = materialForm.querySelector('button[type="submit"]');
         button.disabled = true;
-        button.textContent = "Wird gespeichert ...";
-
-        const id = createId();
-
+        const savedIds = [];
         try {
-            await saveActualFile(id, file);
-
-            data.materials.push({
-                id,
-                subjectId,
-                name,
-                fileName: file.name,
-                fileType: file.type || "Unbekannt",
-                topic,
-                subtopic,
-                description,
-                date: new Date().toISOString(),
-                fileStored: true
-            });
-
+            for (let i=0;i<files.length;i++) {
+                const file=files[i], id=createId();
+                button.textContent="Speichere "+(i+1)+" von "+files.length+" …";
+                await saveActualFile(id,file);
+                savedIds.push(id);
+                data.materials.push({
+                    id,subjectId,
+                    name:files.length===1?name:name+" · "+file.name,
+                    fileName:file.name,fileType:file.type||"application/octet-stream",
+                    topic,subtopic,description,date:new Date().toISOString(),
+                    fileStored:true,batchName:files.length>1?name:""
+                });
+            }
+            saveData();materialForm.reset();renderAll();
+            alert(files.length+" Datei(en) wurden gespeichert.");
+        } catch(error) {
+            console.error(error);
+            data.materials=data.materials.filter(item=>!savedIds.includes(item.id));
+            for(const id of savedIds){try{await deleteActualFile(id);}catch{}}
             saveData();
-
-            materialForm.reset();
-            document.getElementById("materialTopic").value = "";
-            document.getElementById("materialSubtopic").value = "";
-            document.getElementById("materialDescription").value = "";
-
-            renderAll();
-
-            alert("Material wurde vollständig gespeichert!");
-        } catch (error) {
-            console.error("Material konnte nicht gespeichert werden:", error);
-            alert("Die Datei konnte nicht gespeichert werden. Prüfe den verfügbaren Browserspeicher.");
+            alert("Upload fehlgeschlagen. Bitte prüfe den verfügbaren Speicherplatz.");
         } finally {
-            button.disabled = false;
-            button.textContent = "Material speichern";
+            button.disabled=false;button.textContent="Material speichern";
         }
-    }, true);
+    }, true);;
 
     materialSubmitButton.textContent = "Material speichern";
 
