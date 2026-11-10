@@ -205,63 +205,97 @@
   }
 
   // Erzeugt mehrere lesefreundliche Bildvarianten. Das Original bleibt unverändert.
+  // Erstellt mehrere voneinander unabhängige Varianten, damit Tesseract auch bei
+  // blassem Stift, Schatten und ungleichmäßigem Papierhintergrund eine Chance hat.
   async function prepareOCRVariants(source) {
     const bitmap = await createImageBitmap(source);
-    const maxSide = 3000;
-    const scale = Math.min(3, Math.max(1.5, 1800 / Math.max(bitmap.width, bitmap.height)));
+    const maxSide = 2600;
+    const scale = Math.min(2.8, Math.max(1.6, 1900 / Math.max(bitmap.width, bitmap.height)));
     const factor = Math.min(scale, maxSide / Math.max(bitmap.width, bitmap.height));
     const width = Math.max(1, Math.round(bitmap.width * factor));
     const height = Math.max(1, Math.round(bitmap.height * factor));
     const base = document.createElement("canvas");
-    base.width=width;base.height=height;
-    const ctx=base.getContext("2d",{willReadFrequently:true});
-    ctx.fillStyle="#fff";ctx.fillRect(0,0,width,height);
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-    ctx.drawImage(bitmap,0,0,width,height);
-    bitmap.close?.();
+    base.width = width; base.height = height;
+    const ctx = base.getContext("2d", {willReadFrequently:true});
+    ctx.fillStyle = "#fff"; ctx.fillRect(0,0,width,height);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap,0,0,width,height); bitmap.close?.();
 
-    const original = await new Promise(resolve=>base.toBlob(resolve,"image/png"));
-    const gray = ctx.getImageData(0,0,width,height);
-    let sum=0,count=0;
-    for(let i=0;i<gray.data.length;i+=4){
-      const lum=0.299*gray.data[i]+0.587*gray.data[i+1]+0.114*gray.data[i+2];
-      sum+=lum;count++;
-      gray.data[i]=gray.data[i+1]=gray.data[i+2]=lum;
+    const toBlob = canvas => new Promise(resolve => canvas.toBlob(resolve,"image/png"));
+    const original = await toBlob(base);
+    const sourceData = ctx.getImageData(0,0,width,height);
+    const gray = new Uint8ClampedArray(width*height);
+    const hist = new Uint32Array(256);
+    let sum=0;
+    for(let p=0,i=0;p<gray.length;p++,i+=4){
+      const v=Math.max(0,Math.min(255,Math.round(0.299*sourceData.data[i]+0.587*sourceData.data[i+1]+0.114*sourceData.data[i+2])));
+      gray[p]=v;hist[v]++;sum+=v;
     }
-    const mean=sum/Math.max(1,count);
-    const contrast=document.createElement("canvas");contrast.width=width;contrast.height=height;
-    const cctx=contrast.getContext("2d",{willReadFrequently:true});
-    const contrastData=new ImageData(new Uint8ClampedArray(gray.data),width,height);
-    const gain=1.45;
-    for(let i=0;i<contrastData.data.length;i+=4){
-      const v=Math.max(0,Math.min(255,(contrastData.data[i]-mean)*gain+mean));
-      contrastData.data[i]=contrastData.data[i+1]=contrastData.data[i+2]=v;
-      contrastData.data[i+3]=255;
-    }
-    cctx.putImageData(contrastData,0,0);
-    const enhanced=await new Promise(resolve=>contrast.toBlob(resolve,"image/png"));
+    const mean=sum/gray.length;
+    const makeCanvas = data => {
+      const c=document.createElement("canvas");c.width=width;c.height=height;
+      const cctx=c.getContext("2d",{willReadFrequently:true});
+      const image=cctx.createImageData(width,height);
+      for(let p=0,i=0;p<data.length;p++,i+=4){const v=data[p];image.data[i]=image.data[i+1]=image.data[i+2]=v;image.data[i+3]=255;}
+      cctx.putImageData(image,0,0);return c;
+    };
+    const contrastData=new Uint8ClampedArray(gray.length);
+    for(let p=0;p<gray.length;p++) contrastData[p]=Math.max(0,Math.min(255,Math.round((gray[p]-mean)*1.65+mean)));
+    const contrastCanvas=makeCanvas(contrastData);
 
-    const threshold=document.createElement("canvas");threshold.width=width;threshold.height=height;
-    const tctx=threshold.getContext("2d",{willReadFrequently:true});
-    const binary=new ImageData(new Uint8ClampedArray(contrastData.data),width,height);
-    const cut=Math.max(105,Math.min(205,mean-18));
-    for(let i=0;i<binary.data.length;i+=4){
-      const v=binary.data[i]<cut?0:255;
-      binary.data[i]=binary.data[i+1]=binary.data[i+2]=v;binary.data[i+3]=255;
+    // Otsu-Schwelle passt sich an die Helligkeitsverteilung des jeweiligen Fotos an.
+    let total=gray.length, weighted=0;
+    for(let i=0;i<256;i++)weighted+=i*hist[i];
+    let sumB=0,wB=0,maxVariance=-1,otsu=150;
+    for(let t=0;t<256;t++){
+      wB+=hist[t];if(!wB)continue;
+      const wF=total-wB;if(!wF)break;
+      sumB+=t*hist[t];
+      const mB=sumB/wB,mF=(weighted-sumB)/wF;
+      const variance=wB*wF*(mB-mF)*(mB-mF);
+      if(variance>maxVariance){maxVariance=variance;otsu=t;}
     }
-    tctx.putImageData(binary,0,0);
-    const bw=await new Promise(resolve=>threshold.toBlob(resolve,"image/png"));
-    return [{name:"vergrößert",blob:original},{name:"Kontrast",blob:enhanced},{name:"Schwarzweiß",blob:bw}].filter(x=>x.blob);
+    const globalBW=new Uint8ClampedArray(gray.length);
+    for(let p=0;p<gray.length;p++)globalBW[p]=gray[p]>(otsu-8)?255:0;
+
+    // Lokale Hintergrundkorrektur: hilfreich bei Schatten und vergilbtem/strukturiertem Papier.
+    const blur=document.createElement("canvas");blur.width=width;blur.height=height;
+    const bctx=blur.getContext("2d");
+    bctx.filter="blur(16px)";bctx.drawImage(base,0,0);bctx.filter="none";
+    const bg=bctx.getImageData(0,0,width,height).data;
+    const adaptive=new Uint8ClampedArray(gray.length);
+    for(let p=0,i=0;p<gray.length;p++,i+=4){
+      const background=0.299*bg[i]+0.587*bg[i+1]+0.114*bg[i+2];
+      adaptive[p]=(gray[p] < background-13)?0:255;
+    }
+
+    // Sanft geschärfte Graustufenvariante, ohne die Originalaufnahme zu verwerfen.
+    const sharp=new Uint8ClampedArray(gray.length);
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const p=y*width+x;
+      const left=gray[y*width+Math.max(0,x-1)],right=gray[y*width+Math.min(width-1,x+1)];
+      const up=gray[Math.max(0,y-1)*width+x],down=gray[Math.min(height-1,y+1)*width+x];
+      sharp[p]=Math.max(0,Math.min(255,Math.round(gray[p]*1.8-(left+right+up+down)*0.2)));
+    }
+    return [
+      {name:"Original vergrößert",blob:original},
+      {name:"Graustufen mit Kontrast",blob:await toBlob(contrastCanvas)},
+      {name:"Automatische Schwelle",blob:await toBlob(makeCanvas(globalBW))},
+      {name:"Schattenkorrektur",blob:await toBlob(makeCanvas(adaptive))},
+      {name:"Geschärfte Schrift",blob:await toBlob(makeCanvas(sharp))}
+    ].filter(v=>v.blob);
   }
 
   function ocrQuality(result) {
     const text=String(result.data?.text||"").trim();
     const confidence=Number(result.data?.confidence)||0;
-    const letters=(text.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length;
-    const weird=(text.match(/[^A-Za-zÀ-ÿÄÖÜäöüß0-9\\s.,;:!?()'’‘-]/g)||[]).length;
+    const chars=(text.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length;
     const tokens=text.split(/\\s+/).filter(Boolean);
-    const noisePenalty=(weird/Math.max(1,text.length))*35+(tokens.filter(t=>t.length>24).length*4);
-    return confidence+(letters/Math.max(1,text.length))*8-noisePenalty;
+    const odd=(text.match(/[^A-Za-zÀ-ÿÄÖÜäöüß0-9\\s.,;:!?()'’‘-]/g)||[]).length;
+    const tokenPenalty=tokens.filter(t=>t.length>22||/[|_~{}\\\\]/.test(t)).length;
+    const letterRatio=chars/Math.max(1,text.length);
+    const usefulText=Math.min(chars,180)*0.045;
+    return confidence + letterRatio*7 + usefulText - odd/Math.max(1,text.length)*28 - tokenPenalty*2.5;
   }
 
   async function recognizePass(worker, image, psm) {
@@ -273,36 +307,44 @@
     if(!selectedSet())return alert("Bitte zuerst ein Lernset auswählen.");
     if(!uploads.length)return;
     const status=$("fcx-ocr-status"),button=$("fcx-run-ocr");button.disabled=true;
-    status.textContent="Bilder werden optimiert und mehrfach ausgewertet …";
+    status.textContent="Fotos werden vorbereitet. Die erweiterte Handschrift-Erkennung kann etwas dauern …";
     try {
       const mode=$("fcx-language").value;
       const languages=mode==="auto"?["fra","deu","eng","spa","ita"]:[mode];
       const labels={deu:"Deutsch",eng:"Englisch",fra:"Französisch",spa:"Spanisch",ita:"Italienisch"};
       let textOut="";
       for(let i=0;i<uploads.length;i++){
-        const u=uploads[i];status.textContent="Bild "+(i+1)+" von "+uploads.length+": Bildqualität wird verbessert …";
+        const u=uploads[i];
+        status.textContent="Bild "+(i+1)+" von "+uploads.length+": fünf Bildvarianten werden erstellt …";
         const variants=await prepareOCRVariants(u.crop||u.blob);
         let lang=languages[0],bestDetect=-Infinity;
-        // Im Automatikmodus zunächst die Sprache auf dem kontrastverstärkten Bild bestimmen.
         if(mode==="auto"){
           for(const candidateLang of languages){
-            status.textContent="Bild "+(i+1)+"/"+uploads.length+" · Sprache wird verglichen: "+labels[candidateLang];
+            status.textContent="Bild "+(i+1)+"/"+uploads.length+" · Sprachvergleich: "+labels[candidateLang];
             const worker=await getWorker(candidateLang);
             try{
-              const result=await recognizePass(worker,variants[1]?.blob||variants[0].blob,11);
-              const quality=ocrQuality(result);
-              if(quality>bestDetect){bestDetect=quality;lang=candidateLang;}
+              for(const variant of [variants[0],variants[1],variants[3]].filter(Boolean)){
+                for(const psm of [6,11]){
+                  const result=await recognizePass(worker,variant.blob,psm);
+                  const quality=ocrQuality(result);
+                  if(quality>bestDetect){bestDetect=quality;lang=candidateLang;}
+                }
+              }
             }finally{await worker.terminate();}
           }
         }
-        status.textContent="Bild "+(i+1)+"/"+uploads.length+" · mehrere Erkennungsdurchläufe für "+labels[lang];
+        status.textContent="Bild "+(i+1)+"/"+uploads.length+" · ausführliche Erkennung auf "+labels[lang]+" …";
         const worker=await getWorker(lang,m=>{
-          if(m.status==="recognizing text")status.textContent="Bild "+(i+1)+"/"+uploads.length+" · "+labels[lang]+" · "+Math.round((m.progress||0)*100)+" %";
+          if(m.status==="recognizing text")status.textContent="Bild "+(i+1)+"/"+uploads.length+" · "+labels[lang]+" · Durchlauf "+Math.round((m.progress||0)*100)+" %";
         });
         let best={text:"",confidence:0,quality:-Infinity,variant:"",psm:0};
         try{
+          const layouts=[4,6,11,12,13];
+          let pass=0;const total=variants.length*layouts.length;
           for(const variant of variants){
-            for(const psm of [3,6,11]){
+            for(const psm of layouts){
+              pass++;
+              status.textContent="Bild "+(i+1)+"/"+uploads.length+" · "+labels[lang]+" · Variante "+variant.name+" · Analyse "+pass+"/"+total;
               const result=await recognizePass(worker,variant.blob,psm);
               const quality=ocrQuality(result);
               if(quality>best.quality){
@@ -311,11 +353,11 @@
             }
           }
         }finally{await worker.terminate();}
-        textOut+="\n\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Variante: "+best.variant+" · Layout: "+best.psm+" ---\n"+best.text;
+        textOut+="\\n\\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Bildoptimierung: "+best.variant+" · Layout: "+best.psm+" ---\\n"+best.text;
         variants.forEach(v=>{try{URL.revokeObjectURL(v.blob);}catch{}});
       }
       $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
-      status.textContent="Mehrfacherkennung abgeschlossen. Die beste Textvariante wurde ausgewählt. Bitte kontrolliere besonders Akzente, Apostrophe und Bindestriche.";
+      status.textContent="Erweiterte Erkennung abgeschlossen. Prüfe den Text am Foto – besonders ähnliche Buchstaben, Akzente und Endungen.";
     }catch(e){console.error(e);status.textContent="Fehler bei der Texterkennung: "+e.message;}
     finally{button.disabled=!uploads.length||!selectedSet();}
   }
