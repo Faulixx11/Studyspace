@@ -73,7 +73,7 @@
           <div class="fcx-panel-head"><div><h2>Adaptives Training</h2><p id="fcx-review-subtitle">Wähle deine Trainingsrichtung.</p></div><span class="fcx-chip" id="fcx-review-count">0 Karten</span></div>
           <div class="fcx-training-settings">
             <label class="fcx-field">Trainingsrichtung
-              <select id="fcx-direction"><option value="forward">Französisch → Deutsch</option><option value="reverse">Deutsch → Französisch</option><option value="mixed">Gemischt (beide Richtungen)</option></select>
+              <select id="fcx-direction"><option value="forward">Fremdsprache → Deutsch</option><option value="reverse">Deutsch → Fremdsprache</option><option value="mixed">Gemischt (beide Richtungen)</option></select>
             </label>
             <div class="fcx-progress-box"><div><span>Beherrschung dieses Sets</span><strong id="fcx-mastery-percent">0 %</strong></div><div class="fcx-progress-track"><div id="fcx-mastery-bar"></div></div><small id="fcx-mastery-detail">Noch keine Antworten bewertet.</small></div>
           </div>
@@ -228,12 +228,13 @@
     const difficult=list.filter(isDifficultCard);
     const attempted=list.filter(c=>statsFor(c).attempts>0);
     const mastered=list.filter(isMasteredCard);
-    const mastery=attempted.length?Math.round(mastered.length/list.length*100):0;
+    const mastery=list.length?Math.round(list.reduce((sum,card)=>{const st=statsFor(card);if(isMasteredCard(card))return sum+100;const accuracy=st.attempts?st.correct/st.attempts:0;return sum+(st.attempts?Math.min(95,Math.round((Math.min(st.streak,3)/3)*85+accuracy*10)):0);},0)/list.length):0;
     $("fcx-review-count").textContent=list.length+" Karten";
     $("fcx-list-count").textContent=(difficultOnly?difficult.length:list.length)+" Karten";
     $("fcx-difficult-count").textContent=difficult.length;
     $("fcx-mastery-percent").textContent=mastery+" %";
-    $("fcx-mastery-bar").style.width=mastery+"%";
+    $("fcx-mastery-bar").style.setProperty("width",mastery+"%","important");
+    $("fcx-mastery-bar").setAttribute("aria-valuenow",String(mastery));
     $("fcx-mastery-detail").textContent=attempted.length?mastered.length+" von "+list.length+" Karten sicher gelernt · "+difficult.length+" noch schwierig":"Noch keine Antworten bewertet.";
     $("fcx-review-subtitle").textContent=set?esc(subjects().find(s=>s.id===subjectId)?.name||"")+" · "+esc(set.name):"Wähle ein Fach und erstelle ein Lernset.";
     $("fcx-direction").value=reviewDirection;
@@ -281,7 +282,7 @@
     if(directionCardId!==card.id){currentDirection=reviewDirection==="mixed"?(Math.random()<0.5?"forward":"reverse"):reviewDirection;directionCardId=card.id;}
     const question=currentDirection==="forward"?card.question:card.answer;
     const answer=currentDirection==="forward"?card.answer:card.question;
-    $("fcx-review-label").textContent=currentDirection==="forward"?"FRANZÖSISCH → DEUTSCH":"DEUTSCH → FRANZÖSISCH";
+    $("fcx-review-label").textContent=currentDirection==="forward"?"FREMDSPRACHE → DEUTSCH":"DEUTSCH → FREMDSPRACHE";
     $("fcx-review-question").textContent=question;
     $("fcx-review-answer").textContent=answer;
     $("fcx-review-answer").hidden=!answerShown;
