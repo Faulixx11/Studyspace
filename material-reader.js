@@ -171,7 +171,6 @@ function openImageFullscreen(src,alt,annotationCanvas){
  });
  const image=document.createElement("img");
  image.alt=alt||"Materialbild";
- image.src=src;
  if(annotationCanvas){
   image.addEventListener("load",()=>{
    try{
@@ -185,6 +184,7 @@ function openImageFullscreen(src,alt,annotationCanvas){
    }catch(error){console.warn("Annotationen konnten nicht in die Vollbildansicht übernommen werden.",error);}
   },{once:true});
  }
+ image.src=src;
 
  Object.assign(image.style,{display:"block",maxWidth:"100%",maxHeight:"100%",width:"auto",height:"auto",objectFit:"contain",touchAction:"pinch-zoom"});
  const closeButton=document.createElement("button");
