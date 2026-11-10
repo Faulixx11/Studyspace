@@ -24,3 +24,7 @@
 .fcx-list-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .fcx-list-tabs span{opacity:.8}
 @media(max-width:650px){.fcx-training-settings{grid-template-columns:1fr}.fcx-feedback{align-items:stretch}.fcx-feedback .fcx-btn{flex:1}}
+
+/* Progress bar: explicit dimensions and visible fill */
+.fcx-progress-track{display:block!important;width:100%!important;height:9px!important;min-height:9px!important;overflow:hidden!important;position:relative!important}
+.fcx-progress-track #fcx-mastery-bar{display:block!important;height:100%!important;min-height:9px!important;max-width:100%!important;border-radius:20px!important;opacity:1!important;visibility:visible!important;transition:width .3s ease!important}
