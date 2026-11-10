@@ -253,7 +253,7 @@ function renderMaterials() {
                     <strong>${escapeHTML(item.name)}</strong>
                     <p>${escapeHTML(subject?.name || "Kein Fach")} · ${escapeHTML(item.fileName)}</p>
                 </div>
-                <button class="small-button" data-material-open="${item.id}">Öffnen</button>
+                <button class="small-button" data-material-open="${item.id}">Hefter öffnen</button>
                 <button class="small-button delete" data-material-delete="${item.id}">Entfernen</button>
             </div>
         `;
