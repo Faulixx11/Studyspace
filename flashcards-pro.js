@@ -50,6 +50,9 @@
             <button class="fcx-btn fcx-primary" id="fcx-new-set" type="button">+ Set erstellen</button>
           </div>
           <div class="fcx-set-detail" id="fcx-set-info"></div>
+          <label class="fcx-field" style="margin-top:12px">Material für neue Karten / Importe (optional)
+            <select id="fcx-material"><option value="">Kein bestimmtes Material</option></select>
+          </label>
           <div class="fcx-set-actions"><button class="fcx-btn" id="fcx-rename-set" type="button">Set umbenennen</button><button class="fcx-btn fcx-danger" id="fcx-delete-set" type="button">Set löschen</button></div>
         </section>
         <div class="fcx-columns">
@@ -101,7 +104,7 @@
     $("fcx-card-form").addEventListener("submit", e => {
       e.preventDefault();
       if (!requireSet()) return;
-      cards().push({id:makeId(),subjectId,setId,question:$("fcx-question").value.trim(),answer:$("fcx-answer").value.trim(),known:false});
+      cards().push({id:makeId(),subjectId,setId,materialId:$("fcx-material").value||"",question:$("fcx-question").value.trim(),answer:$("fcx-answer").value.trim(),known:false});
       save(); e.target.reset(); currentIndex=activeCards().length-1; render();
     });
     // Import-Button wird zentral über den Seiten-Listener behandelt.
@@ -204,7 +207,7 @@
       const key=question.toLocaleLowerCase()+"|"+answer.toLocaleLowerCase();
       if(existing.has(key)){duplicates++;return;}
       existing.add(key);
-      cards().push({id:makeId(),subjectId,setId,question,answer,known:false});
+      cards().push({id:makeId(),subjectId,setId,materialId:$("fcx-material").value||"",question,answer,known:false});
       added++;
     });
     save(); $("fcx-bulk-text").value="";
@@ -221,6 +224,11 @@
     if(!available.some(s=>s.id===setId)) setId=available[0]?.id||"";
     setSelect.innerHTML=available.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("") || '<option value="">Noch kein Lernset</option>';
     setSelect.value=setId;
+    const materialSelect=$("fcx-material");
+    const previousMaterial=materialSelect.value;
+    const availableMaterials=(data.materials||[]).filter(m=>m.subjectId===subjectId);
+    materialSelect.innerHTML='<option value="">Kein bestimmtes Material</option>'+availableMaterials.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name||m.fileName||"Material")+'</option>').join("");
+    materialSelect.value=availableMaterials.some(m=>m.id===previousMaterial)?previousMaterial:"";
     const set=activeSet(),list=activeCards();
     if(currentCardId && !list.some(c=>c.id===currentCardId))currentCardId=null;
     $("fcx-set-info").innerHTML=set?'<strong>'+esc(set.name)+'</strong><span>'+list.length+' Karte(n) · Fach: '+esc(subjects().find(s=>s.id===subjectId)?.name||"")+'</span>':'<span>Erstelle ein Lernset für das ausgewählte Fach.</span>';
@@ -295,6 +303,7 @@
     const st=statsFor(card);st.attempts++;if(knew){st.correct++;st.streak++;}else{st.wrong++;st.streak=0;}
     st.history.push(!!knew);if(st.history.length>20)st.history=st.history.slice(-20);
     st.lastReviewed=Date.now();
+    if(window.StudySpaceScheduler) window.StudySpaceScheduler.review(card,knew);
     recentCardIds.push(card.id);if(recentCardIds.length>3)recentCardIds.shift();
     save();
     const rate=st.attempts?Math.round(st.correct/st.attempts*100):0;
