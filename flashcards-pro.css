@@ -3357,3 +3357,14 @@ button.calendar-day:hover {
 .fcx-candidate{padding:15px 0;border-bottom:1px solid var(--border-color,#292e3c);display:flex;flex-direction:column;gap:10px}.fcx-check{font-size:12px;color:var(--text-secondary,#9299aa)}.fcx-check input{accent-color:#8b5cf6}
 .fcx-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.78);display:grid;place-items:center;padding:18px}.fcx-modal[hidden]{display:none}.fcx-modal-card{width:min(900px,100%);max-height:90vh;overflow:auto;padding:18px;border:1px solid var(--border-color,#34394a);border-radius:15px;background:var(--panel-bg,#151823)}#fcx-crop-stage{position:relative;display:inline-block;max-width:100%;margin:auto;touch-action:none;line-height:0}#fcx-crop-image{display:block;max-width:100%;max-height:62vh;object-fit:contain;user-select:none;pointer-events:none}#fcx-crop-selection{position:absolute;display:none;border:2px solid #a78bfa;background:rgba(167,139,250,.15);pointer-events:none;box-sizing:border-box}.fcx-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
 @media(max-width:850px){.fcx-columns{grid-template-columns:1fr}}@media(max-width:600px){.fcx-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.fcx-stats>div{padding:12px}.fcx-stats strong{font-size:20px}.fcx-set-row{align-items:stretch;flex-direction:column}.fcx-set-detail,.fcx-list-item{align-items:flex-start;flex-direction:column}.fcx-list-buttons{width:100%}.fcx-hero{padding:19px}.fcx-hero h1{font-size:23px}}
+
+
+/* Textbasierte Karteikarten-Sets */
+.fcx-set-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}
+.fcx-set-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.fcx-help{font-size:11px;line-height:1.55;color:var(--text-secondary,#9299aa)}
+.fcx-field input{box-sizing:border-box;width:100%;padding:11px 12px;border:1px solid var(--border-color,#34394a);border-radius:9px;background:var(--input-bg,#10131d);color:var(--text-primary,#f1f3fa);font:inherit;font-size:13px}
+.fcx-set-row select{min-width:0}
+.fcx-set-row button{white-space:nowrap}
+.fcx-btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:760px){.fcx-set-row{grid-template-columns:1fr}.fcx-set-row button{width:100%}}
