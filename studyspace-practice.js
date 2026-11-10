@@ -183,7 +183,7 @@
       $("spx-again").addEventListener("click",startQuiz);renderSchedule();return;
     }
     const progress=Math.round(quiz.index/quiz.cards.length*100);
-    area.innerHTML='<h2>Frage '+(quiz.index+1)+' von '+quiz.cards.length+'</h2><div class="spx-progress"><span style="width:'+progress+'%"></span></div><div class="spx-question">'+esc(card.question)+'</div><div id="spx-answer" hidden class="spx-answer"><strong>Musterantwort</strong><p>'+esc(card.answer)+'</p></div><div class="spx-actions"><button class="spx-btn primary" id="spx-reveal">Antwort anzeigen</button></div><div id="spx-grade" hidden><p class="spx-muted">Wie sicher war deine Antwort?</p><div class="spx-actions"><button class="spx-btn primary" id="spx-good">Gewusst</button><button class="spx-btn" id="spx-again-grade">Nicht gewusst</button></div></div>';
+    area.innerHTML='<h2>Frage '+(quiz.index+1)+' von '+quiz.cards.length+'</h2><div class="spx-progress"><span style="width:'+progress+'%"></span></div><div class="spx-question">'+esc(card.answer)+'</div><div id="spx-answer" hidden class="spx-answer"><strong>Französische Übersetzung</strong><p>'+esc(card.question)+'</p></div><div class="spx-actions"><button class="spx-btn primary" id="spx-reveal">Antwort anzeigen</button></div><div id="spx-grade" hidden><p class="spx-muted">Wie sicher war deine Antwort?</p><div class="spx-actions"><button class="spx-btn primary" id="spx-good">Gewusst</button><button class="spx-btn" id="spx-again-grade">Nicht gewusst</button></div></div>';
     $("spx-reveal").addEventListener("click",()=>{
       $("spx-answer").hidden=false;$("spx-grade").hidden=false;$("spx-reveal").hidden=true;
     });
