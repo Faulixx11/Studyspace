@@ -77,8 +77,8 @@ async function pushCloud(){
   status("Dateien und Lerndaten werden in die Cloud übertragen …");
   const rows=await getFiles(),manifest=[];
   for(const row of rows){const blob=row.file instanceof Blob?row.file:(row.file?.blob instanceof Blob?row.file.blob:null);if(!blob)continue;const id=String(row.id).replace(/[^a-zA-Z0-9_-]/g,"_"),path=user.id+"/"+id;const {error}=await client.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:blob.type||"application/octet-stream"});if(error)throw error;manifest.push({id:row.id,path,name:row.file?.name||row.name||"",type:blob.type||"application/octet-stream",lastModified:row.file?.lastModified||null,savedAt:row.savedAt||null});}
-  const payload={localStorage:collectLocal(),files:manifest,version:1};const {error}=await client.from(TABLE).upsert({user_id:user.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"});if(error)throw error;
-  saveMeta({...readMeta(),lastSync:new Date().toISOString(),accountId:user.id});status("Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.");
+  const payload={localStorage:collectLocal(),files:manifest,version:1};const syncedAt=new Date().toISOString();const {error}=await client.from(TABLE).upsert({user_id:user.id,payload,updated_at:syncedAt},{onConflict:"user_id"});if(error)throw error;
+  saveMeta({...readMeta(),lastSync:syncedAt,lastRemoteAt:syncedAt,accountId:user.id});status("Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.");
  }catch(e){console.error("StudySpace Cloud Sync",e);status("Synchronisierung fehlgeschlagen: "+e.message,true);}finally{busy=false;}
 }
 async function fetchRemote(){const {data,error}=await client.from(TABLE).select("payload,updated_at").eq("user_id",user.id).maybeSingle();if(error)throw error;return data||null;}
