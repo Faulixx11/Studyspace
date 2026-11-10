@@ -2813,6 +2813,7 @@ Beantworte die konkrete Frage vollständig.
     let pdfModule = null;
     let ocrModule = null;
     let ocrWorker = null;
+    const OCR_VERSION = "2026-11-10-htr-v1";
 
     // --------------------------------------------------
     // STATUSANZEIGE
@@ -2883,6 +2884,7 @@ Beantworte die konkrete Frage vollständig.
                 store.put({
                     ...request.result,
                     extractedText,
+                    extractionVersion: OCR_VERSION,
                     extractedAt: new Date().toISOString()
                 });
             };
@@ -2937,36 +2939,42 @@ Beantworte die konkrete Frage vollständig.
         setStatus("PDF wird untersucht ...");
 
         const buffer = await file.arrayBuffer();
-
-        const pdf = await pdfjs.getDocument({
-            data: buffer
-        }).promise;
-
+        const pdf = await pdfjs.getDocument({ data: buffer }).promise;
         const pageLimit = Math.min(pdf.numPages, 40);
         const pages = [];
 
         for (let number = 1; number <= pageLimit; number++) {
-            setStatus(
-                `PDF: Seite ${number} von ${pageLimit} wird gelesen ...`
-            );
-
+            setStatus("PDF: Seite " + number + " von " + pageLimit + " wird gelesen ...");
             const page = await pdf.getPage(number);
             const content = await page.getTextContent();
+            const pageText = content.items.map(item => item.str || "").join(" ").trim();
 
-            const pageText = content.items
-                .map(item => item.str || "")
-                .join(" ");
+            if (pageText.length >= 45) {
+                pages.push("Seite " + number + ":\n" + pageText);
+                continue;
+            }
 
-            pages.push(`Seite ${number}:\n${pageText}`);
+            // Leere oder fast leere Text-Ebene: Die Seite ist wahrscheinlich ein Scan.
+            setStatus("PDF-Seite " + number + " ist ein Scan – Texterkennung läuft ...");
+            const viewport = page.getViewport({ scale: 1.65 });
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+            const context = canvas.getContext("2d", { alpha: false });
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: context, viewport }).promise;
+            const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+
+            let scannedText = "";
+            if (imageBlob) scannedText = await readImage(imageBlob);
+            pages.push("Seite " + number + " (Scan):\n" + (scannedText || pageText || "[Kein lesbarer Text erkannt]"));
         }
 
         let result = pages.join("\n\n");
-
         if (pdf.numPages > pageLimit) {
-            result +=
-                `\n\nHinweis: Nur die ersten ${pageLimit} von ${pdf.numPages} Seiten wurden gelesen.`;
+            result += "\n\nHinweis: Nur die ersten " + pageLimit + " von " + pdf.numPages + " Seiten wurden gelesen.";
         }
-
         return result;
     }
 
@@ -3022,13 +3030,54 @@ Beantworte die konkrete Frage vollständig.
     }
 
     async function readImage(file) {
-        const worker = await getOcrWorker();
+        let handwritingText = "";
 
-        setStatus("Text auf dem Foto wird erkannt ...");
+        // Primär: spezialisiertes deutsches Handschriftmodell (lokal, kostenlos).
+        try {
+            if (!window.StudySpaceHandwritingOCR) {
+                await import("./handwriting-ocr.js");
+            }
 
-        const result = await worker.recognize(file);
+            if (window.StudySpaceHandwritingOCR) {
+                const result = await window.StudySpaceHandwritingOCR.recognize(file, {
+                    onProgress: setStatus
+                });
+                handwritingText = (result.text || "").trim();
+            }
+        } catch (error) {
+            console.warn("Handschrifterkennung nicht verfügbar – Tesseract übernimmt:", error);
+            setStatus("Handschriftmodell nicht verfügbar – klassische Erkennung wird verwendet ...");
+        }
 
-        return result.data.text || "";
+        // Zweite Engine: Tesseract ist besonders für Druckschrift hilfreich.
+        let printedText = "";
+        let confidence = 0;
+        try {
+            const worker = await getOcrWorker();
+            setStatus("Zweite Erkennung für Druckschrift und schwer lesbare Stellen läuft ...");
+            const result = await worker.recognize(file);
+            printedText = (result.data.text || "").trim();
+            confidence = Number(result.data.confidence || 0);
+        } catch (error) {
+            console.warn("Tesseract konnte das Bild nicht lesen:", error);
+        }
+
+        const handwritingUseful = handwritingText.replace(/[^\p{L}\p{N}]/gu, "").length >= 8;
+        const printUseful = printedText.replace(/[^\p{L}\p{N}]/gu, "").length >= 8;
+
+        if (handwritingUseful && (!printUseful || confidence < 62)) {
+            setStatus("Deutsche Handschrifterkennung abgeschlossen. Bitte erkennte Wörter mit dem Foto vergleichen.");
+            return handwritingText;
+        }
+
+        if (printUseful && (!handwritingUseful || confidence >= 62)) {
+            setStatus("Texterkennung abgeschlossen. Bitte erkennte Wörter mit dem Foto vergleichen.");
+            return printedText;
+        }
+
+        if (handwritingUseful) return handwritingText;
+        if (printUseful) return printedText;
+        return "";
     }
 
     // --------------------------------------------------
@@ -3050,7 +3099,7 @@ Beantworte die konkrete Frage vollständig.
             throw new Error("Originaldatei wurde nicht gefunden.");
         }
 
-        if (record.extractedText) {
+        if (record.extractedText && record.extractionVersion === OCR_VERSION) {
             return record.extractedText;
         }
 
