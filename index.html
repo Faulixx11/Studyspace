@@ -36,12 +36,6 @@
             <button class="nav-item" data-page="flashcards">
                 <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
             </button>
-            <button class="nav-item" data-page="planner">
-                <span class="nav-icon">◷</span><span class="nav-text">Lernplan</span>
-            </button>
-            <button class="nav-item" data-page="progress">
-                <span class="nav-icon">▥</span><span class="nav-text">Fortschritt</span>
-            </button>
         </nav>
 
         <div class="sidebar-bottom">
@@ -73,24 +67,6 @@
                 <button class="primary-button" data-goto="subjects">Meine Fächer öffnen →</button>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">Meine Fächer</span>
-                    <strong id="dashboardSubjectCount">0</strong>
-                    <span class="stat-description">Angelegte Schulfächer</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Karteikarten</span>
-                    <strong id="dashboardCardCount">0</strong>
-                    <span class="stat-description">Gespeicherte Lernkarten</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Lernaufgaben</span>
-                    <strong id="dashboardTaskCount">0</strong>
-                    <span class="stat-description">Offene Aufgaben</span>
-                </div>
-            </div>
-
             <div class="section">
                 <div class="section-heading">
                     <div>
@@ -103,6 +79,11 @@
                         <span class="card-icon blue">▤</span>
                         <h3>Meine Fächer</h3>
                         <p>Verwalte deine Schulfächer und Themen.</p>
+                    </button>
+                    <button class="dashboard-card" data-goto="cockpit">
+                        <span class="card-icon cyan">◷</span>
+                        <h3>Lerncockpit</h3>
+                        <p>Plane deine Lernzeit und behalte alles im Blick.</p>
                     </button>
                     <button class="dashboard-card" data-goto="tutor">
                         <span class="card-icon purple">✧</span>
@@ -119,12 +100,7 @@
                         <h3>Karteikarten</h3>
                         <p>Wiederhole Inhalte und festige dein Wissen.</p>
                     </button>
-                    <button class="dashboard-card" data-goto="planner">
-                        <span class="card-icon pink">◷</span>
-                        <h3>Lernplan</h3>
-                        <p>Plane deine nächsten Lernziele.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="progress">
+<button class="dashboard-card" data-goto="progress">
                         <span class="card-icon cyan">▥</span>
                         <h3>Fortschritt</h3>
                         <p>Behalte deine Entwicklung im Blick.</p>
@@ -132,16 +108,6 @@
                 </div>
             </div>
 
-            <div class="section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Deine nächsten Aufgaben</h2>
-                        <p>Was steht noch an?</p>
-                    </div>
-                    <button class="secondary-button" data-goto="planner">Zum Lernplan</button>
-                </div>
-                <div id="dashboardTasks" class="panel empty-state">Noch keine Aufgaben angelegt.</div>
-            </div>
         </section>
 
         <!-- FÄCHER -->
@@ -333,42 +299,6 @@
         </section>
 
         <!-- LERNPLAN -->
-        <section class="page" id="page-planner">
-            <div class="page-intro">
-                <h1>Mein Lernplan</h1>
-                <p>Plane Aufgaben und behalte anstehende Lernziele im Blick.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Neue Lernaufgabe</h3>
-                <form id="taskForm" class="form-grid">
-                    <input id="taskName" placeholder="Was möchtest du lernen?" required>
-                    <select id="taskSubject"></select>
-                    <input id="taskDate" type="date">
-                    <button class="primary-button" type="submit">Aufgabe hinzufügen</button>
-                </form>
-            </div>
-            <div class="section-heading"><h2>Deine Aufgaben</h2></div>
-            <div id="taskList" class="material-list"></div>
-        </section>
-
-        <!-- FORTSCHRITT -->
-        <section class="page" id="page-progress">
-            <div class="page-intro">
-                <h1>Dein Fortschritt</h1>
-                <p>Behalte deine Lernaktivitäten im Überblick.</p>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card"><span class="stat-label">Fächer</span><strong id="progressSubjects">0</strong><span class="stat-description">Angelegt</span></div>
-                <div class="stat-card"><span class="stat-label">Karteikarten</span><strong id="progressCards">0</strong><span class="stat-description">Erstellt</span></div>
-                <div class="stat-card"><span class="stat-label">Erledigte Aufgaben</span><strong id="progressTasks">0</strong><span class="stat-description">Abgeschlossen</span></div>
-            </div>
-            <div class="panel">
-                <h3>Deine Fächer</h3>
-                <div id="progressSubjectList"></div>
-            </div>
-        </section>
-
         <!-- EINSTELLUNGEN -->
         <section class="page" id="page-settings">
             <div class="page-intro">
@@ -396,8 +326,12 @@
             </div>
             <div class="panel">
                 <h3>Deine Daten</h3>
-                <p class="muted">Deine Daten liegen zunächst lokal in diesem Browser.</p>
-                <button class="secondary-button" id="exportButton">Daten exportieren</button>
+                <p class="muted">Sichere oder übertrage deine StudySpace-Daten einschließlich Lernsets, Lernzeiten und hochgeladener Hefterdateien auf ein anderes Gerät.</p>
+                <button class="secondary-button" id="exportButton">Komplettsicherung herunterladen</button>
+                <label class="setting-row">Komplettsicherung auf diesem Gerät wiederherstellen
+                    <input type="file" id="backupImportInput" accept=".json,application/json">
+                </label>
+                <p class="muted" id="backupStatus" aria-live="polite">Der Import ersetzt die vorhandenen StudySpace-Daten auf diesem Gerät.</p>
                 <button class="danger-button" id="resetButton">Alle Daten löschen</button>
             </div>
         </section>
