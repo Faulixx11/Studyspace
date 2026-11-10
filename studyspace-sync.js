@@ -20,7 +20,11 @@
   }
   function openDB() {
     return new Promise((resolve,reject)=>{
-      const request=indexedDB.open(DB_NAME);
+      const request=indexedDB.open(DB_NAME,1);
+      request.onupgradeneeded=event=>{
+        const db=event.target.result;
+        if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME,{keyPath:"id"});
+      };
       request.onsuccess=()=>resolve(request.result);
       request.onerror=()=>reject(request.error);
       request.onblocked=()=>reject(new Error("Die lokale Dateidatenbank ist gerade blockiert."));
