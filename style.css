@@ -3338,3 +3338,14 @@ button.calendar-day:hover {
         flex-wrap: wrap;
     }
 }
+
+
+/* Materialübersicht: klare Titel und Sortieraktionen */
+.material-library-item{align-items:center;gap:14px;flex-wrap:wrap}
+.material-library-title{min-width:180px;flex:1}
+.material-library-title strong{display:block;font-size:14px}
+.material-library-title p{margin:5px 0 0;color:var(--text-secondary,#9ba8ba);font-size:12px;overflow-wrap:anywhere}
+.material-library-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.material-library-actions button:disabled{opacity:.3;cursor:not-allowed}
+.material-library-actions .material-open-button{border-color:rgba(90,160,255,.45)}
+@media(max-width:650px){.material-library-item{align-items:flex-start}.material-library-actions{width:100%;justify-content:flex-start}.material-library-actions button{padding:7px 9px;font-size:12px}}
