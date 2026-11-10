@@ -60,14 +60,14 @@ function enhanceBinder(){
   const content=sheet.querySelector(".binder-sheet-content"),original=content?.querySelector("img,canvas");
   if(original){
    const wrap=document.createElement("div");wrap.className="sp-annotation-wrap";original.parentNode.insertBefore(wrap,original);wrap.appendChild(original);
-   const ink=document.createElement("canvas");ink.className="sp-ink";ink.width=original.width||1200;ink.height=original.height||1600;wrap.appendChild(ink);
+   const ink=document.createElement("canvas");ink.className="sp-ink";const baseW=original.naturalWidth||original.width||1200,baseH=original.naturalHeight||original.height||1600;ink.width=baseW;ink.height=baseH;Object.assign(ink.style,{position:"absolute",inset:"0",width:"100%",height:"100%",background:"transparent",pointerEvents:"none",zIndex:"3"});wrap.style.position="relative";wrap.style.display="block";wrap.appendChild(ink);
    const ctx=ink.getContext("2d"),strokes=state.annotations[key]||[];
    const redraw=()=>{ctx.clearRect(0,0,ink.width,ink.height);strokes.forEach(st=>{ctx.strokeStyle=st.color;ctx.lineWidth=st.width;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();st.points.forEach((p,j)=>{const x=p[0]*ink.width,y=p[1]*ink.height;j?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();});};redraw();
    let active=null;
    ink.addEventListener("pointerdown",e=>{if(ink.dataset.draw!=="on")return;ink.setPointerCapture(e.pointerId);active={color:ink.dataset.color||"#ffcf5a",width:Number(ink.dataset.width)||4,points:[]};const r=ink.getBoundingClientRect();active.points.push([(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]);strokes.push(active);});
    ink.addEventListener("pointermove",e=>{if(!active)return;const r=ink.getBoundingClientRect();active.points.push([(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]);redraw();});
    const end=()=>{if(active){state.annotations[key]=strokes;save();active=null;}};ink.addEventListener("pointerup",end);ink.addEventListener("pointercancel",end);
-   const pen=document.createElement("button");pen.type="button";pen.className="sp-btn";pen.textContent="✎ Stift";pen.addEventListener("click",()=>{ink.dataset.draw=ink.dataset.draw==="on"?"off":"on";pen.classList.toggle("sp-tool-active",ink.dataset.draw==="on");});
+   const pen=document.createElement("button");pen.type="button";pen.className="sp-btn";pen.textContent="✎ Stift";pen.addEventListener("click",()=>{ink.dataset.draw=ink.dataset.draw==="on"?"off":"on";ink.style.pointerEvents=ink.dataset.draw==="on"?"auto":"none";pen.classList.toggle("sp-tool-active",ink.dataset.draw==="on");});
    const color=document.createElement("input");color.type="color";color.value="#ffcf5a";color.title="Stiftfarbe";color.style.width="38px";color.addEventListener("input",()=>ink.dataset.color=color.value);
    const size=document.createElement("select");size.className="sp-btn";size.innerHTML='<option value="2">Fein</option><option value="4" selected>Normal</option><option value="8">Breit</option>';size.addEventListener("change",()=>ink.dataset.width=size.value);
    const undo=document.createElement("button");undo.type="button";undo.className="sp-btn";undo.textContent="↶ Letzten Strich löschen";undo.addEventListener("click",()=>{strokes.pop();state.annotations[key]=strokes;save();redraw();});
