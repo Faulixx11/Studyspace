@@ -130,6 +130,11 @@
     const labelPattern=/^(?:französisch|franzosisch|français|francais|deutsch|englisch|english|french|german|vokabel|übersetzung|uebersetzung|wort|begriff)\s*[:：]\s*(.+)$/i;
     let pending=null;
     for(const line of lines) {
+      const inlineLabels=[...line.matchAll(/(französisch|franzosisch|français|francais|deutsch|englisch|english|french|german)\\s*[:：]\\s*(.*?)(?=\\s+(?:französisch|franzosisch|français|francais|deutsch|englisch|english|french|german)\\s*[:：]|$)/gi)];
+      if(inlineLabels.length >= 2) {
+        pairs.push([inlineLabels[0][2].trim(), inlineLabels[1][2].trim()]);
+        continue;
+      }
       const labelled=line.match(labelPattern);
       if(labelled) {
         const label=line.slice(0,line.indexOf(":")>=0?line.indexOf(":"):line.indexOf("：")).toLowerCase();
