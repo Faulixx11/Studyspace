@@ -91,7 +91,11 @@ async function loadPdfLibrary(){
 async function appendImage(item,file,scroll){
  const page=makePage(item,1,1),url=URL.createObjectURL(file);objectUrls.push(url);
  const img=document.createElement("img");img.src=url;img.alt=item.name||item.fileName||"Hefterseite";
- img.loading="lazy";page.content.appendChild(img);scroll.appendChild(page.section);
+ img.loading="lazy";page.content.appendChild(img);
+ const edit=document.createElement("button");edit.type="button";edit.className="binder-image-edit";edit.textContent="✂ Bild zuschneiden";
+ edit.addEventListener("click",()=>openImageCropEditor(item,file,img));
+ page.section.querySelector(".binder-sheet-heading").appendChild(edit);
+ scroll.appendChild(page.section);
 }
 async function appendPdf(item,file,scroll,pdfjs){
  const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise;
@@ -146,7 +150,74 @@ function ensureStyles(){
  const style=document.createElement("style");style.id="studyBinderStyles";
  style.textContent="#studyBinder{position:fixed;inset:0;z-index:10060;background:#0b0e14;color:#f1f4f8;display:none;overflow:hidden}\n#studyBinder.open{display:block}\n#studyBinder .binder-window{height:100%;display:flex;flex-direction:column;min-height:0}\n#studyBinder .binder-head{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 22px;background:#121925;border-bottom:1px solid #293243}\n#studyBinder .binder-head-copy{display:flex;flex-direction:column;gap:4px}\n#studyBinder .binder-head-copy strong{font-size:17px}\n#studyBinder .binder-head-copy small,#studyBinder #binderPageCount{color:#9ba8ba;font-size:12px}\n#studyBinder .binder-head-actions{display:flex;align-items:center;gap:14px}\n#studyBinder button{border:1px solid #39465a;background:#202b3b;color:#f1f4f8;border-radius:9px;padding:10px 13px;cursor:pointer}\n#studyBinder .binder-scroll{overflow-y:auto;overscroll-behavior:contain;padding:24px max(14px,calc((100vw - 1180px)/2)) 60px}\n#studyBinder .binder-sheet{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(230px,.65fr);gap:16px;padding:16px;margin:0 auto 24px;max-width:1180px;background:#151d29;border:1px solid #2a3546;border-radius:14px;align-items:start}\n#studyBinder .binder-sheet-heading{grid-column:1/-1;display:flex;justify-content:space-between;gap:10px;color:#aab6c7;font-size:12px}\n#studyBinder .binder-sheet-heading strong{font-size:14px;color:#f1f4f8}\n#studyBinder .binder-sheet-content{min-width:0;background:#0d131d;border-radius:9px;overflow:hidden;display:flex;justify-content:center}\n#studyBinder .binder-sheet-content img{width:100%;height:auto;object-fit:contain;display:block}\n#studyBinder .binder-sheet-content canvas{width:100%;height:auto;display:block;background:white}\n#studyBinder .binder-page-notes{position:sticky;top:8px;display:flex;flex-direction:column;gap:8px}\n#studyBinder .binder-page-notes label{font-size:13px;font-weight:650}\n#studyBinder .binder-page-notes p,#studyBinder .binder-page-notes small{font-size:11px;color:#9ba8ba;margin:0}\n#studyBinder .binder-page-notes textarea{box-sizing:border-box;width:100%;min-height:190px;resize:vertical;border:1px solid #39465a;border-radius:9px;background:#0d131d;color:#f1f4f8;padding:12px;font:inherit;font-size:13px;line-height:1.55}\n#studyBinder .binder-page-notes textarea:focus{outline:2px solid #4689d6;outline-offset:1px}\n#studyBinder .binder-loading,#studyBinder .binder-load-error{padding:24px;margin:20px auto;max-width:900px;background:#151d29;border-radius:12px;color:#c4cede}\n@media(max-width:760px){#studyBinder .binder-head{padding:11px 12px}#studyBinder .binder-head-copy strong{font-size:14px}#studyBinder .binder-head-actions{gap:7px}#studyBinder #binderPageCount{display:none}#studyBinder .binder-scroll{padding:12px 9px 36px}#studyBinder .binder-sheet{grid-template-columns:1fr;padding:10px;gap:11px;margin-bottom:16px}#studyBinder .binder-sheet-heading{grid-column:1;flex-direction:column;gap:4px}#studyBinder .binder-page-notes{position:static}#studyBinder .binder-page-notes textarea{min-height:110px}}";
  document.head.appendChild(style);
+ if(!$("studyCropEditorStyles")){const cropStyle=document.createElement("style");cropStyle.id="studyCropEditorStyles";cropStyle.textContent="\n#studyBinder .binder-image-edit{margin-left:auto;white-space:nowrap;font-size:12px;padding:7px 10px}\n.study-crop-modal{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}\n.study-crop-dialog{width:min(100%,1000px);max-height:95vh;display:flex;flex-direction:column;background:#151d29;color:#f1f4f8;border:1px solid #39465a;border-radius:15px;overflow:hidden;box-shadow:0 25px 80px #0009}\n.study-crop-dialog header,.study-crop-dialog footer{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#121925}\n.study-crop-dialog header{justify-content:space-between;border-bottom:1px solid #293243}\n.study-crop-dialog header div{display:flex;flex-direction:column;gap:4px}.study-crop-dialog header small,.study-crop-status{color:#9ba8ba;font-size:12px}\n.study-crop-dialog button{border:1px solid #39465a;background:#202b3b;color:#f1f4f8;border-radius:9px;padding:9px 13px;cursor:pointer}\n.study-crop-dialog button:disabled{opacity:.5;cursor:wait}\n.study-crop-stage{min-height:180px;max-height:calc(95vh - 150px);padding:14px;display:flex;justify-content:center;overflow:hidden;background:#090d14}\n.study-crop-stage img{display:block;max-width:100%;max-height:calc(95vh - 190px)}\n.study-crop-spacer{flex:1}.study-crop-status{padding:0 18px;margin:0 0 10px;min-height:15px}\n@media(max-width:650px){#studyBinder .binder-image-edit{font-size:11px;padding:7px}.study-crop-modal{padding:6px}.study-crop-dialog footer{padding:10px;flex-wrap:wrap}.study-crop-stage{padding:6px}}\n";document.head.appendChild(cropStyle);}
 }
+
+async function loadCropper(){
+ if(window.Cropper)return window.Cropper;
+ if(!$("studyCropperCss")){
+  const link=document.createElement("link");link.id="studyCropperCss";link.rel="stylesheet";
+  link.href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css";document.head.appendChild(link);
+ }
+ await new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js";
+  script.onload=resolve;script.onerror=()=>reject(new Error("Bildeditor konnte nicht geladen werden."));
+  document.head.appendChild(script);
+ });
+ return window.Cropper;
+}
+async function saveCroppedImage(item,blob){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE),req=store.get(item.id);
+  req.onsuccess=()=>{
+   if(!req.result){tx.abort();return;}
+   const old=req.result.file;
+   const file=new File([blob],(item.fileName||"Material").replace(/\.[^.]+$/,"")+"_zugeschnitten.png",{type:"image/png",lastModified:Date.now()});
+   store.put({...req.result,file});
+  };
+  tx.oncomplete=()=>{db.close();resolve(true);};
+  tx.onerror=()=>{db.close();reject(tx.error);};
+  tx.onabort=()=>{db.close();reject(tx.error||new Error("Speichern fehlgeschlagen."));};
+ });
+}
+async function openImageCropEditor(item,file,currentImage){
+ let CropperClass;
+ try{CropperClass=await loadCropper();}catch(error){alert(error.message);return;}
+ const modal=document.createElement("div");modal.className="study-crop-modal";
+ modal.innerHTML='<div class="study-crop-dialog"><header><div><strong>Bild zuschneiden</strong><small>Ziehe den Rahmen auf den gewünschten Bildausschnitt.</small></div><button type="button" data-crop-close>Schließen</button></header><div class="study-crop-stage"><img alt="Bild zum Zuschneiden"></div><footer><button type="button" data-crop-reset>Zurücksetzen</button><span class="study-crop-spacer"></span><button type="button" data-crop-save>Zuschnitt speichern</button></footer><p class="study-crop-status" aria-live="polite"></p></div>';
+ document.body.appendChild(modal);
+ const image=modal.querySelector("img"),url=URL.createObjectURL(file);image.src=url;
+ let cropper=null,closed=false;
+ const cleanup=()=>{if(closed)return;closed=true;if(cropper)cropper.destroy();URL.revokeObjectURL(url);modal.remove();};
+ modal.querySelector("[data-crop-close]").addEventListener("click",cleanup);
+ modal.addEventListener("click",e=>{if(e.target===modal)cleanup();});
+ image.onload=()=>{cropper=new CropperClass(image,{viewMode:1,dragMode:"crop",autoCropArea:.85,background:false,responsive:true,restore:false,checkOrientation:true});};
+ modal.querySelector("[data-crop-reset]").addEventListener("click",()=>cropper?.reset());
+ modal.querySelector("[data-crop-save]").addEventListener("click",()=>{
+  if(!cropper)return;
+  const button=modal.querySelector("[data-crop-save]"),status=modal.querySelector(".study-crop-status");
+  button.disabled=true;status.textContent="Speichert den Bildausschnitt …";
+  cropper.getCroppedCanvas({maxWidth:4000,maxHeight:4000,imageSmoothingQuality:"high"}).toBlob(async blob=>{
+   try{
+    if(!blob)throw new Error("Der Bildausschnitt konnte nicht erstellt werden.");
+    await saveCroppedImage(item,blob);
+    const updated=await getFile(item.id);
+    if(updated){
+     const newUrl=URL.createObjectURL(updated);objectUrls.push(newUrl);
+     currentImage.src=newUrl;
+     currentImage.dataset.edited="true";
+    }
+    item.fileType="image/png";
+    item.fileName=(item.fileName||"Material").replace(/\.[^.]+$/,"")+"_zugeschnitten.png";
+    status.textContent="Gespeichert!";
+    setTimeout(cleanup,450);
+   }catch(error){status.textContent=error.message;button.disabled=false;}
+  },"image/png");
+ });
+}
+
 function init(){
  ensureStyles();
  const input=$("materialFile");
