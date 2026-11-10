@@ -11,3 +11,16 @@
 .fcx-review-card{min-height:150px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;border:1px solid rgba(139,92,246,.22);border-radius:13px;background:radial-gradient(ellipse at top right,rgba(139,92,246,.09),transparent 65%),#111521;text-align:center}.fcx-review-card>span{font-size:10px;letter-spacing:1.5px;color:#a78bfa;font-weight:800}.fcx-review-card>div{margin-top:12px;font-size:18px;line-height:1.5;overflow-wrap:anywhere}.fcx-review-card #fcx-review-answer{padding-top:14px;border-top:1px solid #34394a;color:#c4b5fd;font-size:14px;white-space:pre-wrap}
 .fcx-review-actions{display:flex;gap:9px;justify-content:center;margin-top:13px;flex-wrap:wrap}.fcx-list-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border-color,#292e3c)}.fcx-list-item:last-child{border-bottom:0}.fcx-list-item>div:first-child{display:flex;flex-direction:column;gap:5px;min-width:0}.fcx-list-item strong{font-size:13px;overflow-wrap:anywhere}.fcx-list-item small{font-size:11px;color:var(--text-secondary,#9299aa);overflow-wrap:anywhere}.fcx-list-buttons{display:flex;gap:6px;flex-shrink:0}.fcx-empty{padding:20px;text-align:center;color:var(--text-secondary,#9299aa);font-size:12px}
 @media(max-width:850px){.fcx-columns{grid-template-columns:1fr}}@media(max-width:760px){.fcx-set-row{grid-template-columns:1fr}.fcx-set-row button{width:100%}}@media(max-width:600px){.fcx-hero{padding:19px}.fcx-hero h1{font-size:23px}.fcx-set-detail,.fcx-list-item{align-items:flex-start;flex-direction:column}.fcx-list-buttons{width:100%}}
+
+/* Adaptives Karteikarten-Training */
+.fcx-training-settings{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px;align-items:end;margin:0 0 17px}
+.fcx-progress-box{padding:12px 14px;border:1px solid var(--border-color,#34394a);border-radius:10px;background:rgba(139,92,246,.06)}
+.fcx-progress-box>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:12px}.fcx-progress-box strong{color:#c4b5fd}
+.fcx-progress-track{height:7px;margin:9px 0 6px;border-radius:20px;background:#292e3c;overflow:hidden}.fcx-progress-track>div{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#7651dc,#5b70dc);transition:width .25s}
+.fcx-progress-box small{font-size:10px;color:var(--text-secondary,#9299aa)}
+.fcx-feedback{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px}
+.fcx-feedback p{width:100%;margin:0 0 2px;text-align:center;font-size:12px;color:var(--text-secondary,#9299aa)}
+.fcx-success{border-color:rgba(52,211,153,.4);color:#6ee7b7}
+.fcx-list-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.fcx-list-tabs span{opacity:.8}
+@media(max-width:650px){.fcx-training-settings{grid-template-columns:1fr}.fcx-feedback{align-items:stretch}.fcx-feedback .fcx-btn{flex:1}}
