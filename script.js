@@ -436,6 +436,7 @@ let answerVisible = false;
 
 function renderFlashcards() {
     const container = document.getElementById("flashcardList");
+    if (!container) return;
 
     document.getElementById("reviewCounter").textContent =
         `${data.flashcards.length} Karten`;
@@ -477,6 +478,7 @@ function showCurrentCard() {
     const card = data.flashcards.find(item => item.id === currentCardId);
     const question = document.getElementById("reviewCard");
     const answer = document.getElementById("reviewAnswer");
+    if (!question || !answer) return;
 
     answerVisible = false;
     answer.textContent = "";
