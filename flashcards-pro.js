@@ -256,7 +256,7 @@
     $("fcx-candidate-count").textContent=candidates.length+" Vorschläge";
     $("fcx-candidate-list").innerHTML=candidates.length?candidates.map((c,i)=>'<article class="fcx-candidate"><label class="fcx-check"><input type="checkbox" data-candidate-check="'+i+'" '+(c.checked?"checked":"")+'> Übernehmen</label><label class="fcx-field">Frage<textarea data-candidate-q="'+i+'" rows="2">'+esc(c.question)+'</textarea></label><label class="fcx-field">Antwort<textarea data-candidate-a="'+i+'" rows="3">'+esc(c.answer)+'</textarea></label></article>').join(""):'<div class="fcx-empty">Aus dem erkannten Text konnten keine sicheren Vorschläge gebildet werden. Du kannst Karten rechts manuell erstellen.</div>';
     candidates.forEach((c,i)=>{
-      const q=$("[data-candidate-q='"+i+"']");const a=$("[data-candidate-a='"+i+"']");const check=$("[data-candidate-check='"+i+"']");
+      const q=$("fcx-candidate-list").querySelector("[data-candidate-q='"+i+"']");const a=$("fcx-candidate-list").querySelector("[data-candidate-a='"+i+"']");const check=$("fcx-candidate-list").querySelector("[data-candidate-check='"+i+"']");
       if(q)q.addEventListener("input",()=>c.question=q.value);if(a)a.addEventListener("input",()=>c.answer=a.value);if(check)check.addEventListener("change",()=>c.checked=check.checked);
     });
   }
