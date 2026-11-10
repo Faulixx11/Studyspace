@@ -3367,3 +3367,17 @@ button.calendar-day:hover {
  .material-library-actions button{min-height:42px!important;font-size:14px!important}
  .material-library-actions .material-open-button{grid-column:1/-1}
 }
+
+/* Finger-Griff zum Sortieren auf Tablets und Smartphones */
+.material-library-item{position:relative}
+.material-touch-grip{order:-2;cursor:grab;align-self:center;flex-shrink:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.material-touch-grip:active{background:#315987!important;transform:scale(.97)}
+.material-library-item.material-touch-dragging{outline:2px solid #70b5ff;z-index:2}
+.material-library-item.material-touch-over{outline:3px dashed #70b5ff;outline-offset:2px;background:rgba(70,140,220,.14)}
+@media(max-width:800px){
+ .material-library-item{display:grid!important;grid-template-columns:52px minmax(0,1fr)!important;align-items:center!important;gap:10px!important}
+ .material-touch-grip{grid-column:1;grid-row:1;min-height:54px!important}
+ .material-library-title{grid-column:2;grid-row:1;width:auto!important;min-width:0!important}
+ .material-library-actions{grid-column:1/-1;grid-row:2;width:100%!important}
+ .material-library-actions button{min-height:44px!important}
+}
