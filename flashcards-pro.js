@@ -13,7 +13,12 @@
   let subjectId = "";
   let setId = "";
   let currentIndex = 0;
+  let currentCardId = null;
   let answerShown = false;
+  let reviewDirection = "forward";
+  let currentDirection = "forward";
+  let difficultOnly = false;
+  let recentCardIds = [];
 
   const subjects = () => Array.isArray(data.subjects) ? data.subjects : [];
   const cards = () => Array.isArray(data.flashcards) ? data.flashcards : [];
@@ -64,12 +69,21 @@
           </section>
         </div>
         <section class="fcx-panel">
-          <div class="fcx-panel-head"><div><h2>Wiederholen</h2><p id="fcx-review-subtitle">Wähle ein Fach und ein Set aus.</p></div><span class="fcx-chip" id="fcx-review-count">0 Karten</span></div>
-          <div class="fcx-review-card"><span>VORDERSEITE</span><div id="fcx-review-question">Noch keine Karte in diesem Set.</div><div id="fcx-review-answer" hidden></div></div>
-          <div class="fcx-review-actions"><button class="fcx-btn" id="fcx-show-answer" type="button">Antwort zeigen</button><button class="fcx-btn fcx-primary" id="fcx-next-card" type="button">Nächste Karte →</button></div>
+          <div class="fcx-panel-head"><div><h2>Adaptives Training</h2><p id="fcx-review-subtitle">Wähle deine Trainingsrichtung.</p></div><span class="fcx-chip" id="fcx-review-count">0 Karten</span></div>
+          <div class="fcx-training-settings">
+            <label class="fcx-field">Trainingsrichtung
+              <select id="fcx-direction"><option value="forward">Französisch → Deutsch</option><option value="reverse">Deutsch → Französisch</option><option value="mixed">Gemischt (beide Richtungen)</option></select>
+            </label>
+            <div class="fcx-progress-box"><div><span>Beherrschung dieses Sets</span><strong id="fcx-mastery-percent">0 %</strong></div><div class="fcx-progress-track"><div id="fcx-mastery-bar"></div></div><small id="fcx-mastery-detail">Noch keine Antworten bewertet.</small></div>
+          </div>
+          <div class="fcx-review-card"><span id="fcx-review-label">FRANZÖSISCH</span><div id="fcx-review-question">Noch keine Karte in diesem Set.</div><div id="fcx-review-answer" hidden></div></div>
+          <div class="fcx-review-actions"><button class="fcx-btn fcx-primary" id="fcx-show-answer" type="button">Antwort zeigen</button></div>
+          <div class="fcx-feedback" id="fcx-feedback" hidden><p>Wie gut konntest du die Antwort?</p><button class="fcx-btn fcx-success" id="fcx-knew" type="button">✓ Gewusst</button><button class="fcx-btn fcx-danger" id="fcx-didnt-know" type="button">↻ Nicht gewusst</button></div>
+          <p class="fcx-status" id="fcx-feedback-status" aria-live="polite">Nach jeder Antwort bitte ehrlich einschätzen.</p>
         </section>
         <section class="fcx-panel">
-          <div class="fcx-panel-head"><div><h2>Karten in diesem Set</h2><p>Du kannst jeden Eintrag bearbeiten oder löschen.</p></div><span class="fcx-chip" id="fcx-list-count">0 Karten</span></div>
+          <div class="fcx-panel-head"><div><h2>Deine Karten</h2><p>Schwierige Karten werden automatisch gesammelt und nach sicherem Lernen wieder entfernt.</p></div><span class="fcx-chip" id="fcx-list-count">0 Karten</span></div>
+          <div class="fcx-list-tabs"><button class="fcx-btn fcx-primary" id="fcx-all-cards" type="button">Alle Karten</button><button class="fcx-btn" id="fcx-difficult-cards" type="button">⚑ Schwierige Karten <span id="fcx-difficult-count">0</span></button></div>
           <div id="fcx-card-list" class="fcx-card-list"></div>
         </section>
       </div>`;
@@ -91,7 +105,11 @@
     });
     // Import-Button wird zentral über den Seiten-Listener behandelt.
     $("fcx-show-answer").addEventListener("click", showAnswer);
-    $("fcx-next-card").addEventListener("click", nextCard);
+    $("fcx-direction").addEventListener("change", e => { reviewDirection=e.target.value; answerShown=false; renderReview(activeCards()); });
+    $("fcx-knew").addEventListener("click", () => rateCurrent(true));
+    $("fcx-didnt-know").addEventListener("click", () => rateCurrent(false));
+    $("fcx-all-cards").addEventListener("click", () => { difficultOnly=false; render(); });
+    $("fcx-difficult-cards").addEventListener("click", () => { difficultOnly=true; render(); });
   }
 
   function requireSet() {
@@ -190,7 +208,7 @@
     });
     save(); $("fcx-bulk-text").value="";
     $("fcx-import-status").textContent=added+" Karteikarte(n) hinzugefügt"+(duplicates?", "+duplicates+" Duplikat(e) übersprungen":"")+".";
-    currentIndex=0; render();
+    currentIndex=0; currentCardId=null; render();
   }
 
   function render() {
@@ -203,28 +221,85 @@
     setSelect.innerHTML=available.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join("") || '<option value="">Noch kein Lernset</option>';
     setSelect.value=setId;
     const set=activeSet(),list=activeCards();
+    if(currentCardId && !list.some(c=>c.id===currentCardId))currentCardId=null;
     $("fcx-set-info").innerHTML=set?'<strong>'+esc(set.name)+'</strong><span>'+list.length+' Karte(n) · Fach: '+esc(subjects().find(s=>s.id===subjectId)?.name||"")+'</span>':'<span>Erstelle ein Lernset für das ausgewählte Fach.</span>';
     $("fcx-rename-set").disabled=!set; $("fcx-delete-set").disabled=!set;
+    const difficult=list.filter(isDifficultCard);
+    const attempted=list.filter(c=>statsFor(c).attempts>0);
+    const mastered=list.filter(isMasteredCard);
+    const mastery=attempted.length?Math.round(mastered.length/list.length*100):0;
     $("fcx-review-count").textContent=list.length+" Karten";
-    $("fcx-list-count").textContent=list.length+" Karten";
+    $("fcx-list-count").textContent=(difficultOnly?difficult.length:list.length)+" Karten";
+    $("fcx-difficult-count").textContent=difficult.length;
+    $("fcx-mastery-percent").textContent=mastery+" %";
+    $("fcx-mastery-bar").style.width=mastery+"%";
+    $("fcx-mastery-detail").textContent=attempted.length?mastered.length+" von "+list.length+" Karten sicher gelernt · "+difficult.length+" noch schwierig":"Noch keine Antworten bewertet.";
     $("fcx-review-subtitle").textContent=set?esc(subjects().find(s=>s.id===subjectId)?.name||"")+" · "+esc(set.name):"Wähle ein Fach und erstelle ein Lernset.";
+    $("fcx-direction").value=reviewDirection;
+    $("fcx-all-cards").classList.toggle("fcx-primary",!difficultOnly);
+    $("fcx-difficult-cards").classList.toggle("fcx-primary",difficultOnly);
     renderReview(list);
-    $("fcx-card-list").innerHTML=list.length?list.map((c,i)=>'<div class="fcx-list-item"><div><strong>'+esc(c.question)+'</strong><small>'+esc(c.answer)+'</small></div><div class="fcx-list-buttons"><button class="fcx-btn" data-edit="'+esc(c.id)+'">Bearbeiten</button><button class="fcx-btn fcx-danger" data-delete="'+esc(c.id)+'">Löschen</button></div></div>').join(""):'<div class="fcx-empty">In diesem Set sind noch keine Karten.</div>';
+    const shown=difficultOnly?difficult:list;
+    $("fcx-card-list").innerHTML=shown.length?shown.map(c=>{const st=statsFor(c);const pct=st.attempts?Math.round(st.correct/st.attempts*100):0;return '<div class="fcx-list-item"><div><strong>'+esc(c.question)+'</strong><small>'+esc(c.answer)+'</small><small>'+ (st.attempts?pct+' % richtig · '+st.attempts+' Versuche':'Noch nicht trainiert')+(isDifficultCard(c)?' · ⚑ Noch unsicher':isMasteredCard(c)?' · ✓ Beherrscht':'')+'</small></div><div class="fcx-list-buttons"><button class="fcx-btn" data-edit="'+esc(c.id)+'">Bearbeiten</button><button class="fcx-btn fcx-danger" data-delete="'+esc(c.id)+'">Löschen</button></div></div>';}).join(""):'<div class="fcx-empty">'+(difficultOnly?'Aktuell keine schwierigen Karten. Sehr gut!':'In diesem Set sind noch keine Karten.')+'</div>';
     $("fcx-card-list").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editCard(b.dataset.edit)));
     $("fcx-card-list").querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteCard(b.dataset.delete)));
     $("fcx-subject").disabled=!subjects().length;
     $("fcx-new-set").disabled=!subjects().length;
   }
-  function renderReview(list) {
-    if(!list.length){$("fcx-review-question").textContent="Noch keine Karte in diesem Set."; $("fcx-review-answer").hidden=true; $("fcx-review-answer").textContent=""; answerShown=false; return;}
-    if(currentIndex>=list.length)currentIndex=0;
-    const card=list[currentIndex];
-    $("fcx-review-question").textContent=card.question;
-    $("fcx-review-answer").textContent=card.answer;
-    $("fcx-review-answer").hidden=!answerShown;
+  function statsFor(card) {
+    if(!card.studyStats) card.studyStats={attempts:0,correct:0,wrong:0,streak:0,history:[]};
+    const st=card.studyStats;
+    if(!Array.isArray(st.history))st.history=[];
+    return st;
   }
-  function showAnswer() { const list=activeCards(); if(!list.length)return; answerShown=true; renderReview(list); }
-  function nextCard() { const list=activeCards(); if(!list.length)return; currentIndex=(currentIndex+1)%list.length; answerShown=false; renderReview(list); }
+  function recentAccuracy(card) {
+    const history=statsFor(card).history.slice(-5);
+    return history.length?history.filter(Boolean).length/history.length:0;
+  }
+  function isMasteredCard(card) {
+    const st=statsFor(card);
+    return st.attempts>=4 && st.streak>=3 && recentAccuracy(card)>=0.8;
+  }
+  function isDifficultCard(card) {
+    const st=statsFor(card);
+    return st.attempts>=2 && !isMasteredCard(card) && (recentAccuracy(card)<0.7 || st.streak===0);
+  }
+  function chooseNextCard(list) {
+    if(!list.length)return null;
+    let pool=list.filter(c=>!recentCardIds.slice(-2).includes(c.id));
+    if(!pool.length)pool=list;
+    const weights=pool.map(c=>{const st=statsFor(c);const accuracy=st.attempts?st.correct/st.attempts:0.5;return 1+(1-accuracy)*4+Math.min(st.wrong,8)*0.25+(st.streak===0&&st.attempts?1:0);});
+    const total=weights.reduce((a,b)=>a+b,0);let pick=Math.random()*total;
+    for(let i=0;i<pool.length;i++){pick-=weights[i];if(pick<=0)return pool[i];}
+    return pool[0];
+  }
+  function renderReview(list) {
+    if(!list.length){$("fcx-review-question").textContent="Noch keine Karte in diesem Set.";$("fcx-review-answer").hidden=true;$("fcx-review-answer").textContent="";$("fcx-feedback").hidden=true;answerShown=false;return;}
+    if(!currentCardId || !list.some(c=>c.id===currentCardId)) currentCardId=chooseNextCard(list)?.id;
+    const card=list.find(c=>c.id===currentCardId)||list[0];
+    currentDirection=reviewDirection==="mixed"?(Math.random()<0.5?"forward":"reverse"):reviewDirection;
+    const question=currentDirection==="forward"?card.question:card.answer;
+    const answer=currentDirection==="forward"?card.answer:card.question;
+    $("fcx-review-label").textContent=currentDirection==="forward"?"FRANZÖSISCH → DEUTSCH":"DEUTSCH → FRANZÖSISCH";
+    $("fcx-review-question").textContent=question;
+    $("fcx-review-answer").textContent=answer;
+    $("fcx-review-answer").hidden=!answerShown;
+    $("fcx-feedback").hidden=!answerShown;
+    $("fcx-show-answer").hidden=answerShown;
+  }
+  function showAnswer() { const list=activeCards();if(!list.length)return;answerShown=true;renderReview(list); }
+  function rateCurrent(knew) {
+    const list=activeCards();const card=list.find(c=>c.id===currentCardId);if(!card||!answerShown)return;
+    const st=statsFor(card);st.attempts++;if(knew){st.correct++;st.streak++;}else{st.wrong++;st.streak=0;}
+    st.history.push(!!knew);if(st.history.length>20)st.history=st.history.slice(-20);
+    st.lastReviewed=Date.now();
+    recentCardIds.push(card.id);if(recentCardIds.length>3)recentCardIds.shift();
+    save();
+    const rate=st.attempts?Math.round(st.correct/st.attempts*100):0;
+    $("fcx-feedback-status").textContent=knew?"Gespeichert: "+rate+" % richtig · "+(isMasteredCard(card)?"Karte jetzt sicher beherrscht.":"Diese Karte kommt später wieder."):"Gespeichert: "+rate+" % richtig · Diese Karte wird häufiger wiederholt.";
+    currentCardId=chooseNextCard(list.filter(c=>c.id!==card.id))?.id||chooseNextCard(list)?.id;
+    answerShown=false;render();
+  }
   function editCard(id) {
     const card=cards().find(c=>c.id===id); if(!card)return;
     const q=prompt("Vorderseite bearbeiten:",card.question); if(q===null)return;
