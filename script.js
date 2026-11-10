@@ -258,9 +258,9 @@ function renderMaterials() {
   return `<div class="material-item material-library-item" data-material-row="${escapeHTML(item.id)}" draggable="true">
    <div class="material-library-title"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(subject?.name||"Kein Fach")} · ${escapeHTML(ext||"DATEI")} · ${escapeHTML(item.fileName||"")}</p></div>
    <div class="material-library-actions">
+    <button type="button" class="small-button material-move-button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} aria-label="Material nach oben verschieben">↑ Hoch</button>
+    <button type="button" class="small-button material-move-button" data-material-down="${escapeHTML(item.id)}" ${index===group.length-1?"disabled":""} aria-label="Material nach unten verschieben">↓ Runter</button>
     <button type="button" class="small-button" data-material-rename="${escapeHTML(item.id)}">✎ Name</button>
-    <button type="button" class="small-button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} title="Nach oben">↑</button>
-    <button type="button" class="small-button" data-material-down="${escapeHTML(item.id)}" ${index===group.length-1?"disabled":""} title="Nach unten">↓</button>
     <button type="button" class="small-button material-open-button" data-material-open="${escapeHTML(item.id)}">Öffnen</button>
     <button type="button" class="small-button delete" data-material-delete="${escapeHTML(item.id)}">Entfernen</button>
    </div></div>`;
