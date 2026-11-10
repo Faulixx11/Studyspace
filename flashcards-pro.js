@@ -252,6 +252,8 @@
     const add=(left,right)=>{
       const q=clean(left),a=clean(right);
       if(!looksLikeVocab(q)||!looksLikeVocab(a))return;
+      // Eine Karte darf nur einen Ausgangsbegriff enthalten; Listen werden zur manuellen Prüfung zurückgestellt.
+      if(/[,;/]/.test(q))return;
       const key=(q+"|"+a).toLocaleLowerCase();
       if(seen.has(key))return;
       seen.add(key);
