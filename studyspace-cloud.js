@@ -53,7 +53,15 @@ function addPanel(){
 }
 function configure(){
  const url=$("ss-cloud-url").value.trim().replace(/\/+$/,""),key=$("ss-cloud-key").value.trim();
- if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key){status("Bitte eine gültige Supabase Project URL und Publishable Key eintragen.",true);return;}
+ if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){
+  status("Project URL ungültig: Erwartet wird https://DEIN-PROJEKT.supabase.co (ohne /dashboard oder weitere Pfade).",true);return;
+ }
+ if(!key){
+  status("Publishable Key fehlt. Trage den Schlüssel ein, der mit sb_publishable_ beginnt.",true);return;
+ }
+ if(!key.startsWith("sb_publishable_")&&!/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)){
+  status("Falscher Schlüsseltyp: Verwende den Publishable Key (sb_publishable_…). Keinen sb_secret_-Key verwenden.",true);return;
+ }
  localStorage.setItem(CONFIG_KEY,JSON.stringify({url,key}));connect();status("Verbindungseinstellungen gespeichert. Jetzt Verbindung prüfen oder anmelden.");
 }
 function connect(){
