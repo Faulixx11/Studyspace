@@ -13,7 +13,7 @@ const saveMeta=value=>localStorage.setItem(META_KEY,JSON.stringify(value));
 function addStyles(){
  if($("ss-cloud-styles"))return;
  const s=document.createElement("style");s.id="ss-cloud-styles";
- s.textContent="#ss-cloud-panel{margin-top:18px}#ss-cloud-panel .ss-cloud-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#ss-cloud-panel input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #39465a;border-radius:9px;background:#101722;color:#f1f4f8;font:inherit}#ss-cloud-panel .ss-field{display:flex;flex-direction:column;gap:6px;margin:9px 0;font-size:13px}#ss-cloud-panel .ss-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}#ss-cloud-panel .ss-actions button{border:1px solid #39465a;border-radius:9px;background:#202b3b;color:#f1f4f8;padding:10px 13px;cursor:pointer;font:inherit;font-size:12px}#ss-cloud-panel .ss-actions .ss-primary{background:#315f9b;border-color:#477fc0}#ss-cloud-panel .ss-muted{font-size:12px;color:#9ba8ba;line-height:1.5}#ss-cloud-panel .ss-state{padding:10px;border-radius:9px;background:#101722;border:1px solid #30394a;margin-top:12px;font-size:12px;line-height:1.5}@media(max-width:650px){#ss-cloud-panel .ss-cloud-grid{grid-template-columns:1fr}}";
+ s.textContent="#ss-cloud-panel{margin-top:18px;position:relative;z-index:20;pointer-events:auto}#ss-cloud-panel button,#ss-cloud-panel input{pointer-events:auto;position:relative;z-index:21}#ss-cloud-panel .ss-cloud-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#ss-cloud-panel input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #39465a;border-radius:9px;background:#101722;color:#f1f4f8;font:inherit}#ss-cloud-panel .ss-field{display:flex;flex-direction:column;gap:6px;margin:9px 0;font-size:13px}#ss-cloud-panel .ss-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}#ss-cloud-panel .ss-actions button{border:1px solid #39465a;border-radius:9px;background:#202b3b;color:#f1f4f8;padding:10px 13px;cursor:pointer;font:inherit;font-size:12px}#ss-cloud-panel .ss-actions .ss-primary{background:#315f9b;border-color:#477fc0}#ss-cloud-panel .ss-muted{font-size:12px;color:#9ba8ba;line-height:1.5}#ss-cloud-panel .ss-state{padding:10px;border-radius:9px;background:#101722;border:1px solid #30394a;margin-top:12px;font-size:12px;line-height:1.5}@media(max-width:650px){#ss-cloud-panel .ss-cloud-grid{grid-template-columns:1fr}}";
  document.head.appendChild(s);
 }
 function addPanel(){
@@ -33,10 +33,23 @@ function addPanel(){
  ].join("");
  page.appendChild(panel);
  const cfg=readConfig();$("ss-cloud-url").value=cfg.url||"";$("ss-cloud-key").value=cfg.key||"";
- $("ss-cloud-config-save").addEventListener("click",configure);$("ss-cloud-test").addEventListener("click",testConnection);
- $("ss-cloud-signup").addEventListener("click",signUp);$("ss-cloud-login").addEventListener("click",signIn);
- $("ss-cloud-reset").addEventListener("click",resetPassword);$("ss-cloud-logout").addEventListener("click",signOut);
- $("ss-cloud-now").addEventListener("click",()=>syncNow(true));$("ss-cloud-download").addEventListener("click",()=>downloadCloud(true));
+ panel.addEventListener("click",event=>{
+  const button=event.target.closest("button");
+  if(!button||!panel.contains(button))return;
+  event.preventDefault();
+  const actions={
+   "ss-cloud-config-save":configure,
+   "ss-cloud-test":testConnection,
+   "ss-cloud-signup":signUp,
+   "ss-cloud-login":signIn,
+   "ss-cloud-reset":resetPassword,
+   "ss-cloud-logout":signOut,
+   "ss-cloud-now":()=>syncNow(true),
+   "ss-cloud-download":()=>downloadCloud(true)
+  };
+  const action=actions[button.id];
+  if(action){button.disabled=true;Promise.resolve().then(action).catch(error=>{console.error("StudySpace Cloud action",error);status("Aktion fehlgeschlagen: "+error.message,true);}).finally(()=>{button.disabled=false;});}
+ },true);
 }
 function configure(){
  const url=$("ss-cloud-url").value.trim().replace(/\/+$/,""),key=$("ss-cloud-key").value.trim();
