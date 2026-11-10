@@ -160,17 +160,39 @@ function ensureStyles(){
 }
 
 function openImageFullscreen(src,alt){
- const existing=$("studyImageFullscreen");if(existing)existing.remove();
- const viewer=document.createElement("div");viewer.id="studyImageFullscreen";viewer.className="study-image-fullscreen";
- viewer.innerHTML='<button type="button" aria-label="Vollbild schließen">✕ Schließen</button><img alt=""><span>Zum Schließen außerhalb des Bildes tippen oder Escape drücken</span>';
- const image=viewer.querySelector("img");image.src=src;image.alt=alt||"Materialbild";
- const close=()=>{viewer.remove();document.removeEventListener("keydown",onKey);};
+ const previous=$("studyImageFullscreen");
+ if(previous)previous.remove();
+ const viewer=document.createElement("div");
+ viewer.id="studyImageFullscreen";
+ Object.assign(viewer.style,{
+  position:"fixed",inset:"0",zIndex:"2147483000",background:"#05070b",
+  display:"flex",alignItems:"center",justifyContent:"center",
+  padding:"58px 12px 42px",boxSizing:"border-box",width:"100vw",height:"100dvh"
+ });
+ const image=document.createElement("img");
+ image.src=src;image.alt=alt||"Materialbild";
+ Object.assign(image.style,{display:"block",maxWidth:"100%",maxHeight:"100%",width:"auto",height:"auto",objectFit:"contain",touchAction:"pinch-zoom"});
+ const closeButton=document.createElement("button");
+ closeButton.type="button";closeButton.textContent="✕ Schließen";
+ Object.assign(closeButton.style,{position:"absolute",top:"12px",right:"12px",zIndex:"2",padding:"11px 15px",border:"1px solid #667085",borderRadius:"10px",background:"#202b3b",color:"#fff",fontSize:"14px",cursor:"pointer"});
+ const hint=document.createElement("div");
+ hint.textContent="Tippe außerhalb des Bildes oder auf Schließen";
+ Object.assign(hint.style,{position:"absolute",bottom:"12px",left:"8px",right:"8px",textAlign:"center",color:"#c4cede",fontSize:"12px",pointerEvents:"none"});
+ const close=()=>{
+  if(document.fullscreenElement===viewer&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+  viewer.remove();document.removeEventListener("keydown",onKey);
+ };
  const onKey=event=>{if(event.key==="Escape")close();};
- viewer.addEventListener("click",event=>{if(event.target===viewer)close();});
- viewer.querySelector("button").addEventListener("click",close);
+ closeButton.addEventListener("click",close);
+ viewer.addEventListener("click",event=>{if(event.target===viewer||event.target===hint)close();});
+ viewer.append(image,closeButton,hint);
  document.addEventListener("keydown",onKey);
  document.body.appendChild(viewer);
+ // Native fullscreen where supported; fixed full-window overlay remains the fallback.
+ const enter=viewer.requestFullscreen||viewer.webkitRequestFullscreen;
+ if(enter){try{const result=enter.call(viewer);if(result&&typeof result.catch==="function")result.catch(()=>{});}catch(error){/* fallback overlay stays visible */}}
 }
+
 async function loadCropper(){
  if(window.Cropper)return window.Cropper;
  if(!$("studyCropperCss")){
