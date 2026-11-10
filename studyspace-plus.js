@@ -47,7 +47,7 @@ function grade(ok,c){if(ok)quiz.correct++;else if(!state.gaps.some(x=>x.question
 function enhanceBinder(){
  const binder=$("studyBinder"),scroll=$("binderScroll");if(!binder||!scroll)return;
  let bar=$("sp-thumbbar");if(!bar){bar=document.createElement("nav");bar.id="sp-thumbbar";bar.className="sp-thumbbar";scroll.before(bar);}
- const sheets=[...scroll.querySelectorAll(".binder-sheet")];bar.innerHTML="";
+ const sheets=[...scroll.querySelectorAll(".binder-sheet")];if(sheets.length&&sheets.every(sheet=>sheet.dataset.spEnhanced==="1")&&bar.children.length===sheets.length)return;bar.innerHTML="";
  sheets.forEach((sheet,i)=>{
   const heading=sheet.querySelector(".binder-sheet-heading"),meta=heading?.querySelector("strong")?.textContent||"Hefterseite",number=heading?.querySelector("span")?.textContent||"";
   const key=sheet.dataset.spKey||(sheet.dataset.spKey="page_"+i+"_"+String(number).replace(/\W/g,"")+"_"+meta.replace(/\W/g,"").slice(0,12));
