@@ -2813,7 +2813,16 @@ Beantworte die konkrete Frage vollständig.
     let pdfModule = null;
     let ocrModule = null;
     let ocrWorker = null;
-    const OCR_VERSION = "2026-11-10-htr-v1";
+    let ocrWorkerLanguage = "";
+    const OCR_VERSION = "2026-11-10-language-v2";
+
+    function getMaterialLanguage(material) {
+        const subject = (data.subjects || []).find(item => item.id === material.subjectId);
+        const label = [subject && subject.name, material.name, material.topic].filter(Boolean).join(" ").toLowerCase();
+        if (/franz[oö]s|\bfrench\b|\bfr\b/.test(label)) return "fra";
+        if (/englisch|\benglish\b|\beng\b/.test(label)) return "eng";
+        return "deu";
+    }
 
     // --------------------------------------------------
     // STATUSANZEIGE
@@ -2867,7 +2876,7 @@ Beantworte die konkrete Frage vollständig.
         });
     }
 
-    async function saveExtractedText(id, extractedText) {
+    async function saveExtractedText(id, extractedText, language) {
         const db = await openDatabase();
 
         return new Promise((resolve, reject) => {
@@ -2885,6 +2894,7 @@ Beantworte die konkrete Frage vollständig.
                     ...request.result,
                     extractedText,
                     extractionVersion: OCR_VERSION,
+                    extractionLanguage: language,
                     extractedAt: new Date().toISOString()
                 });
             };
@@ -2933,7 +2943,7 @@ Beantworte die konkrete Frage vollständig.
         return pdfModule;
     }
 
-    async function readPdf(file) {
+    async function readPdf(file, language) {
         const pdfjs = await loadPdfLibrary();
 
         setStatus("PDF wird untersucht ...");
@@ -2967,7 +2977,7 @@ Beantworte die konkrete Frage vollständig.
             const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
 
             let scannedText = "";
-            if (imageBlob) scannedText = await readImage(imageBlob);
+            if (imageBlob) scannedText = await readImage(imageBlob, language);
             pages.push("Seite " + number + " (Scan):\n" + (scannedText || pageText || "[Kein lesbarer Text erkannt]"));
         }
 
@@ -2994,15 +3004,20 @@ Beantworte die konkrete Frage vollständig.
         return ocrModule;
     }
 
-    async function getOcrWorker() {
-        if (ocrWorker) return ocrWorker;
+    async function getOcrWorker(language) {
+        if (ocrWorker && ocrWorkerLanguage === language) return ocrWorker;
+        if (ocrWorker) {
+            await ocrWorker.terminate();
+            ocrWorker = null;
+        }
 
         const tesseract = await loadOcrLibrary();
 
-        setStatus("Deutsche Texterkennung wird vorbereitet ...");
+        const languageNames = { deu: "Deutsch", eng: "Englisch", fra: "Französisch" };
+        setStatus(languageNames[language] + "e Texterkennung wird vorbereitet ...");
 
         ocrWorker = await tesseract.createWorker(
-            "deu+eng",
+            language,
             1,
             {
                 workerPath:
@@ -3026,14 +3041,17 @@ Beantworte die konkrete Frage vollständig.
             }
         );
 
+        ocrWorkerLanguage = language;
         return ocrWorker;
     }
 
-    async function readImage(file) {
+    async function readImage(file, language = "deu") {
         let handwritingText = "";
 
-        // Primär: spezialisiertes deutsches Handschriftmodell (lokal, kostenlos).
+        // Das HTR-Modell ist nur für Deutsch vorgesehen.
+        // Englisch und Französisch nutzen die jeweilige Tesseract-Sprachdatei.
         try {
+            if (language !== "deu") throw new Error("Deutsches HTR-Modell für diese Sprache nicht geeignet.");
             if (!window.StudySpaceHandwritingOCR) {
                 await import("./handwriting-ocr.js");
             }
@@ -3053,7 +3071,7 @@ Beantworte die konkrete Frage vollständig.
         let printedText = "";
         let confidence = 0;
         try {
-            const worker = await getOcrWorker();
+            const worker = await getOcrWorker(language);
             setStatus("Zweite Erkennung für Druckschrift und schwer lesbare Stellen läuft ...");
             const result = await worker.recognize(file);
             printedText = (result.data.text || "").trim();
@@ -3071,7 +3089,7 @@ Beantworte die konkrete Frage vollständig.
         }
 
         if (printUseful && (!handwritingUseful || confidence >= 62)) {
-            setStatus("Texterkennung abgeschlossen. Bitte erkennte Wörter mit dem Foto vergleichen.");
+            setStatus("Texterkennung (" + ({ deu: "Deutsch", eng: "Englisch", fra: "Französisch" }[language]) + ") abgeschlossen. Bitte erkannte Wörter mit dem Foto vergleichen.");
             return printedText;
         }
 
@@ -3099,7 +3117,9 @@ Beantworte die konkrete Frage vollständig.
             throw new Error("Originaldatei wurde nicht gefunden.");
         }
 
-        if (record.extractedText && record.extractionVersion === OCR_VERSION) {
+        const language = getMaterialLanguage(material);
+
+        if (record.extractedText && record.extractionVersion === OCR_VERSION && record.extractionLanguage === language) {
             return record.extractedText;
         }
 
@@ -3122,10 +3142,10 @@ Beantworte die konkrete Frage vollständig.
             fileType === "application/pdf" ||
             fileName.endsWith(".pdf")
         ) {
-            extractedText = await readPdf(file);
+            extractedText = await readPdf(file, language);
 
         } else if (fileType.startsWith("image/")) {
-            extractedText = await readImage(file);
+            extractedText = await readImage(file, language);
 
         } else {
             throw new Error(
@@ -3141,7 +3161,7 @@ Beantworte die konkrete Frage vollständig.
             );
         }
 
-        await saveExtractedText(materialId, extractedText);
+        await saveExtractedText(materialId, extractedText, language);
 
         return extractedText;
     }
@@ -3325,6 +3345,7 @@ let materials = (data.materials || []).filter(material => {
             if (ocrWorker) {
                 await ocrWorker.terminate();
                 ocrWorker = null;
+                ocrWorkerLanguage = "";
             }
         }
     };
