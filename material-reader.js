@@ -1,103 +1,150 @@
-/* StudySpace digital binder reader */
+/* StudySpace – durchscrollbarer digitaler Hefter mit Notizen pro Seite */
 (() => {
 "use strict";
 const DB="StudySpaceFilesDB", STORE="files", NOTES="studyspaceMaterialPageNotesV1";
-let items=[], index=0, pageNo=1, pdf=null, saveTimer=null, currentUrl=null;
 const $=id=>document.getElementById(id);
+let objectUrls=[];
 function readData(){try{return JSON.parse(localStorage.getItem("studyspaceData")||"{}");}catch{return {};}}
-function notes(){try{return JSON.parse(localStorage.getItem(NOTES)||"{}");}catch{return {};}}
-function saveNote(){
- const item=items[index], field=$("binderNote");if(!item||!field)return;
- const all=notes(),key=item.id+":"+pageNo,value=field.value;
- if(value.trim())all[key]=value;else delete all[key];
+function readNotes(){try{return JSON.parse(localStorage.getItem(NOTES)||"{}");}catch{return {};}}
+function writeNote(key,value,status){
+ const all=readNotes();
+ if(String(value||"").trim())all[key]=value;else delete all[key];
  localStorage.setItem(NOTES,JSON.stringify(all));
- $("binderNoteStatus").textContent="Gespeichert";
+ if(status)status.textContent="Gespeichert";
 }
-function dbFile(id){return new Promise((resolve,reject)=>{
- const req=indexedDB.open(DB);
- req.onsuccess=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE)){db.close();resolve(null);return;}
- const tx=db.transaction(STORE,"readonly"),r=tx.objectStore(STORE).get(id);
- r.onsuccess=()=>{const f=r.result?.file||null;db.close();resolve(f);};
- r.onerror=()=>{db.close();reject(r.error);};};
+function openDB(){return new Promise((resolve,reject)=>{
+ const req=indexedDB.open(DB,1);
+ req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error);
 });}
-function supported(x){const t=(x.fileType||"").toLowerCase(),n=(x.fileName||"").toLowerCase();return t.startsWith("image/")||t==="application/pdf"||n.endsWith(".pdf");}
-function modal(){
- let m=$("studyBinder");if(m)return m;
- m=document.createElement("div");m.id="studyBinder";m.className="binder-modal";
- m.innerHTML='<div class="binder-window"><header class="binder-head"><div><strong id="binderTitle">Digitaler Hefter</strong><small id="binderSubtitle"></small></div><button id="binderClose" type="button">Schließen ✕</button></header><nav class="binder-nav"><button id="binderPrev" type="button">← Zurück</button><span id="binderPosition"></span><button id="binderNext" type="button">Weiter →</button></nav><div class="binder-body"><main id="binderPage" class="binder-page">Lade Seite …</main><aside class="binder-notes"><strong>Notizen zu dieser Seite</strong><p>Diese Notiz bleibt genau dieser Hefterseite zugeordnet.</p><textarea id="binderNote" placeholder="Eigene Notizen …"></textarea><small id="binderNoteStatus">Wird automatisch gespeichert</small></aside></div></div>';
- document.body.appendChild(m);
- $("binderClose").onclick=close;
- $("binderPrev").onclick=()=>move(-1);$("binderNext").onclick=()=>move(1);
- // Touch-Gesten: links wischen = nächste Seite, rechts = vorherige Seite.
- let swipeStart=null;
- const swipeArea=$("binderPage");
- swipeArea.addEventListener("touchstart",event=>{
-  if(event.touches.length!==1)return;
-  swipeStart={x:event.touches[0].clientX,y:event.touches[0].clientY};
- },{passive:true});
- swipeArea.addEventListener("touchend",event=>{
-  if(!swipeStart||!event.changedTouches.length)return;
-  const dx=event.changedTouches[0].clientX-swipeStart.x;
-  const dy=event.changedTouches[0].clientY-swipeStart.y;
-  swipeStart=null;
-  if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.25)return;
-  move(dx<0?1:-1);
- },{passive:true});
- $("binderNote").addEventListener("input",()=>{ $("binderNoteStatus").textContent="Speichert …";clearTimeout(saveTimer);saveTimer=setTimeout(saveNote,350);});
- $("binderNote").addEventListener("blur",()=>{clearTimeout(saveTimer);saveNote();});
- m.addEventListener("click",e=>{if(e.target===m)close();});
- return m;
+async function getFile(id){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{
+  if(!db.objectStoreNames.contains(STORE)){db.close();resolve(null);return;}
+  const tx=db.transaction(STORE,"readonly"),req=tx.objectStore(STORE).get(id);
+  req.onsuccess=()=>{const row=req.result;db.close();resolve(row?.file||null);};
+  req.onerror=()=>{db.close();reject(req.error);};
+ });
 }
-function close(){clearTimeout(saveTimer);saveNote();$("studyBinder")?.classList.remove("open");pdf=null;if(currentUrl){URL.revokeObjectURL(currentUrl);currentUrl=null;}}
-async function pdfLib(){
+function isSupported(item){
+ const type=(item.fileType||"").toLowerCase(),name=(item.fileName||"").toLowerCase();
+ return type.startsWith("image/")||type==="application/pdf"||name.endsWith(".pdf");
+}
+function makeViewer(){
+ let root=$("studyBinder");if(root)return root;
+ root=document.createElement("div");root.id="studyBinder";root.className="binder-modal";
+ root.innerHTML=[
+ '<div class="binder-window">',
+ '<header class="binder-head"><div class="binder-head-copy"><strong id="binderTitle">Dein digitaler Hefter</strong><small id="binderSubtitle"></small></div><div class="binder-head-actions"><span id="binderPageCount"></span><button id="binderClose" type="button">Zurück zu Materialien</button></div></header>',
+ '<div class="binder-scroll" id="binderScroll"><div class="binder-loading">Dein Hefter wird geladen …</div></div>',
+ '</div>'
+ ].join("");
+ document.body.appendChild(root);
+ $("binderClose").addEventListener("click",close);
+ root.addEventListener("click",e=>{if(e.target===root)close();});
+ return root;
+}
+function close(){
+ const root=$("studyBinder");if(root)root.classList.remove("open");
+ objectUrls.forEach(url=>URL.revokeObjectURL(url));objectUrls=[];
+}
+function makeNote(itemId,pageNo){
+ const wrap=document.createElement("aside");wrap.className="binder-page-notes";
+ const label=document.createElement("label");label.textContent="Meine Notizen";
+ const hint=document.createElement("p");hint.textContent="Nur zu dieser Seite gespeichert";
+ const area=document.createElement("textarea");area.placeholder="Ergänzungen, Erklärungen oder Fragen …";
+ const status=document.createElement("small");status.textContent="Wird automatisch gespeichert";
+ const key=itemId+":"+pageNo;
+ area.value=readNotes()[key]||"";
+ let timer=null;
+ area.addEventListener("input",()=>{
+  status.textContent="Speichert …";clearTimeout(timer);
+  const value=area.value;
+  timer=setTimeout(()=>writeNote(key,value,status),300);
+ });
+ area.addEventListener("blur",()=>{clearTimeout(timer);writeNote(key,area.value,status);});
+ wrap.append(label,hint,area,status);
+ return wrap;
+}
+function makePage(item,pageNo,totalPages){
+ const section=document.createElement("section");section.className="binder-sheet";
+ const top=document.createElement("div");top.className="binder-sheet-heading";
+ const title=document.createElement("strong");title.textContent=item.name||item.fileName||"Hefterseite";
+ const number=document.createElement("span");number.textContent=totalPages>1?"Seite "+pageNo+" von "+totalPages:"Hefterseite";
+ top.append(title,number);
+ const content=document.createElement("div");content.className="binder-sheet-content";
+ const note=makeNote(item.id,pageNo);
+ section.append(top,content,note);
+ return {section,content};
+}
+async function loadPdfLibrary(){
  if(window.pdfjsLib)return window.pdfjsLib;
- await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";s.onload=ok;s.onerror=()=>no(Error("PDF-Vorschau konnte nicht geladen werden."));document.head.appendChild(s);});
- window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return window.pdfjsLib;
+ await new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+  script.onload=resolve;script.onerror=()=>reject(new Error("PDF-Anzeige konnte nicht geladen werden."));
+  document.head.appendChild(script);
+ });
+ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+ return window.pdfjsLib;
 }
-async function render(){
- const item=items[index];if(!item)return;
- const m=modal(),target=$("binderPage"),all=notes();
- $("binderTitle").textContent=item.name||item.fileName||"Hefter";
- $("binderSubtitle").textContent=(item.fileName||"")+" · Wische nach links oder rechts zum Blättern";
- $("binderNote").value=all[item.id+":"+pageNo]||"";
- $("binderNoteStatus").textContent="Wird automatisch gespeichert";
- target.textContent="Seite wird geladen …";
- try{
-  const file=await dbFile(item.id);if(!file)throw Error("Datei nicht gefunden. Bitte erneut hochladen.");
-  const isPdf=(item.fileType||file.type||"").toLowerCase()==="application/pdf"||(item.fileName||"").toLowerCase().endsWith(".pdf");
-  if(isPdf){
-   const lib=await pdfLib();if(!pdf||pdf._studySpaceId!==item.id){pdf=await lib.getDocument({data:await file.arrayBuffer()}).promise;pdf._studySpaceId=item.id;}
-   const page=await pdf.getPage(pageNo),base=page.getViewport({scale:1}),scale=Math.min(1.7,Math.max(.5,(target.clientWidth-40)/base.width)),vp=page.getViewport({scale});
-   const canvas=document.createElement("canvas");canvas.width=vp.width;canvas.height=vp.height;canvas.style.width="100%";canvas.style.height="auto";target.replaceChildren(canvas);
-   await page.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;
-   $("binderPosition").textContent="Datei "+(index+1)+"/"+items.length+" · Seite "+pageNo+"/"+pdf.numPages;
-   $("binderPrev").disabled=index===0&&pageNo===1;$("binderNext").disabled=index===items.length-1&&pageNo===pdf.numPages;
-  }else{
-   if(currentUrl)URL.revokeObjectURL(currentUrl);currentUrl=URL.createObjectURL(file);
-   const img=document.createElement("img");img.src=currentUrl;img.alt=item.name||"Hefterseite";target.replaceChildren(img);
-   $("binderPosition").textContent="Datei "+(index+1)+"/"+items.length+" · Bildseite 1/1";
-   $("binderPrev").disabled=index===0;$("binderNext").disabled=index===items.length-1;
-  }
- }catch(e){target.textContent=e.message;$("binderPosition").textContent="Vorschau nicht verfügbar";}
+async function appendImage(item,file,scroll){
+ const page=makePage(item,1,1),url=URL.createObjectURL(file);objectUrls.push(url);
+ const img=document.createElement("img");img.src=url;img.alt=item.name||item.fileName||"Hefterseite";
+ img.loading="lazy";page.content.appendChild(img);scroll.appendChild(page.section);
 }
-async function move(delta){
- const item=items[index];if(!item)return;
- const isPdf=(item.fileType||"").toLowerCase()==="application/pdf"||(item.fileName||"").toLowerCase().endsWith(".pdf");
- if(isPdf&&pdf&&((delta>0&&pageNo<pdf.numPages)||(delta<0&&pageNo>1)))pageNo+=delta;
- else{index+=delta;if(index<0||index>=items.length){index=Math.max(0,Math.min(items.length-1,index));return;}pageNo=1;pdf=null;}
- await render();
+async function appendPdf(item,file,scroll,pdfjs){
+ const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise;
+ for(let n=1;n<=pdf.numPages;n++){
+  const page=makePage(item,n,pdf.numPages);
+  const pdfPage=await pdf.getPage(n);
+  const base=pdfPage.getViewport({scale:1});
+  const scale=Math.min(1.5,Math.max(.55,1100/base.width));
+  const viewport=pdfPage.getViewport({scale});
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+  canvas.setAttribute("aria-label","PDF-Seite "+n);
+  page.content.appendChild(canvas);scroll.appendChild(page.section);
+  await pdfPage.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+ }
 }
 async function open(id){
- const data=readData(),material=(data.materials||[]).find(x=>x.id===id);if(!material)return;
- items=(data.materials||[]).filter(x=>x.subjectId===material.subjectId&&supported(x)).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
- index=Math.max(0,items.findIndex(x=>x.id===id));pageNo=1;pdf=null;
- modal().classList.add("open");await render();
+ const data=readData(),selected=(data.materials||[]).find(x=>x.id===id);
+ if(!selected)return;
+ const items=(data.materials||[])
+  .filter(x=>x.subjectId===selected.subjectId&&isSupported(x))
+  .sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+ const root=makeViewer(),scroll=$("binderScroll");
+ objectUrls.forEach(url=>URL.revokeObjectURL(url));objectUrls=[];
+ scroll.replaceChildren();
+ $("binderTitle").textContent=(data.subjects||[]).find(s=>s.id===selected.subjectId)?.name||"Dein Hefter";
+ $("binderSubtitle").textContent=items.length+" Materialien · Scrolle durch deine Unterlagen und ergänze Notizen direkt daneben";
+ $("binderPageCount").textContent="Lernansicht";
+ root.classList.add("open");
+ let pdfjs=null,shown=0;
+ for(const item of items){
+  try{
+   const file=await getFile(item.id);
+   if(!file)throw new Error("Datei nicht gefunden");
+   const type=(item.fileType||file.type||"").toLowerCase();
+   const isPdf=type==="application/pdf"||(item.fileName||"").toLowerCase().endsWith(".pdf");
+   if(isPdf){pdfjs=pdfjs||await loadPdfLibrary();await appendPdf(item,file,scroll,pdfjs);}
+   else await appendImage(item,file,scroll);
+   shown++;
+  }catch(error){
+   const section=document.createElement("section");section.className="binder-load-error";
+   section.textContent=(item.fileName||item.name)+": "+error.message;
+   scroll.appendChild(section);
+  }
+ }
+ if(!shown){const empty=document.createElement("div");empty.className="binder-loading";empty.textContent="Keine lesbaren Bilder oder PDFs gefunden.";scroll.appendChild(empty);}
+ scroll.scrollTop=0;
 }
 function init(){
- const input=$("materialFile");if(input){input.multiple=true;const label=input.closest("label");if(label)label.firstChild.textContent="Mehrere Dateien oder Fotos";}
- window.addEventListener("studyspace:open-material",e=>open(e.detail.id));
- document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("studyBinder")?.classList.contains("open"))close();});
+ const input=$("materialFile");
+ if(input){input.multiple=true;}
+ window.addEventListener("studyspace:open-material",event=>open(event.detail.id));
+ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("studyBinder")?.classList.contains("open"))close();});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
