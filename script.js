@@ -258,14 +258,34 @@ function renderMaterials() {
   return `<div class="material-item material-library-item" data-material-row="${escapeHTML(item.id)}" draggable="true">
    <div class="material-library-title"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(subject?.name||"Kein Fach")} · ${escapeHTML(ext||"DATEI")} · ${escapeHTML(item.fileName||"")}</p></div>
    <div class="material-library-actions">
-    <button type="button" class="small-button material-move-button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} aria-label="Material nach oben verschieben">↑ Hoch</button>
-    <button type="button" class="small-button material-move-button" data-material-down="${escapeHTML(item.id)}" ${index===group.length-1?"disabled":""} aria-label="Material nach unten verschieben">↓ Runter</button>
+    <button type="button" data-material-up="${escapeHTML(item.id)}" ${index===0?"disabled":""} aria-label="Material nach oben verschieben" style="display:inline-flex!important;visibility:visible!important;opacity:1!important;min-width:92px;min-height:44px;padding:10px 12px;border:2px solid #69a7ff;border-radius:9px;background:#203b5d;color:#fff;font-size:15px;font-weight:700;align-items:center;justify-content:center;touch-action:manipulation">↑ Nach oben</button>
+    <button type="button" data-material-down="${escapeHTML(item.id)}" ${index===group.length-1?"disabled":""} aria-label="Material nach unten verschieben" style="display:inline-flex!important;visibility:visible!important;opacity:1!important;min-width:92px;min-height:44px;padding:10px 12px;border:2px solid #69a7ff;border-radius:9px;background:#203b5d;color:#fff;font-size:15px;font-weight:700;align-items:center;justify-content:center;touch-action:manipulation">↓ Nach unten</button>
+    <label style="display:inline-flex;align-items:center;gap:6px;color:inherit;font-size:13px">Position
+      <select data-material-position="${escapeHTML(item.id)}" aria-label="Position von ${escapeHTML(label)}" style="min-height:42px;min-width:64px;padding:6px;border-radius:8px">
+       ${group.map((entry,i)=>`<option value="${i}" ${i===index?"selected":""}>${i+1}</option>`).join("")}
+      </select>
+    </label>
     <button type="button" class="small-button" data-material-rename="${escapeHTML(item.id)}">✎ Name</button>
     <button type="button" class="small-button material-open-button" data-material-open="${escapeHTML(item.id)}">Öffnen</button>
     <button type="button" class="small-button delete" data-material-delete="${escapeHTML(item.id)}">Entfernen</button>
    </div></div>`;
  }).join("");
 
+ container.onchange=event=>{
+  const select=event.target.closest("[data-material-position]");
+  if(!select||!container.contains(select))return;
+  const id=select.dataset.materialPosition;
+  const item=data.materials.find(x=>x.id===id);
+  if(!item)return;
+  const group=orderedMaterials(item.subjectId);
+  const from=group.findIndex(x=>x.id===id);
+  const to=Number(select.value);
+  if(from<0||!Number.isInteger(to)||to<0||to>=group.length)return;
+  const [moved]=group.splice(from,1);
+  group.splice(to,0,moved);
+  saveMaterialOrder(group);
+  renderMaterials();
+ };
  container.onclick=event=>{
   const b=event.target.closest("button");if(!b||!container.contains(b))return;
   const id=b.dataset.materialUp||b.dataset.materialDown||b.dataset.materialRename||b.dataset.materialOpen||b.dataset.materialDelete;
