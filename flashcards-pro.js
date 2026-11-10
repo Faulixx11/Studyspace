@@ -299,6 +299,7 @@
     const rate=st.attempts?Math.round(st.correct/st.attempts*100):0;
     $("fcx-feedback-status").textContent=knew?"Gespeichert: "+rate+" % richtig · "+(isMasteredCard(card)?"Karte jetzt sicher beherrscht.":"Diese Karte kommt später wieder."):"Gespeichert: "+rate+" % richtig · Diese Karte wird häufiger wiederholt.";
     currentCardId=chooseNextCard(list.filter(c=>c.id!==card.id))?.id||chooseNextCard(list)?.id;
+    directionCardId=null;
     answerShown=false;render();
   }
   function editCard(id) {
