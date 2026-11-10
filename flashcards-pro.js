@@ -292,6 +292,8 @@
     closeCrop();renderUploads();
   }
 
+  // Die alte Flashcard-Ansicht wurde vollständig ersetzt; alte Render-Aufrufe dürfen nicht auf entfernte Elemente zugreifen.
+  renderFlashcards = function () { render(); };
   ensureSets();
   build();
   window.addEventListener("beforeunload",()=>uploads.forEach(u=>URL.revokeObjectURL(u.url)));
