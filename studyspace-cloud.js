@@ -29,7 +29,7 @@ function addPanel(){
  '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-signup">Konto erstellen</button><button id="ss-cloud-login">Anmelden</button><button id="ss-cloud-reset">Passwort zurücksetzen</button><button id="ss-cloud-logout">Abmelden</button></div>',
  '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-now">Jetzt synchronisieren</button><button id="ss-cloud-download">Cloud-Daten auf dieses Gerät laden</button></div>',
  '<div class="ss-state" id="ss-cloud-status" aria-live="polite">Noch nicht verbunden. Zuerst Projekt-URL und Publishable Key eintragen.</div>',
- '<p class="ss-muted">Die erste Anmeldung auf einem weiteren Gerät fragt, ob die Cloud-Daten geladen werden sollen. Danach werden Änderungen automatisch übertragen. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
+ '<p class="ss-muted">Die erste Anmeldung auf einem weiteren Gerät fragt, ob die Cloud-Daten geladen werden sollen. Danach werden Änderungen automatisch übertragen. Neuere Cloud-Daten werden niemals ungefragt heruntergeladen oder lokale Lernstände überschrieben. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
  ].join("");
  page.appendChild(panel);
  const cfg=readConfig();$("ss-cloud-url").value=cfg.url||"";$("ss-cloud-key").value=cfg.key||"";
@@ -120,12 +120,22 @@ async function initialSync(){
  if(!client||!user||busy||initializing)return;
  initializing=true;
  try{
-  const remote=await fetchRemote();if(!remote){status("Noch keine Cloud-Sicherung vorhanden. Dieses Gerät wird als erstes synchronisiert.");await pushCloud();startAutoSync();return;}
-  const meta=readMeta();if(meta.accountId===user.id&&meta.lastRemoteAt===remote.updated_at){status("Cloud ist aktuell · "+user.email);startAutoSync();return;}
+  const remote=await fetchRemote();
+  if(!remote){status("Noch keine Cloud-Sicherung vorhanden. Dieses Gerät wird als erstes synchronisiert.");await pushCloud();startAutoSync();return;}
+  const meta=readMeta();
+  if(meta.accountId===user.id&&meta.lastRemoteAt===remote.updated_at){status("Cloud ist aktuell · "+user.email);startAutoSync();return;}
   const local=collectLocal(),hasLocal=Object.keys(local).some(k=>k.startsWith("studyspace")||k.startsWith("studySpace"));
-  if(hasLocal&&meta.accountId!==user.id){const useCloud=confirm("Für dieses Konto gibt es bereits eine Cloud-Sicherung. OK = Cloud-Daten auf dieses Gerät laden. Abbrechen = lokale Daten behalten und in die Cloud hochladen.");if(useCloud)await downloadCloud(false);else await pushCloud();}
-  else await downloadCloud(false);
-  saveMeta({...readMeta(),accountId:user.id});startAutoSync();
+  const sameAccount=meta.accountId===user.id;
+  const message=sameAccount
+   ?"Die Cloud-Version wurde seit der letzten Synchronisierung geändert.\n\nOK = Cloud-Version auf dieses Gerät laden (lokale Daten werden ersetzt).\nAbbrechen = lokale Daten behalten; es wird vorerst nichts überschrieben."
+   :"Für dieses Konto gibt es bereits eine Cloud-Sicherung.\n\nOK = Cloud-Version auf dieses Gerät laden (lokale Daten werden ersetzt).\nAbbrechen = lokale Daten behalten; es wird vorerst nichts überschrieben.";
+  if(hasLocal||sameAccount){
+   if(confirm(message)){await downloadCloud(false);saveMeta({...readMeta(),accountId:user.id});startAutoSync();}
+   else{status("Konflikt: Lokale Daten bleiben erhalten. Keine automatische Synchronisierung, damit nichts überschrieben wird.",true);}
+  }else{
+   if(confirm(message)){await downloadCloud(false);saveMeta({...readMeta(),accountId:user.id});startAutoSync();}
+   else status("Cloud-Konflikt: Es wurde nichts verändert. Bitte Datenstände erst vergleichen.",true);
+  }
  }catch(e){console.error(e);status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}finally{initializing=false;}
 }
 async function syncNow(show=true){if(!client||!user){status("Bitte zuerst anmelden.",true);return;}if(show)status("Synchronisierung wird gestartet …");await pushCloud();}
@@ -134,8 +144,9 @@ function startAutoSync(){
  if(window.__studySpaceAutoSync)return;window.__studySpaceAutoSync=true;
  const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){const result=original.call(this,key,value);if(this===localStorage&&appKey(String(key)))scheduleSync();return result;};
  ["put","add","delete","clear"].forEach(name=>{const originalMethod=IDBObjectStore.prototype[name];if(typeof originalMethod!=="function")return;IDBObjectStore.prototype[name]=function(...args){const result=originalMethod.apply(this,args);if(this.name===STORE)scheduleSync();return result;};});
- window.addEventListener("focus",async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){if(dirty){status("Auf diesem Gerät gibt es noch nicht synchronisierte Änderungen. Bitte synchronisiere zuerst, bevor du Cloud-Daten lädst.");}else await downloadCloud(false);}}catch(e){console.warn(e);}});
- setInterval(async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){if(dirty){status("Auf diesem Gerät gibt es noch nicht synchronisierte Änderungen. Bitte synchronisiere zuerst, bevor du Cloud-Daten lädst.");}else await downloadCloud(false);}}catch(e){console.warn(e);}},30000);
+ const checkRemote=async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){status("Eine andere Browser-Registerkarte oder ein anderes Gerät hat neuere Cloud-Daten. Deine lokalen Daten bleiben sicher; es wird nichts automatisch heruntergeladen. Zum Übernehmen bitte bewusst „Cloud-Daten auf dieses Gerät laden“ wählen.",true);}}catch(e){console.warn(e);}};
+ window.addEventListener("focus",checkRemote);
+ setInterval(checkRemote,30000);
 }
 function init(){addStyles();addPanel();const cfg=readConfig();if(cfg.url&&cfg.key)connect();}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
