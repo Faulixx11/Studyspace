@@ -311,7 +311,7 @@
             }
           }
         }finally{await worker.terminate();}
-        textOut+="\\n\\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Variante: "+best.variant+" · Layout: "+best.psm+" ---\\n"+best.text;
+        textOut+="\n\n--- "+u.name+" · Sprache: "+labels[lang]+" · OCR-Konfidenz: "+Math.round(best.confidence)+" % · Variante: "+best.variant+" · Layout: "+best.psm+" ---\n"+best.text;
         variants.forEach(v=>{try{URL.revokeObjectURL(v.blob);}catch{}});
       }
       $("fcx-recognized-text").value=textOut.trim();$("fcx-text-review").hidden=false;
@@ -328,10 +328,14 @@
     const clean=value=>String(value||"").replace(/^[\s•*\-–—:;,.]+|[\s•*\-–—:;,.]+$/g,"").replace(/\s+/g," ").trim();
     const looksLikeVocab=value=>{
       const words=value.split(/\s+/);
-      if(!value||words.length>5||value.length>55)return false;
+      if(!value||words.length>4||value.length>48)return false;
       if(/[.!?;。！？]/.test(value))return false;
-      if(/^(der|die|das|ein|eine|the|a|an|le|la|les|un|une|el|la|los|las)\s+.+\s+(ist|sind|war|waren|are|is|was|were|est|sont)$/i.test(value))return false;
-      return /[A-Za-zÀ-ÿÄÖÜäöüß]/.test(value);
+      if(/\d/.test(value))return false;
+      if(!/[A-Za-zÀ-ÿÄÖÜäöüß]/.test(value))return false;
+      const letters=(value.match(/[A-Za-zÀ-ÿÄÖÜäöüß]/g)||[]).length;
+      if(letters/Math.max(1,value.length)<0.65)return false;
+      if(/^(der|die|das|ein|eine|the|a|an|le|la|les|un|une|el|los|las)\s+.+\s+(ist|sind|war|waren|are|is|was|were|est|sont)$/i.test(value))return false;
+      return true;
     };
     const add=(left,right)=>{
       const q=clean(left),a=clean(right);
