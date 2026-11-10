@@ -14,6 +14,7 @@
   let setId = "";
   let currentIndex = 0;
   let currentCardId = null;
+  let directionCardId = null;
   let answerShown = false;
   let reviewDirection = "forward";
   let currentDirection = "forward";
@@ -105,7 +106,7 @@
     });
     // Import-Button wird zentral über den Seiten-Listener behandelt.
     $("fcx-show-answer").addEventListener("click", showAnswer);
-    $("fcx-direction").addEventListener("change", e => { reviewDirection=e.target.value; answerShown=false; renderReview(activeCards()); });
+    $("fcx-direction").addEventListener("change", e => { reviewDirection=e.target.value; directionCardId=null; answerShown=false; renderReview(activeCards()); });
     $("fcx-knew").addEventListener("click", () => rateCurrent(true));
     $("fcx-didnt-know").addEventListener("click", () => rateCurrent(false));
     $("fcx-all-cards").addEventListener("click", () => { difficultOnly=false; render(); });
@@ -277,7 +278,7 @@
     if(!list.length){$("fcx-review-question").textContent="Noch keine Karte in diesem Set.";$("fcx-review-answer").hidden=true;$("fcx-review-answer").textContent="";$("fcx-feedback").hidden=true;answerShown=false;return;}
     if(!currentCardId || !list.some(c=>c.id===currentCardId)) currentCardId=chooseNextCard(list)?.id;
     const card=list.find(c=>c.id===currentCardId)||list[0];
-    currentDirection=reviewDirection==="mixed"?(Math.random()<0.5?"forward":"reverse"):reviewDirection;
+    if(directionCardId!==card.id){currentDirection=reviewDirection==="mixed"?(Math.random()<0.5?"forward":"reverse"):reviewDirection;directionCardId=card.id;}
     const question=currentDirection==="forward"?card.question:card.answer;
     const answer=currentDirection==="forward"?card.answer:card.question;
     $("fcx-review-label").textContent=currentDirection==="forward"?"FRANZÖSISCH → DEUTSCH":"DEUTSCH → FRANZÖSISCH";
