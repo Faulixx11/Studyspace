@@ -971,31 +971,10 @@ applySettings();
             }));
     };
 
-    // ---------- Materialien zeigen die Farbe ihres Fachs ----------
-    renderMaterials = function() {
-        const container = $("materialList");
-        if (!data.materials.length) {
-            container.innerHTML = `<div class="panel empty-state">Noch keine Materialien vorhanden.</div>`;
-            return;
-        }
-        container.innerHTML = data.materials.map(item => {
-            const subject = getSubject(item.subjectId);
-            return `<div class="material-item material-item-colored" style="--subject-color:${subjectColor(subject)}">
-                <div class="material-subject-mark"></div>
-                <div class="material-main">
-                    <strong>${safeText(item.name)}</strong>
-                    <p>${safeText(subject?.icon || "📁")} ${safeText(subject?.name || "Kein Fach")} · ${safeText(item.fileName)}</p>
-                </div>
-                <button class="small-button delete" data-material-delete="${safeText(item.id)}">Entfernen</button>
-            </div>`;
-        }).join("");
-        container.querySelectorAll("[data-material-delete]").forEach(button =>
-            button.addEventListener("click", () => {
-                data.materials = data.materials.filter(item => item.id !== button.dataset.materialDelete);
-                saveData();
-                renderAll();
-            }));
-    };
+    // Die zentrale renderMaterials()-Funktion bleibt aktiv.
+    // Sie enthält die Sortiersteuerung (Nach oben/Nach unten/Position)
+    // sowie die Touch-Griff-Funktion. Eine spätere vereinfachte
+    // Neudefinition hatte diese Oberfläche bisher wieder entfernt.
 
     // ---------- Karteikarten mit animierter Vorder- und Rückseite ----------
     showCurrentCard = function() {
