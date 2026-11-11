@@ -497,7 +497,7 @@
     {"id":"oat-drink","name":"Haferdrink","protein":1,"category":"Pflanzendrinks"},
     {"id":"rice-drink","name":"Reisdrink","protein":0.1,"category":"Pflanzendrinks"},
     {"id":"coconut-drink","name":"Kokosdrink","protein":0.2,"category":"Pflanzendrinks"},
-    {"id":"almond-drink","name":"Mandeldrink","protein":0.5,"category":"Pflanzendrinks"},
+    {"id":"potato-drink","name":"Kartoffeldrink","protein":0.3,"category":"Pflanzendrinks"},{"id":"pea-drink","name":"Erbsendrink","protein":3,"category":"Pflanzendrinks"},
     {"id":"vegan-pudding","name":"Veganer Pudding","protein":3,"category":"Pflanzendrinks"},
     {"id":"vegan-icecream","name":"Veganes Eis","protein":2,"category":"Pflanzendrinks"}
   ];
