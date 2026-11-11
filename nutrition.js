@@ -202,6 +202,7 @@
     });
 
     if (learning) {
+      document.querySelectorAll(".nutrition-page").forEach(page => page.classList.remove("active"));
       localStorage.setItem("studyspaceWorkspaceMode", "learning");
       if (typeof window.openPage === "function") window.openPage("dashboard");
       else {
