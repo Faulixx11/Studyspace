@@ -9,7 +9,9 @@
     highProteinFocus: true,
     avoidNuts: true,
     allergies: "",
-    dislikes: ""
+    dislikes: "",
+    aiEndpoint: "",
+    aiToken: ""
   };
 
   const readStore = () => {
@@ -142,6 +144,7 @@
           <button class="primary-button" id="saveNutritionProfile" type="button">Profil speichern</button>
           <p class="muted" id="nutritionProfileStatus" aria-live="polite"></p>
         </div>
+        <div class="panel"><h3>KI-Assistent verbinden (optional)</h3><p class="muted">Trage die Adresse deines privaten KI-Workers und deinen persönlichen Zugriffscode ein. Beides wird nur in diesem Browser gespeichert. Niemals einen öffentlichen API-Schlüssel verwenden.</p><label class="form-stack">Worker-Adresse<input id="nutritionAiEndpoint" type="url" placeholder="https://dein-worker.workers.dev"></label><label class="form-stack" style="margin-top:12px">Persönlicher Zugriffscode<input id="nutritionAiToken" type="password" autocomplete="off" placeholder="Zugriffscode"></label><p class="muted">Ohne Verbindung nutzt der Assistent weiterhin die lokale Rezept- und Vorratssuche.</p></div>
       </section>
     `;
     main.appendChild(wrapper);
@@ -269,6 +272,8 @@
       nutritionData.profile.avoidNuts = document.getElementById("nutritionAvoidNuts").checked;
       nutritionData.profile.dislikes = document.getElementById("nutritionDislikes").value.trim();
       nutritionData.profile.allergies = document.getElementById("nutritionAllergies").value.trim();
+      nutritionData.profile.aiEndpoint = document.getElementById("nutritionAiEndpoint")?.value.trim() || "";
+      nutritionData.profile.aiToken = document.getElementById("nutritionAiToken")?.value.trim() || "";
       if (saveStore()) document.getElementById("nutritionProfileStatus").textContent = "Dein Ernährungsprofil wurde auf diesem Gerät gespeichert.";
     });
   }
@@ -285,6 +290,10 @@
     if (nuts) nuts.checked = !!profile.avoidNuts;
     if (dislikes) dislikes.value = profile.dislikes || "";
     if (allergies) allergies.value = profile.allergies || "";
+    const endpoint = document.getElementById("nutritionAiEndpoint");
+    const token = document.getElementById("nutritionAiToken");
+    if (endpoint) endpoint.value = profile.aiEndpoint || "";
+    if (token) token.value = profile.aiToken || "";
   }
 
 
@@ -617,7 +626,16 @@
     const form=document.getElementById("nutritionAiForm");if(!form)return;
     const messages=document.getElementById("nutritionAiMessages");
     const reply=(text)=>{const div=document.createElement("div");div.className="nutrition-ai-message";div.textContent=text;messages.appendChild(div);};
-    form.addEventListener("submit",e=>{e.preventDefault();const q=document.getElementById("nutritionAiInput").value.trim();if(!q)return;reply("Du: "+q);const terms=q.toLowerCase().split(/[^a-zäöüß]+/).filter(x=>x.length>2);
+    form.addEventListener("submit",async e=>{e.preventDefault();const q=document.getElementById("nutritionAiInput").value.trim();if(!q)return;reply("Du: "+q);
+      if(nutritionData.profile.aiEndpoint){
+        try{
+          const response=await fetch(nutritionData.profile.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(nutritionData.profile.aiToken||"")},body:JSON.stringify({message:q,context:{diet:nutritionData.profile.diet,avoidNuts:nutritionData.profile.avoidNuts,dislikes:nutritionData.profile.dislikes,allergies:nutritionData.profile.allergies,recipes:nutritionData.recipes.slice(0,30).map(r=>({name:r.name,ingredients:r.ingredients})),pantry:nutritionData.pantry}})});
+          const data=await response.json();if(!response.ok)throw new Error(data.error||"KI-Anfrage fehlgeschlagen");
+          reply(data.answer||"Der KI-Dienst hat keine Antwort geliefert.");
+        }catch(error){reply("KI-Verbindung fehlgeschlagen: "+error.message+". Prüfe Worker-Adresse, Zugriffscode und Verbindung.");}
+        document.getElementById("nutritionAiInput").value="";return;
+      }
+      const terms=q.toLowerCase().split(/[^a-zäöüß]+/).filter(x=>x.length>2);
       const matches=nutritionData.recipes.filter(r=>(r.name+" "+(r.ingredients||[]).map(i=>i.name).join(" ")).toLowerCase().includes(terms.find(t=>(r.name+" "+(r.ingredients||[]).map(i=>i.name)).toLowerCase().includes(t))||"§"));
       const pantry=nutritionData.pantry.filter(p=>terms.some(t=>p.name.toLowerCase().includes(t)));
       let answer=matches.length?"Diese gespeicherten Rezepte könnten passen: "+matches.slice(0,5).map(r=>r.name+" (ca. "+recipeProtein(r).toFixed(1)+" g Protein/Portion)").join("; "):"Ich habe in deinen gespeicherten Rezepten keinen eindeutigen Treffer gefunden. Du kannst Zutaten im Vorrat ergänzen oder ein Rezept importieren.";
