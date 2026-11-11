@@ -8,7 +8,7 @@ const types={grammar:"Grammatik",formula:"Formeln",year:"Jahreszahlen",definitio
 let store={entries:[]},filter="all",editing=null,quiz={cards:[],index:0,correct:0};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&Array.isArray(s.entries))store=s;}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store));return true;}catch(e){alert("Speichern fehlgeschlagen. Prüfe den Browserspeicher.");return false;}};
-const subject=id=>(window.data?.subjects||[]).find(s=>s.id===id)?.name||"Allgemein";
+const subject=id=>(data?.subjects||[]).find(s=>s.id===id)?.name||"Allgemein";
 const due=e=>!e.nextReview||e.nextReview<=Date.now();
 function init(){
  if(!$("sidebar")||$("page-knowledge"))return;
@@ -38,7 +38,7 @@ function init(){
  $("kn-list").addEventListener("click",e=>{const x=e.target.closest("[data-edit]"),d=e.target.closest("[data-del]");if(x)editEntry(x.dataset.edit);if(d)deleteEntry(d.dataset.del);});
  renderSubjects();renderAll();
 }
-function renderSubjects(){const s=$("kn-subject");if(!s)return;const old=s.value;s.innerHTML='<option value="">Allgemein / kein Fach</option>'+(window.data?.subjects||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");s.value=old;}
+function renderSubjects(){const s=$("kn-subject");if(!s)return;const old=s.value;s.innerHTML='<option value="">Allgemein / kein Fach</option>'+(data?.subjects||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");s.value=old;}
 function saveEntry(e){e.preventDefault();const x={id:editing||uid(),type:$("kn-type").value,subjectId:$("kn-subject").value,title:$("kn-title").value.trim(),question:$("kn-question").value.trim(),answer:$("kn-answer").value.trim(),example:$("kn-example").value.trim(),tags:$("kn-tags").value.trim(),updatedAt:Date.now()};if(!x.title||!x.question||!x.answer)return;if(editing){const old=store.entries.find(y=>y.id===editing);if(old)Object.assign(old,x);}else{Object.assign(x,{createdAt:Date.now(),interval:0,nextReview:0,reviews:0,correct:0,wrong:0});store.entries.unshift(x);}save();resetForm();renderAll();}
 function resetForm(){editing=null;$("kn-form").reset();$("kn-form-title").textContent="Neuen Eintrag erstellen";$("kn-save").textContent="Eintrag speichern";$("kn-cancel").hidden=true;renderSubjects();}
 function editEntry(id){const x=store.entries.find(y=>y.id===id);if(!x)return;editing=id;$("kn-type").value=x.type;$("kn-subject").value=x.subjectId||"";$("kn-title").value=x.title;$("kn-question").value=x.question;$("kn-answer").value=x.answer;$("kn-example").value=x.example||"";$("kn-tags").value=x.tags||"";$("kn-form-title").textContent="Eintrag bearbeiten";$("kn-save").textContent="Änderungen speichern";$("kn-cancel").hidden=false;$("kn-form-title").scrollIntoView({behavior:"smooth"});}
