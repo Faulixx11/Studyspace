@@ -519,7 +519,7 @@
         const meal=plan.meals.find(m=>m.date===key&&m.slot===slot);
         const recipe=meal?.recipeId?nutritionData.recipes.find(r=>r.id===meal.recipeId):null;
         const title=recipe?.name||meal?.customName||"Noch frei";
-        return '<div class="nutrition-meal-slot"><label>'+slot+'</label><div class="nutrition-meal-current">'+escapeText(title)+'</div><select data-plan-recipe data-date="'+key+'" data-slot="'+slot+'"><option value="">— Rezept wählen —</option>'+nutritionData.recipes.map(r=>'<option value="'+escapeText(r.id)+'" '+(meal?.recipeId===r.id?'selected':'')+'>'+escapeText(r.name)+'</option>').join("")+'</select><input data-plan-custom data-date="'+key+'" data-slot="'+slot+'" placeholder="Oder freie Mahlzeit" value="'+escapeText(meal?.customName||"")+'"><button class="nutrition-small-button" data-plan-clear data-date="'+key+'" data-slot="'+slot+'">Entfernen</button></div>';
+        return '<div class="nutrition-meal-slot"><label>'+slot+'</label><div class="nutrition-meal-current">'+escapeText(title)+'</div><label class="nutrition-serving-label">Portionen<input type="number" min="1" max="20" step="1" data-plan-servings data-date="'+key+'" data-slot="'+slot+'" value="'+(Number(meal?.servings)||1)+'"></label><select data-plan-recipe data-date="'+key+'" data-slot="'+slot+'"><option value="">— Rezept wählen —</option>'+nutritionData.recipes.map(r=>'<option value="'+escapeText(r.id)+'" '+(meal?.recipeId===r.id?'selected':'')+'>'+escapeText(r.name)+'</option>').join("")+'</select><input data-plan-custom data-date="'+key+'" data-slot="'+slot+'" placeholder="Oder freie Mahlzeit" value="'+escapeText(meal?.customName||"")+'"><button class="nutrition-small-button" data-plan-clear data-date="'+key+'" data-slot="'+slot+'">Entfernen</button></div>';
       }).join("")+'</section>';
     }).join("");
   }
@@ -536,6 +536,13 @@
       if(meal.recipeId)meal.customName="";
       if(!meal.recipeId&&!meal.customName)plan.meals=plan.meals.filter(m=>m!==meal);
       saveStore();renderPlanner();
+    });
+    document.getElementById("plannerGrid").addEventListener("change",e=>{
+      const el=e.target;if(!el.matches("[data-plan-servings]"))return;
+      const plan=ensureWeek(el.dataset.date),date=el.dataset.date,slot=el.dataset.slot;
+      let meal=plan.meals.find(m=>m.date===date&&m.slot===slot);
+      if(!meal){meal={date,slot};plan.meals.push(meal);}
+      meal.servings=Math.max(1,Math.min(20,Number(el.value)||1));saveStore();
     });
     document.getElementById("plannerGrid").addEventListener("change",e=>{
       const el=e.target;if(!el.matches("[data-plan-custom]"))return;
@@ -567,7 +574,7 @@
       (recipe.ingredients||[]).forEach(ing=>{
         const key=ing.foodId||ing.name.toLowerCase();
         if(!totals[key])totals[key]={key,name:ing.name,grams:0};
-        totals[key].grams+=Number(ing.grams)||0;
+        totals[key].grams+=(Number(ing.grams)||0)*Math.max(1,Number(meal.servings)||1)/Math.max(1,Number(recipe.servings)||1);
       });
     });
     const items=Object.values(totals).map(item=>{
