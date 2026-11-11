@@ -90,7 +90,7 @@
         <div class="page-intro"><h1>Rezepte</h1><p>Deine Sammlung für abwechslungsreiche, vegane und proteinbewusste Gerichte.</p></div>
         <div class="nutrition-recipe-toolbar">
           <input id="recipeSearch" type="search" placeholder="Rezepte oder Zutaten suchen …" aria-label="Rezepte suchen">
-          <select id="recipeFilter" aria-label="Rezepte filtern"><option value="all">Alle Rezepte</option><option value="protein">Proteinreiche Rezepte</option></select>
+          <select id="recipeFilter" aria-label="Rezepte filtern"><option value="all">Alle Rezepte</option><option value="protein">Proteinreiche Rezepte</option><option value="favorites">Favoriten</option></select>
           <button type="button" class="nutrition-primary-button" id="newRecipeButton">＋ Rezept erstellen</button>
         </div>
         <div id="recipeEditor" class="nutrition-editor" hidden></div>
@@ -429,8 +429,10 @@
     });
 
     list.addEventListener("click", event => {
+      const favorite = event.target.closest("[data-recipe-favorite]");
       const edit = event.target.closest("[data-recipe-edit]");
       const remove = event.target.closest("[data-recipe-delete]");
+      if (favorite) { const recipe = nutritionData.recipes.find(item => item.id === favorite.dataset.recipeFavorite); if (recipe) { recipe.favorite = !recipe.favorite; saveStore(); renderRecipes(); } }
       if (edit) {
         const recipe = nutritionData.recipes.find(item => item.id === edit.dataset.recipeEdit);
         if (recipe) openRecipeEditor(recipe);
@@ -475,7 +477,7 @@
     const filter = document.getElementById("recipeFilter")?.value || "all";
     const recipes = nutritionData.recipes.filter(recipe => {
       const searchable = [recipe.name,recipe.description,...(recipe.ingredients||[]).map(item=>item.name)].join(" ").toLocaleLowerCase("de");
-      return searchable.includes(query) && (filter !== "protein" || recipeProtein(recipe) >= 20);
+      return searchable.includes(query) && (filter !== "protein" || recipeProtein(recipe) >= 20) && (filter !== "favorites" || !!recipe.favorite);
     }).sort((a,b)=>recipeProtein(b)-recipeProtein(a));
     if (!recipes.length) {
       list.innerHTML = `<div class="nutrition-empty">${nutritionData.recipes.length ? "Keine passenden Rezepte gefunden." : "Noch keine Rezepte gespeichert. Erstelle dein erstes Rezept und füge pflanzliche Proteinquellen hinzu."}</div>`;
@@ -490,7 +492,7 @@
           <ul>${(recipe.ingredients||[]).map(item=>`<li>${escapeText(item.name)} – ${item.grams} g</li>`).join("")}</ul>
           <p>${escapeText(recipe.instructions || "Noch keine Zubereitung hinterlegt.")}</p>
         </details>
-        <div class="nutrition-form-actions"><button class="nutrition-small-button" data-recipe-edit="${escapeText(recipe.id)}">Bearbeiten</button><button class="nutrition-small-button nutrition-danger-button" data-recipe-delete="${escapeText(recipe.id)}">Löschen</button></div>
+        <div class="nutrition-form-actions"><button class="nutrition-small-button" data-recipe-favorite="${escapeText(recipe.id)}">${recipe.favorite ? "★ Favorit" : "☆ Merken"}</button><button class="nutrition-small-button" data-recipe-edit="${escapeText(recipe.id)}">Bearbeiten</button><button class="nutrition-small-button nutrition-danger-button" data-recipe-delete="${escapeText(recipe.id)}">Löschen</button></div>
       </article>`;
     }).join("");
   }
