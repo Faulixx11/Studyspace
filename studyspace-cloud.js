@@ -155,6 +155,18 @@ function hasMeaningfulLocalData(){
  }
  return false;
 }
+async function localStateMatchesRemote(remote){
+ const remoteStorage=remote?.payload?.localStorage||{};
+ const localStorageValues=collectLocal();
+ const keys=new Set([...Object.keys(localStorageValues),...Object.keys(remoteStorage)].filter(appKey));
+ for(const key of keys){
+  if((localStorageValues[key]??null)!==(remoteStorage[key]===undefined?null:String(remoteStorage[key])))return false;
+ }
+ const localFiles=await getFiles();
+ const localIds=localFiles.map(row=>String(row.id)).sort();
+ const remoteIds=(remote?.payload?.files||[]).map(row=>String(row.id)).sort();
+ return JSON.stringify(localIds)===JSON.stringify(remoteIds);
+}
 async function initialSync(){
  if(!client||!user||busy||initializing)return;
  initializing=true;
@@ -168,9 +180,9 @@ async function initialSync(){
    return;
   }
   const meta=readMeta();
-  if(meta.accountId===user.id&&timestampMatches(meta.lastRemoteAt,remote.updated_at)){
+  if(meta.accountId===user.id&&timestampMatches(meta.lastRemoteAt,remote.updated_at)&&await localStateMatchesRemote(remote)){
    syncPaused=false;
-   status("Cloud ist aktuell · "+user.email);
+   status("Cloud und dieses Gerät enthalten dieselben Lernstände · "+user.email);
    startAutoSync();
    return;
   }
