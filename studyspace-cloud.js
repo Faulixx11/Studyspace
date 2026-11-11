@@ -3,7 +3,7 @@
 "use strict";
 const CONFIG_KEY="studyspaceCloudConfig", META_KEY="studyspaceCloudMeta", TABLE="studyspace_backups", BUCKET="studyspace-files", DB_NAME="StudySpaceFilesDB", STORE="files";
 const $=id=>document.getElementById(id);
-let client=null,user=null,busy=false,restoring=false,dirty=false,debounce=null,initializing=false;
+let client=null,user=null,busy=false,restoring=false,dirty=false,debounce=null,initializing=false,syncPaused=false;
 const excluded=k=>k===CONFIG_KEY||k===META_KEY||k.startsWith("sb-");
 const appKey=k=>!excluded(k);
 const status=(message,error=false)=>{const el=$("ss-cloud-status");if(el){el.textContent=message;el.style.color=error?"#fca5a5":"";}};
@@ -27,9 +27,9 @@ function addPanel(){
  '<hr style="border:0;border-top:1px solid #30394a;margin:16px 0">',
  '<div class="ss-cloud-grid"><label class="ss-field">E-Mail<input id="ss-cloud-email" type="email" placeholder="deine E-Mail-Adresse" autocomplete="email"></label><label class="ss-field">Passwort<input id="ss-cloud-password" type="password" placeholder="Mindestens 8 Zeichen" autocomplete="current-password"></label></div>',
  '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-signup">Konto erstellen</button><button id="ss-cloud-login">Anmelden</button><button id="ss-cloud-reset">Passwort zurücksetzen</button><button id="ss-cloud-logout">Abmelden</button></div>',
- '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-now">Jetzt synchronisieren</button><button id="ss-cloud-download">Cloud-Daten auf dieses Gerät laden</button></div>',
+ '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-now">Lokale Daten in Cloud hochladen</button><button id="ss-cloud-download">Cloud-Daten auf dieses Gerät laden</button></div>',
  '<div class="ss-state" id="ss-cloud-status" aria-live="polite">Noch nicht verbunden. Zuerst Projekt-URL und Publishable Key eintragen.</div>',
- '<p class="ss-muted">Die erste Anmeldung auf einem weiteren Gerät fragt, ob die Cloud-Daten geladen werden sollen. Danach werden Änderungen automatisch übertragen. Neuere Cloud-Daten werden niemals ungefragt heruntergeladen oder lokale Lernstände überschrieben. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
+ '<p class="ss-muted">Ein neues oder leeres Gerät lädt eine vorhandene Cloud-Sicherung automatisch. Sind auf dem Gerät bereits eigene Lerninhalte vorhanden, fragt StudySpace vor dem Laden nach. Bei einem Konflikt bleibt die automatische Übertragung pausiert, bis du bewusst lokale Daten hochlädst oder Cloud-Daten herunterlädst. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
  ].join("");
  page.appendChild(panel);
  const cfg=readConfig();$("ss-cloud-url").value=cfg.url||"";$("ss-cloud-key").value=cfg.key||"";
@@ -44,7 +44,7 @@ function addPanel(){
    "ss-cloud-login":signIn,
    "ss-cloud-reset":resetPassword,
    "ss-cloud-logout":signOut,
-   "ss-cloud-now":()=>syncNow(true),
+   "ss-cloud-now":()=>syncNow(true,true),
    "ss-cloud-download":()=>downloadCloud(true)
   };
   const action=actions[button.id];
@@ -72,7 +72,19 @@ function connect(){
  client.auth.getSession().then(({data,error})=>{if(error){status("Anmeldestatus konnte nicht geladen werden: "+error.message,true);return;}user=data.session?.user||null;if(user){status("Angemeldet als "+user.email+".");initialSync();}else status("Cloud-Verbindung bereit. Bitte anmelden oder Konto erstellen.");});
  return true;
 }
-async function testConnection(){if(!client&&!connect())return;try{const {error}=await client.auth.getSession();if(error)throw error;status("Verbindung zu Supabase funktioniert. Jetzt Konto erstellen oder anmelden.");}catch(e){status("Verbindung fehlgeschlagen: "+e.message,true);}}
+async function testConnection(){
+ if(!client&&!connect())return;
+ try{
+  const {data:sessionData,error:sessionError}=await client.auth.getSession();
+  if(sessionError)throw new Error("Anmeldung bei Supabase: "+sessionError.message);
+  const session=sessionData.session;
+  if(!session){status("Supabase ist erreichbar. Bitte zuerst anmelden; danach kann der Zugriff auf die StudySpace-Datentabelle geprüft werden.");return;}
+  user=session.user;
+  const {data,error}=await client.from(TABLE).select("updated_at").eq("user_id",user.id).maybeSingle();
+  if(error)throw new Error("Datenbankzugriff auf "+TABLE+" fehlgeschlagen: "+error.message+" Prüfe, ob cloud-sync-setup.sql im Supabase SQL Editor ausgeführt wurde.");
+  status(data?"Verbindung vollständig geprüft: Anmeldung, Datentabelle und Cloud-Sicherung sind erreichbar.":"Verbindung vollständig geprüft: Anmeldung und Datentabelle funktionieren. Für dieses Konto existiert noch keine Cloud-Sicherung.");
+ }catch(e){console.error("StudySpace Cloud connection test",e);status("Verbindungstest fehlgeschlagen: "+e.message,true);}
+}
 async function signUp(){
  if(!client&&!connect())return;const email=$("ss-cloud-email").value.trim(),password=$("ss-cloud-password").value;
  if(!email||password.length<8){status("Bitte E-Mail und ein Passwort mit mindestens 8 Zeichen eingeben.",true);return;}
@@ -116,30 +128,92 @@ async function downloadCloud(confirmReplace){
   saveMeta({...readMeta(),lastRemoteAt:remote.updated_at,accountId:user.id});status("Cloud-Daten geladen. StudySpace wird neu gestartet …");location.reload();
  }catch(e){console.error(e);status("Cloud-Daten konnten nicht geladen werden: "+e.message,true);}finally{restoring=false;busy=false;}
 }
+function timestampMatches(a,b){
+ if(a===b)return true;
+ const left=Date.parse(a||""),right=Date.parse(b||"");
+ return Number.isFinite(left)&&Number.isFinite(right)&&Math.abs(left-right)<1000;
+}
+function hasMeaningfulLocalData(){
+ const local=collectLocal();
+ const ignoredKeys=new Set([CONFIG_KEY,META_KEY,"studyspacePracticeSettingsV1"]);
+ const meaningful=value=>{
+  if(value===null||value===undefined)return false;
+  if(Array.isArray(value))return value.length>0;
+  if(typeof value==="object"){
+   return Object.entries(value).some(([childKey,child])=>{
+    if(["settings","timer","accent","fontSize","dailyLimit","targetRetention","version","createdAt","updatedAt","lastOpened"].includes(childKey))return false;
+    return meaningful(child);
+   });
+  }
+  if(typeof value==="string")return value.trim().length>0;
+  return false;
+ };
+ for(const [key,raw] of Object.entries(local)){
+  if(ignoredKeys.has(key))continue;
+  try{if(meaningful(JSON.parse(raw)))return true;}
+  catch{if(raw&&raw.trim())return true;}
+ }
+ return false;
+}
 async function initialSync(){
  if(!client||!user||busy||initializing)return;
  initializing=true;
  try{
   const remote=await fetchRemote();
-  if(!remote){status("Noch keine Cloud-Sicherung vorhanden. Dieses Gerät wird als erstes synchronisiert.");await pushCloud();startAutoSync();return;}
-  const meta=readMeta();
-  if(meta.accountId===user.id&&meta.lastRemoteAt===remote.updated_at){status("Cloud ist aktuell · "+user.email);startAutoSync();return;}
-  const local=collectLocal(),hasLocal=Object.keys(local).some(k=>k.startsWith("studyspace")||k.startsWith("studySpace"));
-  const sameAccount=meta.accountId===user.id;
-  const message=sameAccount
-   ?"Die Cloud-Version wurde seit der letzten Synchronisierung geändert.\n\nOK = Cloud-Version auf dieses Gerät laden (lokale Daten werden ersetzt).\nAbbrechen = lokale Daten behalten; es wird vorerst nichts überschrieben."
-   :"Für dieses Konto gibt es bereits eine Cloud-Sicherung.\n\nOK = Cloud-Version auf dieses Gerät laden (lokale Daten werden ersetzt).\nAbbrechen = lokale Daten behalten; es wird vorerst nichts überschrieben.";
-  if(hasLocal||sameAccount){
-   if(confirm(message)){await downloadCloud(false);saveMeta({...readMeta(),accountId:user.id});startAutoSync();}
-   else{status("Konflikt: Lokale Daten bleiben erhalten. Keine automatische Synchronisierung, damit nichts überschrieben wird.",true);}
-  }else{
-   if(confirm(message)){await downloadCloud(false);saveMeta({...readMeta(),accountId:user.id});startAutoSync();}
-   else status("Cloud-Konflikt: Es wurde nichts verändert. Bitte Datenstände erst vergleichen.",true);
+  if(!remote){
+   syncPaused=false;
+   status("Noch keine Cloud-Sicherung vorhanden. Dieses Gerät erstellt jetzt die erste Sicherung.");
+   await pushCloud();
+   startAutoSync();
+   return;
   }
- }catch(e){console.error(e);status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}finally{initializing=false;}
+  const meta=readMeta();
+  if(meta.accountId===user.id&&timestampMatches(meta.lastRemoteAt,remote.updated_at)){
+   syncPaused=false;
+   status("Cloud ist aktuell · "+user.email);
+   startAutoSync();
+   return;
+  }
+  const hasLocal=hasMeaningfulLocalData();
+  if(!hasLocal){
+   syncPaused=false;
+   status("Vorhandene Cloud-Sicherung gefunden. Dieses Gerät ist leer – die Lernstände werden geladen …");
+   await downloadCloud(false);
+   return;
+  }
+  const sameAccount=meta.accountId===user.id;
+  const message=(sameAccount
+   ?"Die Cloud-Sicherung wurde seit der letzten Synchronisierung geändert."
+   :"Für dieses Konto gibt es bereits eine Cloud-Sicherung.")+
+   "\n\nOK = Cloud-Daten auf diesen PC laden (lokale Inhalte werden ersetzt)."+
+   "\nAbbrechen = lokale PC-Daten behalten. Es wird nichts automatisch überschrieben."+
+   "\n\nDu kannst später über „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“ bewusst entscheiden.";
+  if(confirm(message)){
+   syncPaused=false;
+   await downloadCloud(false);
+  }else{
+   syncPaused=true;
+   startAutoSync();
+   status("Lokale PC-Daten bleiben erhalten. Automatische Synchronisierung ist bis zu deiner Entscheidung pausiert. Wähle „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“.",true);
+  }
+ }catch(e){console.error(e);syncPaused=true;status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}
+ finally{initializing=false;}
 }
-async function syncNow(show=true){if(!client||!user){status("Bitte zuerst anmelden.",true);return;}if(show)status("Synchronisierung wird gestartet …");await pushCloud();}
-function scheduleSync(){if(restoring||!client||!user)return;dirty=true;clearTimeout(debounce);debounce=setTimeout(()=>syncNow(false),1800);}
+async function syncNow(show=true,explicit=false){
+ if(!client||!user){status("Bitte zuerst anmelden.",true);return;}
+ if(explicit){
+  try{
+   const remote=await fetchRemote();
+   if(remote&&!confirm("Die lokalen Daten dieses PCs werden in die Cloud hochgeladen und ersetzen dort die bisherige Sicherung. Fortfahren?"))return;
+   syncPaused=false;
+  }catch(e){status("Cloud konnte vor dem Upload nicht geprüft werden: "+e.message,true);return;}
+ }
+ if(syncPaused&&!explicit){if(show)status("Synchronisierung pausiert: Bitte zuerst entscheiden, welche Daten-Version verwendet werden soll.",true);return;}
+ if(show)status("Lokale Daten werden in die Cloud übertragen …");
+ await pushCloud();
+ if(!syncPaused)startAutoSync();
+}
+function scheduleSync(){if(restoring||!client||!user)return;dirty=true;clearTimeout(debounce);debounce=setTimeout(()=>{if(syncPaused){status("Lokale Änderung gespeichert. Cloud-Übertragung pausiert, bis der Datenkonflikt geklärt ist.",true);return;}syncNow(false);},1800);}
 function startAutoSync(){
  if(window.__studySpaceAutoSync)return;window.__studySpaceAutoSync=true;
  const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){const result=original.call(this,key,value);if(this===localStorage&&appKey(String(key)))scheduleSync();return result;};
