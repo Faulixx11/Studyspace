@@ -342,7 +342,7 @@
     const selected = FOOD_LIBRARY.some(food => food.id === ingredient.foodId) ? ingredient.foodId : FOOD_LIBRARY[0].id;
     return `<div class="nutrition-ingredient-row">
       <select class="recipe-food" aria-label="Lebensmittel">${FOOD_LIBRARY.map(food => `<option value="${food.id}" ${food.id===selected?"selected":""}>${escapeText(food.name)} · ${food.protein} g Protein/100 g</option>`).join("")}</select>
-      <label class="nutrition-grams-label">Gramm<input class="recipe-grams" type="number" min="1" max="5000" step="1" value="${Math.max(1,Number(ingredient.grams)||100}"></label>
+      <label class="nutrition-grams-label">Gramm<input class="recipe-grams" type="number" min="1" max="5000" step="1" value="${Math.max(1,Number(ingredient.grams)||100)}"></label>
       <button type="button" class="nutrition-remove-ingredient" aria-label="Zutat entfernen">×</button>
     </div>`;
   }
@@ -376,7 +376,7 @@
       if (event.target.matches(".recipe-food,.recipe-grams")) updateProteinPreview();
     });
     editor.addEventListener("input", event => {
-      if (event.target.matches(".recipe-grams")) updateProteinPreview();
+      if (event.target.matches(".recipe-grams") || event.target.id === "recipeServings") updateProteinPreview();
     });
     editor.addEventListener("submit", event => {
       if (event.target.id !== "nutritionRecipeForm") return;
