@@ -73,7 +73,7 @@ function connect(){
    const script=document.createElement("script");
    script.src="https://unpkg.com/@supabase/supabase-js@2";
    script.onload=()=>{if(window.supabase?.createClient){window.__studySpaceSupabaseFallbackStarted=false;connect();}else status("Cloud-Bibliothek konnte auf diesem Gerät nicht gestartet werden.",true);};
-   script.onerror=()=>status("Cloud-Bibliothek konnte nicht geladen werden. Prüfe die Internetverbindung oder den Browser-Inhaltsschutz.",true);
+   script.onerror=()=>{window.__studySpaceSupabaseFallbackStarted=false;status("Cloud-Bibliothek konnte nicht geladen werden. Prüfe die Internetverbindung oder den Browser-Inhaltsschutz und tippe danach erneut auf „Verbindung speichern“.",true);};
    document.head.appendChild(script);
   }
   return false;
