@@ -664,11 +664,62 @@
   function recipeNutrients(r){const t={protein:0,carbs:0,fat:0,fiber:0};(r.ingredients||[]).forEach(i=>{const v=NUTRIENTS_PER_100G[i.foodId];if(!v)return;const f=(Number(i.grams)||0)/100;t.protein+=v[0]*f;t.carbs+=v[1]*f;t.fat+=v[2]*f;t.fiber+=v[3]*f;});const s=Math.max(1,Number(r.servings)||1);Object.keys(t).forEach(k=>t[k]/=s);return t;}
   function renderNutrientAnalysis(){const sel=document.getElementById("nutrientRecipeSelect"),root=document.getElementById("nutrientAnalysis");if(!sel||!root)return;const old=sel.value;sel.innerHTML='<option value="">Rezept wählen …</option>'+nutritionData.recipes.map(r=>'<option value="'+escapeText(r.id)+'">'+escapeText(r.name)+'</option>').join("");if(nutritionData.recipes.some(r=>r.id===old))sel.value=old;const draw=()=>{const r=nutritionData.recipes.find(x=>x.id===sel.value);if(!r){root.innerHTML='<div class="nutrition-empty">Wähle ein Rezept aus.</div>';return;}const n=recipeNutrients(r);root.innerHTML=Object.entries({Protein:n.protein,Kohlenhydrate:n.carbs,Fett:n.fat,Ballaststoffe:n.fiber}).map(x=>'<article class="nutrition-nutrient-card"><span>'+x[0]+'</span><strong>'+x[1].toFixed(1).replace(".",",")+' g</strong><small>pro Portion · Schätzwert</small></article>').join("");};if(!sel.dataset.bound){sel.addEventListener("change",draw);sel.dataset.bound="1";}draw();}
   function renderFoodDatabase(){const root=document.getElementById("foodDatabase");if(root)root.innerHTML=FOOD_LIBRARY.map(f=>'<article class="nutrition-food-row"><strong>'+escapeText(f.name)+'</strong><span>'+f.protein+' g Protein / 100 g</span><small>Orientierungswert</small></article>').join("");}
-  let barcodeStream=null,barcodeLoop=0;
-  async function lookupBarcode(code){const status=document.getElementById("barcodeStatus"),root=document.getElementById("barcodeResult");if(!/^\d{8,14}$/.test(code)){status.textContent="Bitte eine Barcode-Nummer mit 8 bis 14 Ziffern eingeben.";return;}status.textContent="Produkt wird gesucht …";root.innerHTML="";try{const res=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,brands,ingredients_text,allergens_tags,nutriments,image_url,quantity");if(!res.ok)throw Error("HTTP "+res.status);const data=await res.json();if(data.status!==1||!data.product){status.textContent="Kein Produkt gefunden.";return;}const p=data.product,n=p.nutriments||{},vals=[["Protein",n.proteins_100g],["Kohlenhydrate",n.carbohydrates_100g],["Fett",n.fat_100g],["Ballaststoffe",n.fiber_100g]].filter(x=>Number.isFinite(Number(x[1])));root.innerHTML='<article class="nutrition-product-result">'+(p.image_url?'<img src="'+escapeText(p.image_url)+'" alt="Produktbild">':"")+'<div><h3>'+escapeText(p.product_name||"Unbenanntes Produkt")+'</h3><p>'+escapeText(p.brands||"Marke unbekannt")+' · '+escapeText(p.quantity||"Menge unbekannt")+'</p><div class="nutrition-product-nutrients">'+vals.map(x=>'<span>'+x[0]+': <strong>'+x[1]+' g</strong>/100 g</span>').join("")+'</div><p class="nutrition-muted">'+escapeText((p.ingredients_text||"Keine Zutatenliste hinterlegt.").slice(0,700))+'</p><p class="nutrition-muted">Allergene: '+escapeText((p.allergens_tags||[]).map(x=>x.replace("en:","")).join(", ")||"Keine Angaben")+'</p><button type="button" class="nutrition-primary-button" id="addScannedToPantry">Mit 100 g zum Vorrat hinzufügen</button></div></article>';document.getElementById("addScannedToPantry").addEventListener("click",()=>{nutritionData.pantry.push({id:"pantry-"+Date.now(),name:p.product_name||"Gescanntes Produkt",grams:100,foodId:"barcode-"+code});saveStore();alert("Produkt mit 100 g eingetragen. Bitte Menge prüfen.");});status.textContent="Produkt gefunden. Verpackungsangaben gegenprüfen.";}catch(e){status.textContent="Produktdatenbank nicht erreichbar. Prüfe deine Internetverbindung.";console.warn(e);}}
-  function stopBarcodeCamera(){if(barcodeLoop)cancelAnimationFrame(barcodeLoop);barcodeLoop=0;if(barcodeStream)barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;const v=document.getElementById("barcodeVideo");if(v){v.pause();v.srcObject=null;v.hidden=true;}const b=document.getElementById("stopBarcodeCamera");if(b)b.disabled=true;}
-  function bindBarcodeScanner(){const form=document.getElementById("barcodeForm");if(!form)return;form.addEventListener("submit",e=>{e.preventDefault();lookupBarcode(document.getElementById("barcodeInput").value.trim());});document.getElementById("startBarcodeCamera").addEventListener("click",async()=>{const status=document.getElementById("barcodeStatus"),video=document.getElementById("barcodeVideo");if(!("BarcodeDetector" in window)){status.textContent="Barcode-Erkennung wird in diesem Browser nicht unterstützt. Nutze die manuelle Eingabe.";return;}try{const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});video.srcObject=barcodeStream;video.hidden=false;await video.play();document.getElementById("stopBarcodeCamera").disabled=false;status.textContent="Barcode vor die Kamera halten.";const scan=async()=>{if(!barcodeStream)return;try{const found=await detector.detect(video);if(found.length){const value=found[0].rawValue;document.getElementById("barcodeInput").value=value;stopBarcodeCamera();lookupBarcode(value);return;}}catch(e){}barcodeLoop=requestAnimationFrame(scan);};scan();}catch(e){status.textContent="Kamera nicht verfügbar oder Zugriff verweigert. Nutze die manuelle Eingabe.";stopBarcodeCamera();}});document.getElementById("stopBarcodeCamera").addEventListener("click",stopBarcodeCamera);}
-
+  let barcodeStream=null,barcodeLoop=0,barcodeControls=null,barcodeReader=null;
+  async function lookupBarcode(code){
+    const status=document.getElementById("barcodeStatus"),root=document.getElementById("barcodeResult");
+    code=String(code||"").replace(/\s+/g,"");
+    if(!/^\d{8,14}$/.test(code)){status.textContent="Bitte eine gültige EAN-/UPC-Nummer mit 8 bis 14 Ziffern eingeben.";return;}
+    status.textContent="Produkt wird gesucht …";root.innerHTML="";
+    try{
+      const url="https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,product_name_de,brands,ingredients_text,ingredients_text_de,allergens_tags,nutriments,image_url,quantity";
+      const res=await fetch(url,{headers:{"Accept":"application/json"}});
+      if(!res.ok)throw Error("HTTP "+res.status);
+      const data=await res.json();
+      if(data.status!==1||!data.product){status.textContent="Kein Produkt gefunden. Prüfe die Nummer oder versuche es später erneut.";return;}
+      const p=data.product,n=p.nutriments||{},name=p.product_name_de||p.product_name||"Unbenanntes Produkt";
+      const vals=[["Protein",n.proteins_100g],["Kohlenhydrate",n.carbohydrates_100g],["Fett",n.fat_100g],["Ballaststoffe",n.fiber_100g]].filter(x=>x[1]!==undefined&&x[1]!==null&&x[1]!=="");
+      root.innerHTML='<article class="nutrition-product-result">'+(p.image_url?'<img src="'+escapeText(p.image_url)+'" alt="Produktbild" loading="lazy">':"")+'<div><h3>'+escapeText(name)+'</h3><p>'+escapeText(p.brands||"Marke unbekannt")+' · '+escapeText(p.quantity||"Menge unbekannt")+'</p><div class="nutrition-product-nutrients">'+vals.map(x=>'<span>'+x[0]+': <strong>'+escapeText(x[1])+' g</strong>/100 g</span>').join("")+'</div><p class="nutrition-muted">'+escapeText((p.ingredients_text_de||p.ingredients_text||"Keine Zutatenliste hinterlegt.").slice(0,700))+'</p><p class="nutrition-muted">Allergene laut Datenbank: '+escapeText((p.allergens_tags||[]).map(x=>x.replace(/^en:/,"").replace(/^de:/,"")).join(", ")||"Keine Angaben")+'</p><button type="button" class="nutrition-primary-button" id="addScannedToPantry">Zum Vorrat hinzufügen</button></div></article>';
+      document.getElementById("addScannedToPantry").addEventListener("click",()=>{nutritionData.pantry.push({id:"pantry-"+Date.now(),name,grams:100,foodId:"barcode-"+code});saveStore();alert("Produkt mit zunächst 100 g zum Vorrat hinzugefügt. Du kannst die Menge anschließend anpassen.");});
+      status.textContent="Produkt gefunden. Bitte Zutatenliste und Verpackungsangaben prüfen.";
+    }catch(e){status.textContent="Produktdatenbank gerade nicht erreichbar. Prüfe die Internetverbindung oder versuche es später erneut.";console.warn("Barcode lookup:",e);}
+  }
+  function stopBarcodeCamera(){
+    if(barcodeLoop)cancelAnimationFrame(barcodeLoop);barcodeLoop=0;
+    try{barcodeControls?.stop();}catch(e){}barcodeControls=null;
+    try{barcodeReader?.reset();}catch(e){}barcodeReader=null;
+    if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;}
+    const v=document.getElementById("barcodeVideo");if(v){v.pause();v.srcObject=null;v.hidden=true;}
+    const b=document.getElementById("stopBarcodeCamera");if(b)b.disabled=true;
+  }
+  function bindBarcodeScanner(){
+    const form=document.getElementById("barcodeForm");if(!form||form.dataset.bound)return;form.dataset.bound="1";
+    const status=document.getElementById("barcodeStatus"),video=document.getElementById("barcodeVideo");
+    form.addEventListener("submit",e=>{e.preventDefault();lookupBarcode(document.getElementById("barcodeInput").value);});
+    document.getElementById("startBarcodeCamera").addEventListener("click",async()=>{
+      if(!navigator.mediaDevices?.getUserMedia){status.textContent="Dieser Browser bietet keinen Kamerazugriff. Gib den Barcode unten manuell ein.";return;}
+      stopBarcodeCamera();
+      try{
+        if("BarcodeDetector" in window){
+          const supported=await BarcodeDetector.getSupportedFormats();
+          const formats=["ean_13","ean_8","upc_a","upc_e"].filter(f=>supported.includes(f));
+          if(!formats.length)throw Error("Keine passenden Barcodeformate");
+          const detector=new BarcodeDetector({formats});
+          barcodeStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"}}});
+          video.srcObject=barcodeStream;video.hidden=false;await video.play();
+          document.getElementById("stopBarcodeCamera").disabled=false;status.textContent="Kamera aktiv – Barcode ruhig und gut beleuchtet vor die Kamera halten.";
+          const scan=async()=>{if(!barcodeStream)return;try{if(video.readyState>=2){const found=await detector.detect(video);if(found.length){const value=found[0].rawValue;document.getElementById("barcodeInput").value=value;stopBarcodeCamera();lookupBarcode(value);return;}}}catch(err){console.debug("Barcode-Erkennung:",err);}barcodeLoop=requestAnimationFrame(scan);};scan();
+        }else if(window.ZXingBrowser?.BrowserMultiFormatReader){
+          barcodeReader=new ZXingBrowser.BrowserMultiFormatReader();
+          status.textContent="Starte Kamera …";video.hidden=false;document.getElementById("stopBarcodeCamera").disabled=false;
+          barcodeControls=await barcodeReader.decodeFromVideoDevice(undefined,video,(result,error)=>{
+            if(result){const value=result.getText();document.getElementById("barcodeInput").value=value;stopBarcodeCamera();lookupBarcode(value);}
+          });
+          status.textContent="Kamera aktiv – Barcode ruhig und gut beleuchtet vor die Kamera halten.";
+        }else{status.textContent="Die Barcode-Funktion ist in diesem Browser nicht verfügbar. Lade die Seite mit Internetverbindung neu oder gib den Barcode manuell ein.";}
+      }catch(e){console.warn("Kamerastart fehlgeschlagen:",e);stopBarcodeCamera();status.textContent=e.name==="NotAllowedError"?"Kamerazugriff verweigert. Erlaube der Website den Kamerazugriff in den Browser-Einstellungen.":e.name==="NotFoundError"?"Keine Kamera gefunden. Gib den Barcode manuell ein.":"Kamera konnte nicht gestartet werden. Prüfe HTTPS und die Browserfreigabe; alternativ Barcode manuell eingeben.";}
+    });
+    document.getElementById("stopBarcodeCamera").addEventListener("click",()=>{stopBarcodeCamera();status.textContent="Kamera gestoppt.";});
+  }
   function renderNutritionDashboard() {
     const hero=document.querySelector("#nutrition-dashboard .nutrition-hero");if(!hero)return;
     let stats=document.getElementById("nutritionQuickStats");
