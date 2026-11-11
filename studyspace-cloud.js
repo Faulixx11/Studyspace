@@ -27,9 +27,9 @@ function addPanel(){
  '<hr style="border:0;border-top:1px solid #30394a;margin:16px 0">',
  '<div class="ss-cloud-grid"><label class="ss-field">E-Mail<input id="ss-cloud-email" type="email" placeholder="deine E-Mail-Adresse" autocomplete="email"></label><label class="ss-field">Passwort<input id="ss-cloud-password" type="password" placeholder="Mindestens 8 Zeichen" autocomplete="current-password"></label></div>',
  '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-signup">Konto erstellen</button><button id="ss-cloud-login">Anmelden</button><button id="ss-cloud-reset">Passwort zurücksetzen</button><button id="ss-cloud-logout">Abmelden</button></div>',
- '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-now">Lokale Daten in Cloud hochladen</button><button id="ss-cloud-download">Cloud-Daten auf dieses Gerät laden</button></div>',
+ '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-download">Cloud → PC: Tablet-Daten übernehmen</button><button id="ss-cloud-now">PC → Cloud: PC-Daten übertragen</button></div>',
  '<div class="ss-state" id="ss-cloud-status" aria-live="polite">Noch nicht verbunden. Zuerst Projekt-URL und Publishable Key eintragen.</div>',
- '<p class="ss-muted">Ein neues oder leeres Gerät lädt eine vorhandene Cloud-Sicherung automatisch. Sind auf dem Gerät bereits eigene Lerninhalte vorhanden, fragt StudySpace vor dem Laden nach. Bei einem Konflikt bleibt die automatische Übertragung pausiert, bis du bewusst lokale Daten hochlädst oder Cloud-Daten herunterlädst. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
+ '<p class="ss-muted">Bei unterschiedlichen Datenständen wird die Synchronisierung aus Sicherheitsgründen angehalten. Nutze „Cloud → PC“, wenn die Tablet-Daten richtig sind. Nutze „PC → Cloud“ nur, wenn die PC-Daten die richtige Version sind; damit wird die bisherige Cloud-Sicherung ersetzt. Nach dieser Entscheidung synchronisiert StudySpace Änderungen automatisch in beide Richtungen. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
  ].join("");
  page.appendChild(panel);
  const cfg=readConfig();$("ss-cloud-url").value=cfg.url||"";$("ss-cloud-key").value=cfg.key||"";
@@ -182,7 +182,7 @@ async function initialSync(){
   const meta=readMeta();
   if(meta.accountId===user.id&&meta.conflictRemoteAt===remote.updated_at){
    syncPaused=true;
-   status("Datenkonflikt bereits angezeigt. Lokale PC-Daten bleiben erhalten; die Synchronisierung ist pausiert. Entscheide über „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“. ",true);
+   status("Nur lokale Speicherung aktiv: Datenkonflikt erkannt. Wähle unten „Cloud → PC“ oder „PC → Cloud“, um die Synchronisierung wieder freizugeben.",true);
    startAutoSync();
    return;
   }
@@ -219,7 +219,7 @@ async function initialSync(){
    syncPaused=true;
    saveMeta({...readMeta(),conflictRemoteAt:remote.updated_at,accountId:user.id});
    startAutoSync();
-   status("Lokale PC-Daten bleiben erhalten. Automatische Synchronisierung ist bis zu deiner Entscheidung pausiert. Wähle „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“.",true);
+   status("Nur lokale Speicherung aktiv: Wegen unterschiedlicher Datenstände ist die Cloud-Synchronisierung pausiert. Wähle unten „Cloud → PC“, wenn das Tablet maßgeblich ist, oder „PC → Cloud“, wenn der PC maßgeblich ist.",true);
   }
  }catch(e){console.error(e);syncPaused=true;status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}
  finally{initializing=false;}
