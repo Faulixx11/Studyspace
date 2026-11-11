@@ -657,6 +657,20 @@
     pageMarkup();
     buildNavigation();
     buildModeSwitch();
+
+    // Alle Ernährungsbereiche nach dem Erzeugen der Seiten einmalig aktivieren.
+    bindProfile();
+    renderProfile();
+    bindRecipes();
+    bindPlanner();
+    bindShopping();
+    bindMealPrep();
+    bindNutritionAssistant();
+    bindBarcodeScanner();
+    renderNutrientAnalysis();
+    renderFoodDatabase();
+    renderNutritionDashboard();
+
     const mode = localStorage.getItem("studyspaceWorkspaceMode") || "learning";
     setMode(mode);
     console.log("StudySpace Ernährung geladen.");
