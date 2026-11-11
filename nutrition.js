@@ -37,6 +37,7 @@
   function saveStore() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nutritionData));
+      renderNutritionDashboard();
       return true;
     } catch (error) {
       console.error("Ernährungsdaten konnten nicht gespeichert werden:", error);
@@ -621,10 +622,10 @@
     document.getElementById("ingredientPhoto").addEventListener("change",e=>{const file=e.target.files?.[0],root=document.getElementById("ingredientPhotoPreview");root.innerHTML="";if(!file)return;const img=document.createElement("img");img.className="nutrition-photo-preview";img.alt="Ausgewähltes Zutatenfoto";img.src=URL.createObjectURL(file);root.appendChild(img);const note=document.createElement("p");note.className="nutrition-muted";note.textContent="Foto lokal zur Ansicht ausgewählt. Zutaten bitte selbst bestätigen; es wurde keine automatische Erkennung durchgeführt.";root.appendChild(note);});
   }
   function renderNutritionDashboard() {
-    const hero=document.querySelector("#nutrition-dashboard .nutrition-hero");if(!hero||document.getElementById("nutritionQuickStats"))return;
-    const stats=document.createElement("div");stats.id="nutritionQuickStats";stats.className="nutrition-quick-stats";
-    stats.innerHTML='<div><strong id="nutritionRecipeCount">0</strong><span>Rezepte</span></div><div><strong id="nutritionPlannedCount">0</strong><span>geplante Mahlzeiten</span></div><div><strong id="nutritionPantryCount">0</strong><span>Vorratsartikel</span></div>';
-    hero.appendChild(stats);document.getElementById("nutritionRecipeCount").textContent=nutritionData.recipes.length;
+    const hero=document.querySelector("#nutrition-dashboard .nutrition-hero");if(!hero)return;
+    let stats=document.getElementById("nutritionQuickStats");
+    if(!stats){stats=document.createElement("div");stats.id="nutritionQuickStats";stats.className="nutrition-quick-stats";stats.innerHTML='<div><strong id="nutritionRecipeCount">0</strong><span>Rezepte</span></div><div><strong id="nutritionPlannedCount">0</strong><span>geplante Mahlzeiten</span></div><div><strong id="nutritionPantryCount">0</strong><span>Vorratsartikel</span></div>';hero.appendChild(stats);}
+    document.getElementById("nutritionRecipeCount").textContent=nutritionData.recipes.length;
     document.getElementById("nutritionPlannedCount").textContent=nutritionData.mealPlans.reduce((s,p)=>s+p.meals.length,0);
     document.getElementById("nutritionPantryCount").textContent=nutritionData.pantry.length;
   }
