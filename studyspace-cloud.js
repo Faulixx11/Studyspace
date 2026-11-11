@@ -78,13 +78,24 @@ async function testConnection(){
   const {data:sessionData,error:sessionError}=await client.auth.getSession();
   if(sessionError)throw new Error("Anmeldung bei Supabase: "+sessionError.message);
   const session=sessionData.session;
-  if(!session){status("Supabase ist erreichbar. Bitte zuerst anmelden; danach kann der Zugriff auf die StudySpace-Datentabelle geprüft werden.");return;}
+  if(!session){status("Supabase ist erreichbar, aber dieses Gerät ist nicht angemeldet. Bitte anmelden.",true);return;}
   user=session.user;
   const {data,error}=await client.from(TABLE).select("updated_at").eq("user_id",user.id).maybeSingle();
-  if(error)throw new Error("Datenbankzugriff auf "+TABLE+" fehlgeschlagen: "+error.message+" Prüfe, ob cloud-sync-setup.sql im Supabase SQL Editor ausgeführt wurde.");
-  status(data?"Verbindung vollständig geprüft: Anmeldung, Datentabelle und Cloud-Sicherung sind erreichbar.":"Verbindung vollständig geprüft: Anmeldung und Datentabelle funktionieren. Für dieses Konto existiert noch keine Cloud-Sicherung.");
- }catch(e){console.error("StudySpace Cloud connection test",e);status("Verbindungstest fehlgeschlagen: "+e.message,true);}
+  if(error)throw new Error("Datenbankzugriff fehlgeschlagen: "+error.message+" Prüfe cloud-sync-setup.sql in Supabase.");
+  let storageStatus="Cloud-Dateispeicher erreichbar";
+  try{
+   const {error:storageError}=await client.storage.from(BUCKET).list(user.id,{limit:1});
+   if(storageError)throw storageError;
+  }catch(storageError){storageStatus="Dateispeicher nicht erreichbar: "+storageError.message;}
+  const fileState=await getFilesState();
+  const localStatus=fileState.available?"lokaler Dateispeicher OK ("+fileState.rows.length+" Dateien)":"lokaler Dateispeicher blockiert: "+fileState.reason;
+  status((data?"Cloud-Sicherung gefunden. ":"Noch keine Cloud-Sicherung. ")+"Anmeldung OK · Datenbank OK · "+storageStatus+" · "+localStatus,data===null&&false||!fileState.available||storageStatus.includes("nicht erreichbar"));
+ }catch(e){
+  console.error("StudySpace Cloud connection test",e);
+  status("Verbindungstest fehlgeschlagen: "+e.message,true);
+ }
 }
+
 async function signUp(){
  if(!client&&!connect())return;const email=$("ss-cloud-email").value.trim(),password=$("ss-cloud-password").value;
  if(!email||password.length<8){status("Bitte E-Mail und ein Passwort mit mindestens 8 Zeichen eingeben.",true);return;}
@@ -97,37 +108,134 @@ async function signIn(){
 }
 async function resetPassword(){if(!client&&!connect())return;const email=$("ss-cloud-email").value.trim();if(!email){status("Bitte zuerst deine E-Mail-Adresse eingeben.",true);return;}try{const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;status("Falls ein Konto existiert, wurde ein Link zum Zurücksetzen versendet.");}catch(e){status("Zurücksetzen fehlgeschlagen: "+e.message,true);}}
 async function signOut(){if(!client)return;try{const {error}=await client.auth.signOut();if(error)throw error;user=null;status("Abgemeldet. Deine lokalen Daten bleiben erhalten.");}catch(e){status("Abmeldung fehlgeschlagen: "+e.message,true);}}
-function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
-async function getFiles(){const db=await openDB();return new Promise((resolve,reject)=>{if(!db.objectStoreNames.contains(STORE)){db.close();resolve([]);return;}const tx=db.transaction(STORE,"readonly"),req=tx.objectStore(STORE).getAll();req.onsuccess=()=>{const rows=req.result||[];db.close();resolve(rows);};req.onerror=()=>{db.close();reject(req.error);};});}
+function openDB(){
+ return new Promise((resolve,reject)=>{
+  if(!window.indexedDB){reject(new Error("Dieser Browser erlaubt IndexedDB nicht."));return;}
+  const open=(version)=>{
+   let req;
+   try{req=version?indexedDB.open(DB_NAME,version):indexedDB.open(DB_NAME);}
+   catch(error){reject(error);return;}
+   req.onupgradeneeded=()=>{
+    const db=req.result;
+    if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:"id"});
+   };
+   req.onsuccess=()=>{
+    const db=req.result;
+    if(!db.objectStoreNames.contains(STORE)){
+     const nextVersion=db.version+1;db.close();open(nextVersion);return;
+    }
+    resolve(db);
+   };
+   req.onerror=()=>reject(req.error||new Error("StudySpace-Dateispeicher konnte nicht geöffnet werden."));
+   req.onblocked=()=>reject(new Error("Der Dateispeicher wird von einem anderen StudySpace-Tab blockiert. Schließe andere Tabs und lade neu."));
+  };
+  open();
+ });
+}
+async function getFilesState(){
+ let db=null;
+ try{
+  db=await openDB();
+  return await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE,"readonly"),req=tx.objectStore(STORE).getAll();
+   req.onsuccess=()=>resolve({available:true,rows:req.result||[],reason:""});
+   req.onerror=()=>reject(req.error||new Error("Dateiliste konnte nicht gelesen werden."));
+   tx.onabort=()=>reject(tx.error||new Error("Dateidatenbank wurde abgebrochen."));
+  });
+ }catch(error){
+  return {available:false,rows:[],reason:error?.message||"Unbekannter IndexedDB-Fehler"};
+ }finally{try{db?.close();}catch{}}
+}
+async function getFiles(){
+ const result=await getFilesState();
+ if(!result.available)throw new Error(result.reason);
+ return result.rows;
+}
+
 async function replaceFiles(files){
  const db=await openDB();if(!db.objectStoreNames.contains(STORE)){db.close();throw new Error("Lokale Dateidatenbank fehlt.");}
  await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE);store.clear();for(const item of files){if(!(item.blob instanceof Blob))continue;let file=item.blob;if(item.name){try{file=new File([item.blob],item.name,{type:item.type||item.blob.type,lastModified:item.lastModified||Date.now()});}catch{}}store.put({...item.metadata,id:item.id,file,savedAt:item.savedAt||new Date().toISOString()});}tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
 }
 function collectLocal(){const values={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&appKey(k))values[k]=localStorage.getItem(k);}return values;}
 async function pushCloud(){
- if(!client||!user||busy)return;busy=true;
+ if(!client||!user)return false;
+ if(busy){status("Synchronisierung läuft bereits …");return false;}
+ busy=true;
  try{
-  status("Dateien und Lerndaten werden in die Cloud übertragen …");
-  const rows=await getFiles(),manifest=[];
-  for(const row of rows){const blob=row.file instanceof Blob?row.file:(row.file?.blob instanceof Blob?row.file.blob:null);if(!blob)continue;const id=String(row.id).replace(/[^a-zA-Z0-9_-]/g,"_"),path=user.id+"/"+id;const {error}=await client.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:blob.type||"application/octet-stream"});if(error)throw error;const metadata={...row};delete metadata.file;manifest.push({id:row.id,path,name:row.file?.name||row.name||"",type:blob.type||"application/octet-stream",lastModified:row.file?.lastModified||null,savedAt:row.savedAt||null,metadata});}
-  const payload={localStorage:collectLocal(),files:manifest,version:1};const syncedAt=new Date().toISOString();const {error}=await client.from(TABLE).upsert({user_id:user.id,payload,updated_at:syncedAt},{onConflict:"user_id"});if(error)throw error;
-  saveMeta({...readMeta(),lastSync:syncedAt,lastRemoteAt:syncedAt,accountId:user.id});dirty=false;status("Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.");
- }catch(e){console.error("StudySpace Cloud Sync",e);status("Synchronisierung fehlgeschlagen: "+e.message,true);}finally{busy=false;}
+  status("Lernstände und Dateien werden in die Cloud übertragen …");
+  const remoteBefore=await fetchRemote();
+  const fileState=await getFilesState();
+  const manifest=[...(remoteBefore?.payload?.files||[])];
+  let fileUploadErrors=0;
+  if(fileState.available){
+   for(const row of fileState.rows){
+    const blob=row.file instanceof Blob?row.file:(row.file?.blob instanceof Blob?row.file.blob:null);
+    if(!blob||row.id===undefined||row.id===null)continue;
+    const id=String(row.id).replace(/[^a-zA-Z0-9_-]/g,"_"),path=user.id+"/"+id;
+    try{
+     const {error}=await client.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:blob.type||"application/octet-stream"});
+     if(error)throw error;
+     const metadata={...row};delete metadata.file;
+     const entry={id:row.id,path,name:row.file?.name||row.name||"",type:blob.type||"application/octet-stream",lastModified:row.file?.lastModified||null,savedAt:row.savedAt||null,metadata};
+     const existing=manifest.findIndex(item=>String(item.id)===String(row.id));
+     if(existing>=0)manifest[existing]=entry;else manifest.push(entry);
+    }catch(error){fileUploadErrors++;console.warn("StudySpace file upload failed",row.id,error);}
+   }
+  }
+  const payload={localStorage:collectLocal(),files:manifest,version:1};
+  const syncedAt=new Date().toISOString();
+  const {error}=await client.from(TABLE).upsert({user_id:user.id,payload,updated_at:syncedAt},{onConflict:"user_id"});
+  if(error)throw error;
+  saveMeta({...readMeta(),lastSync:syncedAt,lastRemoteAt:syncedAt,conflictRemoteAt:null,accountId:user.id});
+  dirty=false;
+  let message="Synchronisiert · "+new Date().toLocaleString("de-DE")+" · "+manifest.length+" Dateien.";
+  if(!fileState.available)message="Lernstände synchronisiert. Der Dateispeicher dieses Geräts ist nicht erreichbar; bereits vorhandene Cloud-Dateien bleiben erhalten. ("+fileState.reason+")";
+  else if(fileUploadErrors)message="Lernstände synchronisiert; "+fileUploadErrors+" Datei(en) konnten nicht übertragen werden. Die übrige Cloud-Sicherung blieb erhalten.";
+  status(message,fileUploadErrors>0||!fileState.available);
+  return true;
+ }catch(e){
+  console.error("StudySpace Cloud Sync",e);
+  status("Synchronisierung fehlgeschlagen: "+(e?.message||String(e)),true);
+  return false;
+ }finally{busy=false;}
 }
+
 async function fetchRemote(){const {data,error}=await client.from(TABLE).select("payload,updated_at").eq("user_id",user.id).maybeSingle();if(error)throw error;return data||null;}
 async function downloadCloud(confirmReplace){
- if(!client||!user){status("Bitte zuerst anmelden.",true);return;}if(busy)return;busy=true;
+ if(!client||!user){status("Bitte zuerst anmelden.",true);return;}
+ if(busy)return;
+ busy=true;
  try{
-  status("Cloud-Daten werden geladen …");const remote=await fetchRemote();if(!remote){status("Für dieses Konto gibt es noch keine Cloud-Sicherung. Dieses Gerät kann die erste Sicherung hochladen.");return;}
+  status("Cloud-Daten werden geladen …");
+  const remote=await fetchRemote();
+  if(!remote){status("Für dieses Konto gibt es noch keine Cloud-Sicherung. Dieses Gerät kann die erste Sicherung hochladen.");return;}
   if(confirmReplace&&!confirm("Die Daten auf diesem Gerät werden durch die Cloud-Sicherung ersetzt. Die Cloud-Sicherung bleibt unverändert. Fortfahren?"))return;
-  restoring=true;const downloaded=[];
-  for(const item of remote.payload.files||[]){const {data,error}=await client.storage.from(BUCKET).download(item.path);if(error)throw error;downloaded.push({...item,blob:data});}
-  await replaceFiles(downloaded);
-  const remoteStorage=remote.payload.localStorage||{};Object.keys(localStorage).forEach(k=>{if(appKey(k))localStorage.removeItem(k);});
+  const downloaded=[];
+  let fileWarning="";
+  try{
+   for(const item of remote.payload.files||[]){
+    const {data,error}=await client.storage.from(BUCKET).download(item.path);
+    if(error)throw error;
+    downloaded.push({...item,blob:data});
+   }
+   await replaceFiles(downloaded);
+  }catch(error){
+   fileWarning=" Die Dateianhänge konnten auf diesem Gerät nicht vollständig geladen werden ("+(error?.message||String(error))+").";
+   console.warn("StudySpace file restore warning",error);
+  }
+  restoring=true;
+  const remoteStorage=remote.payload.localStorage||{};
+  Object.keys(localStorage).forEach(k=>{if(appKey(k))localStorage.removeItem(k);});
   Object.entries(remoteStorage).forEach(([k,v])=>{if(appKey(k))localStorage.setItem(k,String(v));});
-  saveMeta({...readMeta(),lastRemoteAt:remote.updated_at,lastAppliedRemoteAt:remote.updated_at,conflictRemoteAt:null,accountId:user.id});status("Cloud-Daten geladen. StudySpace wird neu gestartet …");location.reload();
- }catch(e){console.error(e);status("Cloud-Daten konnten nicht geladen werden: "+e.message,true);}finally{restoring=false;busy=false;}
+  saveMeta({...readMeta(),lastRemoteAt:remote.updated_at,lastAppliedRemoteAt:remote.updated_at,conflictRemoteAt:null,accountId:user.id});
+  status("Cloud-Lernstände geladen."+fileWarning+" StudySpace wird neu gestartet …",!!fileWarning);
+  location.reload();
+ }catch(e){
+  console.error(e);
+  status("Cloud-Daten konnten nicht geladen werden: "+(e?.message||String(e)),true);
+ }finally{restoring=false;busy=false;}
 }
+
 function timestampMatches(a,b){
  if(a===b)return true;
  const left=Date.parse(a||""),right=Date.parse(b||"");
@@ -162,11 +270,13 @@ async function localStateMatchesRemote(remote){
  for(const key of keys){
   if((localStorageValues[key]??null)!==(remoteStorage[key]===undefined?null:String(remoteStorage[key])))return false;
  }
- const localFiles=await getFiles();
- const localIds=localFiles.map(row=>String(row.id)).sort();
+ const localState=await getFilesState();
+ if(!localState.available)return false;
+ const localIds=localState.rows.map(row=>String(row.id)).sort();
  const remoteIds=(remote?.payload?.files||[]).map(row=>String(row.id)).sort();
  return JSON.stringify(localIds)===JSON.stringify(remoteIds);
 }
+
 async function initialSync(){
  if(!client||!user||busy||initializing)return;
  initializing=true;
@@ -209,9 +319,9 @@ async function initialSync(){
   const message=(sameAccount
    ?"Die Cloud-Sicherung wurde seit der letzten Synchronisierung geändert."
    :"Für dieses Konto gibt es bereits eine Cloud-Sicherung.")+
-   "\n\nOK = Cloud-Daten auf diesen PC laden (lokale Inhalte werden ersetzt)."+
+   "\n\nOK = Cloud-Daten auf dieses Gerät laden (lokale Inhalte werden ersetzt)."+
    "\nAbbrechen = lokale PC-Daten behalten. Es wird nichts automatisch überschrieben."+
-   "\n\nDu kannst später über „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“ bewusst entscheiden.";
+   "\n\nDu kannst später über „Cloud → dieses Gerät“ oder „Dieses Gerät → Cloud“ bewusst entscheiden.";
   if(confirm(message)){
    syncPaused=false;
    await downloadCloud(false);
@@ -239,15 +349,61 @@ async function syncNow(show=true,explicit=false){
  await pushCloud();
  if(!syncPaused)startAutoSync();
 }
-function scheduleSync(){if(restoring||!client||!user)return;dirty=true;clearTimeout(debounce);debounce=setTimeout(()=>{if(syncPaused){status("Lokale Änderung gespeichert. Cloud-Übertragung pausiert, bis der Datenkonflikt geklärt ist.",true);return;}syncNow(false);},1800);}
+function scheduleSync(){if(restoring||!client||!user)return;dirty=true;clearTimeout(debounce);debounce=setTimeout(()=>{if(syncPaused){status("Lokale Änderung gespeichert. Cloud-Übertragung pausiert, bis du eine Daten-Version ausgewählt hast.",true);return;}syncNow(false);},1800);}
 function startAutoSync(){
- if(window.__studySpaceAutoSync)return;window.__studySpaceAutoSync=true;
- const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){const result=original.call(this,key,value);if(this===localStorage&&appKey(String(key)))scheduleSync();return result;};
- ["put","add","delete","clear"].forEach(name=>{const originalMethod=IDBObjectStore.prototype[name];if(typeof originalMethod!=="function")return;IDBObjectStore.prototype[name]=function(...args){const result=originalMethod.apply(this,args);if(this.name===STORE)scheduleSync();return result;};});
- const checkRemote=async()=>{if(!user||busy)return;try{const remote=await fetchRemote();if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){status("Eine andere Browser-Registerkarte oder ein anderes Gerät hat neuere Cloud-Daten. Deine lokalen Daten bleiben sicher; es wird nichts automatisch heruntergeladen. Zum Übernehmen bitte bewusst „Cloud-Daten auf dieses Gerät laden“ wählen.",true);}}catch(e){console.warn(e);}};
- window.addEventListener("focus",checkRemote);
+ if(window.__studySpaceAutoSync)return;
+ try{
+  const storageProto=window.Storage?.prototype;
+  if(storageProto&&!storageProto.__studySpaceWrapped){
+   const originalSetItem=storageProto.setItem;
+   storageProto.setItem=function(key,value){
+    const result=originalSetItem.call(this,key,value);
+    if(this===localStorage&&appKey(String(key)))scheduleSync();
+    return result;
+   };
+   storageProto.__studySpaceWrapped=true;
+  }
+ }catch(error){console.warn("StudySpace localStorage autosync hook unavailable",error);}
+ try{
+  const proto=window.IDBObjectStore?.prototype;
+  if(proto){
+   ["put","add","delete","clear"].forEach(name=>{
+    const originalMethod=proto[name];
+    if(typeof originalMethod!=="function"||originalMethod.__studySpaceWrapped)return;
+    const wrapped=function(...args){
+     const result=originalMethod.apply(this,args);
+     if(this.name===STORE)scheduleSync();
+     return result;
+    };
+    wrapped.__studySpaceWrapped=true;
+    proto[name]=wrapped;
+   });
+  }
+ }catch(error){console.warn("StudySpace IndexedDB autosync hook unavailable",error);}
+ window.__studySpaceAutoSync=true;
+ const checkRemote=async()=>{
+  if(!user||busy)return;
+  try{
+   const remote=await fetchRemote();
+   if(remote&&remote.updated_at!==readMeta().lastRemoteAt&&!debounce){
+    status("Auf einem anderen Gerät liegen neuere Cloud-Daten. Zum Übernehmen bitte bewusst „Cloud → dieses Gerät“ wählen.",true);
+   }
+  }catch(error){console.warn("StudySpace cloud status check",error);}
+ };
+ const flushPending=()=>{
+  if(dirty&&!syncPaused&&user&&!busy){
+   clearTimeout(debounce);debounce=null;
+   syncNow(false);
+  }
+ };
+ window.addEventListener("focus",()=>{checkRemote();flushPending();});
+ window.addEventListener("online",flushPending);
+ document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"){checkRemote();flushPending();}
+ });
  setInterval(checkRemote,30000);
 }
+
 function init(){addStyles();addPanel();const cfg=readConfig();if(cfg.url&&cfg.key)connect();}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
