@@ -34,3 +34,34 @@ body.nutrition-mode { --accent: #65c99a; --accent-soft: #183b30; }
   .topbar { flex-wrap:wrap; gap:15px; }
   .nutrition-hero { padding:22px; }
 }
+
+/* Rezeptverwaltung */
+.nutrition-recipe-toolbar{display:grid;grid-template-columns:minmax(180px,1fr) minmax(160px,220px) auto;gap:10px;margin:18px 0}
+.nutrition-recipe-toolbar input,.nutrition-recipe-toolbar select,.nutrition-recipe-form input,.nutrition-recipe-form select,.nutrition-recipe-form textarea{width:100%;min-width:0;background:#111722;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px}
+.nutrition-primary-button{background:#276c4c;color:#effff5;border:1px solid #39865f;border-radius:9px;padding:11px 15px;font-weight:700}
+.nutrition-primary-button:hover{background:#31865d}
+.nutrition-small-button{background:#202a39;color:var(--text);border:1px solid #3a485e;border-radius:8px;padding:9px 12px}
+.nutrition-editor{background:var(--panel);border:1px solid #315442;border-radius:15px;padding:19px;margin:15px 0}
+.nutrition-recipe-form{display:grid;gap:14px}
+.nutrition-recipe-form label{display:grid;gap:6px;color:#c7d2d0;font-size:13px}
+.nutrition-form-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.nutrition-editor-heading,.nutrition-form-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nutrition-ingredient-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 38px;gap:8px;margin:8px 0;align-items:end}
+.nutrition-grams-label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+.nutrition-remove-ingredient{height:40px;border:1px solid #70404a;background:#38232a;color:#ffb6bd;border-radius:8px;font-size:20px}
+.nutrition-recipe-preview{padding:13px;background:#173c30;border:1px solid #28684e;border-radius:10px;color:#c8f3d9}
+.nutrition-recipe-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:15px}
+.nutrition-recipe-card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:17px;min-width:0}
+.nutrition-recipe-card h3{margin:10px 0 5px;font-size:19px}
+.nutrition-recipe-card p{color:var(--muted);font-size:13px;line-height:1.5}
+.nutrition-recipe-card-top{display:flex;justify-content:space-between;gap:12px}
+.nutrition-protein-number{display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap;color:#9be6ba}
+.nutrition-protein-number strong{font-size:25px}
+.nutrition-protein-number span{font-size:11px;color:#a9c9b7}
+.nutrition-recipe-meta{display:flex;gap:13px;flex-wrap:wrap;color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.nutrition-recipe-details{margin:12px 0;color:#d7e2dc;font-size:13px}
+.nutrition-recipe-details summary{cursor:pointer;color:#9be6ba;font-weight:700}
+.nutrition-recipe-details li{margin:5px 0}
+.nutrition-danger-button{border-color:#70404a;color:#ffb6bd}
+.nutrition-muted{color:var(--muted);font-size:12px;line-height:1.5;margin-top:15px}
+@media(max-width:700px){.nutrition-recipe-toolbar{grid-template-columns:1fr}.nutrition-form-grid{grid-template-columns:1fr}.nutrition-recipe-card-top{flex-direction:column}.nutrition-protein-number{align-items:flex-start}.nutrition-ingredient-row{grid-template-columns:minmax(0,1fr) 90px 34px}}
