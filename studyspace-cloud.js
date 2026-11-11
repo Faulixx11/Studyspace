@@ -27,9 +27,9 @@ function addPanel(){
  '<hr style="border:0;border-top:1px solid #30394a;margin:16px 0">',
  '<div class="ss-cloud-grid"><label class="ss-field">E-Mail<input id="ss-cloud-email" type="email" placeholder="deine E-Mail-Adresse" autocomplete="email"></label><label class="ss-field">Passwort<input id="ss-cloud-password" type="password" placeholder="Mindestens 8 Zeichen" autocomplete="current-password"></label></div>',
  '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-signup">Konto erstellen</button><button id="ss-cloud-login">Anmelden</button><button id="ss-cloud-reset">Passwort zurücksetzen</button><button id="ss-cloud-logout">Abmelden</button></div>',
- '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-download">Cloud → PC: Tablet-Daten übernehmen</button><button id="ss-cloud-now">PC → Cloud: PC-Daten übertragen</button></div>',
+ '<div class="ss-actions"><button class="ss-primary" id="ss-cloud-download">Cloud → dieses Gerät: Daten übernehmen</button><button id="ss-cloud-now">Dieses Gerät → Cloud: Daten übertragen</button></div>',
  '<div class="ss-state" id="ss-cloud-status" aria-live="polite">Noch nicht verbunden. Zuerst Projekt-URL und Publishable Key eintragen.</div>',
- '<p class="ss-muted">Bei unterschiedlichen Datenständen wird die Synchronisierung aus Sicherheitsgründen angehalten. Nutze „Cloud → PC“, wenn die Tablet-Daten richtig sind. Nutze „PC → Cloud“ nur, wenn die PC-Daten die richtige Version sind; damit wird die bisherige Cloud-Sicherung ersetzt. Nach dieser Entscheidung synchronisiert StudySpace Änderungen automatisch in beide Richtungen. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
+ '<p class="ss-muted">Bei unterschiedlichen Datenständen wird die Synchronisierung aus Sicherheitsgründen angehalten. Nutze „Cloud → dieses Gerät“, wenn die Cloud-Daten richtig sind. Nutze „Dieses Gerät → Cloud“ nur, wenn die lokalen Daten dieses Geräts die richtige Version sind; damit wird die bisherige Cloud-Sicherung ersetzt. Nach dieser Entscheidung synchronisiert StudySpace Änderungen automatisch in beide Richtungen. Das SQL-Schema aus cloud-sync-setup.sql muss einmal im Supabase SQL Editor ausgeführt werden.</p>'
  ].join("");
  page.appendChild(panel);
  const cfg=readConfig();$("ss-cloud-url").value=cfg.url||"";$("ss-cloud-key").value=cfg.key||"";
@@ -182,7 +182,7 @@ async function initialSync(){
   const meta=readMeta();
   if(meta.accountId===user.id&&meta.conflictRemoteAt===remote.updated_at){
    syncPaused=true;
-   status("Nur lokale Speicherung aktiv: Datenkonflikt erkannt. Wähle unten „Cloud → PC“ oder „PC → Cloud“, um die Synchronisierung wieder freizugeben.",true);
+   status("Nur lokale Speicherung aktiv: Datenkonflikt erkannt. Wähle unten „Cloud → dieses Gerät“ oder „Dieses Gerät → Cloud“, um die Synchronisierung wieder freizugeben.",true);
    startAutoSync();
    return;
   }
@@ -219,7 +219,7 @@ async function initialSync(){
    syncPaused=true;
    saveMeta({...readMeta(),conflictRemoteAt:remote.updated_at,accountId:user.id});
    startAutoSync();
-   status("Nur lokale Speicherung aktiv: Wegen unterschiedlicher Datenstände ist die Cloud-Synchronisierung pausiert. Wähle unten „Cloud → PC“, wenn das Tablet maßgeblich ist, oder „PC → Cloud“, wenn der PC maßgeblich ist.",true);
+   status("Nur lokale Speicherung aktiv: Wegen unterschiedlicher Datenstände ist die Cloud-Synchronisierung pausiert. Wähle unten „Cloud → dieses Gerät“, wenn die Cloud-Version maßgeblich ist, oder „Dieses Gerät → Cloud“, wenn die lokalen Daten maßgeblich sind.",true);
   }
  }catch(e){console.error(e);syncPaused=true;status("Erste Synchronisierung fehlgeschlagen: "+e.message,true);}
  finally{initializing=false;}
