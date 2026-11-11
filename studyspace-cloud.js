@@ -66,7 +66,18 @@ function configure(){
 }
 function connect(){
  const cfg=readConfig();if(!cfg.url||!cfg.key)return false;
- if(!window.supabase?.createClient){status("Supabase-Bibliothek konnte nicht geladen werden. Prüfe deine Internetverbindung.",true);return false;}
+ if(!window.supabase?.createClient){
+  status("Cloud-Bibliothek wird geladen …");
+  if(!window.__studySpaceSupabaseFallbackStarted){
+   window.__studySpaceSupabaseFallbackStarted=true;
+   const script=document.createElement("script");
+   script.src="https://unpkg.com/@supabase/supabase-js@2";
+   script.onload=()=>{if(window.supabase?.createClient){window.__studySpaceSupabaseFallbackStarted=false;connect();}else status("Cloud-Bibliothek konnte auf diesem Gerät nicht gestartet werden.",true);};
+   script.onerror=()=>status("Cloud-Bibliothek konnte nicht geladen werden. Prüfe die Internetverbindung oder den Browser-Inhaltsschutz.",true);
+   document.head.appendChild(script);
+  }
+  return false;
+ }
  client=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  client.auth.onAuthStateChange((event,session)=>{user=session?.user||null;if(user){status("Angemeldet als "+user.email+". Synchronisierung startet …");setTimeout(()=>initialSync(),0);}else status("Nicht angemeldet. Lokale Daten bleiben auf diesem Gerät erhalten.");});
  client.auth.getSession().then(({data,error})=>{if(error){status("Anmeldestatus konnte nicht geladen werden: "+error.message,true);return;}user=data.session?.user||null;if(user){status("Angemeldet als "+user.email+".");initialSync();}else status("Cloud-Verbindung bereit. Bitte anmelden oder Konto erstellen.");});
@@ -210,6 +221,7 @@ async function downloadCloud(confirmReplace){
   const remote=await fetchRemote();
   if(!remote){status("Für dieses Konto gibt es noch keine Cloud-Sicherung. Dieses Gerät kann die erste Sicherung hochladen.");return;}
   if(confirmReplace&&!confirm("Die Daten auf diesem Gerät werden durch die Cloud-Sicherung ersetzt. Die Cloud-Sicherung bleibt unverändert. Fortfahren?"))return;
+  restoring=true;
   const downloaded=[];
   let fileWarning="";
   try{
@@ -223,7 +235,6 @@ async function downloadCloud(confirmReplace){
    fileWarning=" Die Dateianhänge konnten auf diesem Gerät nicht vollständig geladen werden ("+(error?.message||String(error))+").";
    console.warn("StudySpace file restore warning",error);
   }
-  restoring=true;
   const remoteStorage=remote.payload.localStorage||{};
   Object.keys(localStorage).forEach(k=>{if(appKey(k))localStorage.removeItem(k);});
   Object.entries(remoteStorage).forEach(([k,v])=>{if(appKey(k))localStorage.setItem(k,String(v));});
