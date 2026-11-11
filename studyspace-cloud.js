@@ -125,7 +125,7 @@ async function downloadCloud(confirmReplace){
   await replaceFiles(downloaded);
   const remoteStorage=remote.payload.localStorage||{};Object.keys(localStorage).forEach(k=>{if(appKey(k))localStorage.removeItem(k);});
   Object.entries(remoteStorage).forEach(([k,v])=>{if(appKey(k))localStorage.setItem(k,String(v));});
-  saveMeta({...readMeta(),lastRemoteAt:remote.updated_at,accountId:user.id});status("Cloud-Daten geladen. StudySpace wird neu gestartet …");location.reload();
+  saveMeta({...readMeta(),lastRemoteAt:remote.updated_at,lastAppliedRemoteAt:remote.updated_at,conflictRemoteAt:null,accountId:user.id});status("Cloud-Daten geladen. StudySpace wird neu gestartet …");location.reload();
  }catch(e){console.error(e);status("Cloud-Daten konnten nicht geladen werden: "+e.message,true);}finally{restoring=false;busy=false;}
 }
 function timestampMatches(a,b){
@@ -180,6 +180,18 @@ async function initialSync(){
    return;
   }
   const meta=readMeta();
+  if(meta.accountId===user.id&&meta.conflictRemoteAt===remote.updated_at){
+   syncPaused=true;
+   status("Datenkonflikt bereits angezeigt. Lokale PC-Daten bleiben erhalten; die Synchronisierung ist pausiert. Entscheide über „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“. ",true);
+   startAutoSync();
+   return;
+  }
+  if(meta.accountId===user.id&&meta.lastAppliedRemoteAt===remote.updated_at){
+   syncPaused=false;
+   status("Diese Cloud-Sicherung wurde bereits auf diesem Gerät übernommen · "+user.email);
+   startAutoSync();
+   return;
+  }
   if(meta.accountId===user.id&&timestampMatches(meta.lastRemoteAt,remote.updated_at)&&await localStateMatchesRemote(remote)){
    syncPaused=false;
    status("Cloud und dieses Gerät enthalten dieselben Lernstände · "+user.email);
@@ -205,6 +217,7 @@ async function initialSync(){
    await downloadCloud(false);
   }else{
    syncPaused=true;
+   saveMeta({...readMeta(),conflictRemoteAt:remote.updated_at,accountId:user.id});
    startAutoSync();
    status("Lokale PC-Daten bleiben erhalten. Automatische Synchronisierung ist bis zu deiner Entscheidung pausiert. Wähle „Cloud-Daten auf dieses Gerät laden“ oder „Lokale Daten in Cloud hochladen“.",true);
   }
@@ -218,6 +231,7 @@ async function syncNow(show=true,explicit=false){
    const remote=await fetchRemote();
    if(remote&&!confirm("Die lokalen Daten dieses PCs werden in die Cloud hochgeladen und ersetzen dort die bisherige Sicherung. Fortfahren?"))return;
    syncPaused=false;
+   saveMeta({...readMeta(),conflictRemoteAt:null,accountId:user.id});
   }catch(e){status("Cloud konnte vor dem Upload nicht geprüft werden: "+e.message,true);return;}
  }
  if(syncPaused&&!explicit){if(show)status("Synchronisierung pausiert: Bitte zuerst entscheiden, welche Daten-Version verwendet werden soll.",true);return;}
