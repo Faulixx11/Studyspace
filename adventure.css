@@ -32,3 +32,42 @@
 @media(max-width:600px){.adv-area-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.adv-map-grid{gap:2px}.adv-map-wrap{padding:7px}}
 
 .adv-inventory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.adv-inventory-item{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border:1px solid var(--border-color,#30394b);border-radius:14px;background:var(--panel-bg,#151a27);text-align:center}.adv-inventory-item>span{font-size:38px}.adv-inventory-item small{color:var(--text-secondary,#9ba5b8);font-size:10px}
+
+/* Sterneninsel campaign: quest progress and permanent island projects */
+.adv-story-scene-new{min-height:340px;align-items:stretch;padding:clamp(14px,2.5vw,26px);background:radial-gradient(circle at 15% 15%,#fff7d455,transparent 28%),linear-gradient(145deg,#a9d9df 0%,#d9e9d2 54%,#9bc58f 54%,#76a97b 100%)}
+.adv-story-scene-new .adv-story-character{align-self:center;flex:0 0 110px;text-align:center;font-size:76px;filter:drop-shadow(0 8px 10px #365a3a35)}
+.adv-story-scene-new .adv-story-card{align-self:center;width:min(100%,720px);max-width:720px;padding:clamp(17px,2.4vw,25px)}
+.adv-story-scene-new .adv-story-card h3{font-size:clamp(20px,2.2vw,25px)}
+.adv-story-progress{margin:15px 0 12px}
+.adv-story-progress>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#52715c}
+.adv-objective-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0 22px}
+.adv-objective{padding:13px 14px;border:1px solid var(--border-color,#30394b);border-radius:12px;background:var(--panel-bg,#151a27);min-width:0}
+.adv-objective.done{border-color:#58b88b77;background:linear-gradient(120deg,#2b946d18,var(--panel-bg,#151a27))}
+.adv-objective-top{display:flex;align-items:center;gap:8px;min-height:24px}
+.adv-objective-top>span{display:grid;place-items:center;flex:0 0 23px;width:23px;height:23px;border-radius:50%;background:#ffffff14;color:var(--text-secondary,#b6c0d1);font-size:13px}
+.adv-objective.done .adv-objective-top>span{background:#338f6a;color:#fff}
+.adv-objective-top b{font-size:11px;line-height:1.4;flex:1}
+.adv-objective-top small{font-size:10px;color:var(--text-secondary,#9ba5b8);white-space:nowrap}
+.adv-objective .adv-track{margin:9px 0 0}
+.adv-project-list{display:grid;gap:10px;margin-bottom:22px}
+.adv-project{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border-color,#30394b);border-radius:14px;background:var(--panel-bg,#151a27);min-width:0}
+.adv-project.locked{opacity:.58}
+.adv-project.complete{border-color:#58b88b77}
+.adv-project-icon{display:grid;place-items:center;flex:0 0 52px;height:52px;border-radius:13px;background:#8b7cff20;font-size:28px}
+.adv-project-copy{min-width:0;flex:1}
+.adv-project-copy small{display:block;margin-bottom:4px;color:#aaa0ff;font-size:9px;font-weight:800;letter-spacing:1px}
+.adv-project-copy b{font-size:13px}
+.adv-project-copy p{margin:4px 0 0;color:var(--text-secondary,#9ba5b8);font-size:11px;line-height:1.45}
+.adv-project-action{display:flex;align-items:flex-end;flex-direction:column;gap:7px;white-space:nowrap;font-size:11px}
+.adv-project-done{color:#65d9a8;font-weight:750}
+.adv-postgame{display:flex;flex-direction:column;gap:6px;padding:17px;border:1px solid #8b7cff44;border-radius:13px;background:#8b7cff13}
+.adv-postgame b{font-size:13px}
+.adv-postgame span{font-size:11px;color:var(--text-secondary,#9ba5b8)}
+@media(max-width:650px){
+ .adv-story-scene-new{min-height:0;flex-direction:column;align-items:center;gap:8px}
+ .adv-story-scene-new .adv-story-character{flex:0 0 auto;font-size:64px}
+ .adv-story-scene-new .adv-story-card{width:100%;max-width:none}
+ .adv-project{align-items:flex-start;flex-wrap:wrap}
+ .adv-project-action{margin-left:66px;align-items:flex-start}
+ .adv-objective-list{grid-template-columns:1fr}
+}
