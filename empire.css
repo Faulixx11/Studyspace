@@ -38,3 +38,12 @@
 .empire-card .empire-cards{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:12px}
 .empire-region-status{line-height:1.45}
 @media(max-width:620px){.empire-card .empire-cards{grid-template-columns:1fr}}
+
+/* Gebäudetypen auf der Karte */
+.empire-tile.building-field,.empire-tile.building-farmstead{background:linear-gradient(145deg,#8a7842,#66552e);border-color:#c4a75b}
+.empire-tile.building-lumber,.empire-tile.building-sawmill{background:linear-gradient(145deg,#45664b,#294b37);border-color:#6e9a6c}
+.empire-tile.building-quarry,.empire-tile.building-ironmine,.empire-tile.building-smelter{background:linear-gradient(145deg,#65717a,#414d59);border-color:#9aa7b0}
+.empire-tile.building-house,.empire-tile.building-hall,.empire-tile.building-monument{background:linear-gradient(145deg,#8c6d4b,#5e4937);border-color:#c09a68}
+.empire-tile.building-barracks,.empire-tile.building-wall,.empire-tile.building-tower,.empire-tile.building-guardpost{background:linear-gradient(145deg,#58677b,#364354);border-color:#8c9db2}
+.empire-tile.building-library,.empire-tile.building-school{background:linear-gradient(145deg,#5c527c,#3e365c);border-color:#9b8bc4}
+.empire-tile.building-clinic,.empire-tile.building-park{background:linear-gradient(145deg,#47756a,#2f514a);border-color:#83bba7}
