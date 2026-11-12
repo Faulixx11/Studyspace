@@ -364,5 +364,23 @@
 <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 <script src="nutrition.js?v=10"></script>
 <script src="empire.js?v=4"></script>
+<script>
+/* Fallback-Navigation: stellt sicher, dass das Imperium auch dann geöffnet wird,
+   wenn ein anderer Navigationshandler vorher nicht korrekt gebunden wurde. */
+document.addEventListener("click", function(event) {
+    const trigger = event.target.closest('[data-page="empire"], [data-goto="empire"]');
+    if (!trigger) return;
+    event.preventDefault();
+    document.querySelectorAll(".page").forEach(function(page) {
+        page.classList.toggle("active", page.id === "page-empire");
+    });
+    document.querySelectorAll(".nav-item[data-page]").forEach(function(item) {
+        item.classList.toggle("active", item.dataset.page === "empire");
+    });
+    const title = document.getElementById("pageTitle");
+    if (title) title.textContent = "Dein Imperium";
+    window.scrollTo({ top: 0, behavior: "auto" });
+}, true);
+</script>
 </body>
 </html>
