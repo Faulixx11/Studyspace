@@ -17,7 +17,7 @@ function cone(p,x,y,z,r,h,m,n=9){let o=new THREE.Mesh(new THREE.ConeGeometry(r,h
 function group(p,x=0,y=0,z=0){let o=new THREE.Group();o.position.set(x,y,z);p.add(o);return o}
 function flat(x,z,w,d,m,y=.04){let o=box(scene,x,y,z,w,.08,d,m);return o}
 function collider(x,z,r){colliders.push({x,z,r})}
-function tree(x,z,s=1,kind=0){let g=group(scene,x,0,z);cyl(g,0,.8*s,0,.19*s,.28*s,1.6*s,mat.wood);let crown=kind===1?M(0x659b75):M(0x4d985e);ball(g,0,2.05*s,0,1.02*s,crown);ball(g,-.58*s,1.82*s,.12*s,.68*s,M(0x75b879));ball(g,.58*s,1.9*s,-.12*s,.7*s,M(0x438d59));ball(g,0,2.48*s,-.05*s,.58*s,M(0x8bc77e));if(kind===2)for(let i=0;i<5;i++)ball(g,(i-2)*.24,1.85*s,.68*s,.13*s,mat.gold);collider(x,z,.75*s)}
+function tree(x,z,s=1,kind=0){let g=group(scene,x,0,z);let bark=M(kind===1?0x76513b:0x936044);cyl(g,0,.9*s,0,.2*s,.29*s,1.8*s,bark,10);for(let side of [-1,1]){let branch=cyl(g,side*.36*s,1.42*s,0,.075*s,.11*s,.95*s,bark,8);branch.rotation.z=side*.62}let colors=kind===1?[0x527e69,0x6d9e79,0x82ae82]:[0x397d50,0x4c965d,0x70ad69,0x8bc77e];for(let i=0;i<7;i++){let a=i*2.399,r=(i%3)*.32*s,y=1.95*s+(i%3)*.3*s;let leaf=ball(g,Math.cos(a)*r,y,Math.sin(a)*r,.72*s, M(colors[i%colors.length]));leaf.scale.set(1,.82,.95)}ball(g,0,2.55*s,0,.62*s,M(colors[3]||0x8bc77e));if(kind===2)for(let i=0;i<7;i++)ball(g,Math.cos(i*2.4)*.48*s,1.8*s,Math.sin(i*2.4)*.48*s,.12*s,mat.gold);collider(x,z,.82*s)}
 function flower(x,z,color){let g=group(scene,x,0,z);cyl(g,0,.22,0,.025,.03,.44,M(0x438b50),6);for(let i=0;i<5;i++){let a=i*Math.PI*2/5;ball(g,Math.cos(a)*.13,.47,Math.sin(a)*.13,.12,M(color))}ball(g,0,.49,0,.075,mat.gold)}
 function path(x,z,w,d){flat(x,z,w,d,mat.path,.075)}
 function house(x,z,walls,roof,name,kind="home"){let g=group(scene,x,0,z);let wall=M(walls),trim=M(0xf7e8cf);box(g,0,1,0,4.3,2,3.5,wall);box(g,0,2.05,1.78,4.5,.18,.16,trim);let r=cone(g,0,3.05,0,3.15,2.05,M(roof),4);r.rotation.y=Math.PI/4;box(g,0,.78,1.82,.82,1.55,.14,mat.dark);box(g,-1.25,1.38,1.82,.82,.72,.13,mat.blue);box(g,1.25,1.38,1.82,.82,.72,.13,mat.blue);box(g,0,.1,2.02,1.5,.16,.58,mat.wood);box(g,-1.25,1.38,1.91,.12,.78,.06,trim);box(g,1.25,1.38,1.91,.12,.78,.06,trim);for(let q of [-1.25,1.25]){box(g,q,1.38,1.91,.9,.08,.07,trim);box(g,q,1.38,1.91,.08,.78,.07,trim)}box(g,-1.6,.22,1.98,.14,.44,.14,mat.wood);box(g,1.6,.22,1.98,.14,.44,.14,mat.wood);collider(x,z,2.2);let b={x,z,r:3.5,title:name,kind:"building",building:kind};things.push(b);buildings.push({g,x,z,kind,name})}
@@ -60,7 +60,24 @@ function buildWorld(){
  for(let i=0;i<12;i++)pickup(20+(i%4)*3,-8+Math.floor(i/4)*3,"fruit"+i,"fruit");
  for(let i=0;i<8;i++)pickup(-29+(i%4)*3,-26+Math.floor(i/4)*3,"crystal"+i,"crystal");
  sign(0,10,"Insel-Kompass",["Die Wege führen zu Dorf, Garten, Wald und Strand.","Nutze WASD oder die Pfeiltasten. E öffnet Gespräche und sammelt Dinge."]);
- addPlacedObjects();for(let i=0;i<13;i++){let cloud=group(scene,-45+i*8,18+(i%3)*4,-48+(i%5)*18);for(let j=0;j<5;j++)ball(cloud,(j-2)*1.15,Math.sin(j)*.4,0,1.2+(j%2)*.35,M(0xffffff));clouds.push({g:cloud,speed:.35+(i%3)*.12});}
+ addPlacedObjects();addSceneryDetails();for(let i=0;i<13;i++){let cloud=group(scene,-45+i*8,18+(i%3)*4,-48+(i%5)*18);for(let j=0;j<5;j++)ball(cloud,(j-2)*1.15,Math.sin(j)*.4,0,1.2+(j%2)*.35,M(0xffffff));clouds.push({g:cloud,speed:.35+(i%3)*.12});}
+}
+function addSceneryDetails(){
+ const pebble=M(0xa6aaa0),darkRock=M(0x747f7c),shrubA=M(0x477f55),shrubB=M(0x6da56a),mushroom=M(0xf0e3ca),cap=M(0xc96e62);
+ // Uneven grassy knolls make the island silhouette feel less like a flat disc.
+ for(let i=0;i<15;i++){let a=i*2.399,r=35+(i%4)*2.1,g=group(scene,Math.cos(a)*r,0,Math.sin(a)*r);let mound=ball(g,0,.18,0,1.8+(i%3)*.35,mat.grass2);mound.scale.set(1.35,.32,1.05);mound.rotation.y=a;}
+ // Bushes and small plants around paths and under the trees.
+ for(let i=0;i<64;i++){let a=i*2.41,r=13+(i%7)*3.8,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.hypot(x,z)<10)continue;let g=group(scene,x,0,z);for(let j=0;j<3;j++){let b=ball(g,(j-1)*.34,.38+(j%2)*.12,(j%2)*.12,.48,j%2?shrubA:shrubB);b.scale.set(1,.82,1)}if(i%5===0){cyl(g,.12,.18,.3,.035,.04,.36,M(0x477c49),6);ball(g,.12,.4,.3,.19,cap);ball(g,.12,.31,.3,.12,mushroom)}}
+ // Natural stone clusters along the beach and forest edge.
+ for(let i=0;i<42;i++){let a=i*2.17,r=i%2?43.5:31.5,x=Math.cos(a)*r,z=Math.sin(a)*r,g=group(scene,x,0,z);for(let j=0;j<2+(i%3);j++){let rock=ball(g,(j-1)*.42,.22+(j%2)*.12,(j%2)*.2,.42+(j%2)*.12,j%2?pebble:darkRock);rock.scale.set(1.25,.72,.9);rock.rotation.y=a+j}}
+ // Flowering bushes and tiny ground flowers add a more layered garden.
+ for(let i=0;i<36;i++){let a=i*2.4,r=20+(i%4)*1.5,x=Math.cos(a)*r,z=Math.sin(a)*r;for(let j=0;j<3;j++){let g=group(scene,x+(j-1)*.32,.02,z+((j%2)-.5)*.35);ball(g,0,.25,0,.3,j%2?shrubB:shrubA);if(i%2===0)ball(g,0,.52,0,.13,M([0xf3a8c8,0xffd978,0xc6b0ff][(i+j)%3]))}}
+ // Wooden fences frame the village garden and make spaces feel designed.
+ for(let side=-1;side<=1;side+=2){for(let k=0;k<7;k++){let x=side*13,z=-5+k*1.5;cyl(scene,x,.42,z,.07,.07,.84,mat.wood,7);if(k<6)box(scene,x+side*.0,.58,z+.75,.1,.1,1.5,mat.cream)}}
+ // Reeds and lily pads around the pond.
+ for(let i=0;i<12;i++){let a=i*Math.PI/6,x=27+Math.cos(a)*4.7,z=13+Math.sin(a)*4.7;let reed=cyl(scene,x,.48,z,.035,.045,.9,M(0x548d59),6);reed.rotation.z=Math.cos(a)*.18;let pad=ball(scene,27+Math.cos(a)*2.5,.13,13+Math.sin(a)*2.5,.38,M(0x4c9b68));pad.scale.set(1,.12,.72);if(i%3===0)ball(scene,27+Math.cos(a)*2.5,.23,13+Math.sin(a)*2.5,.12,M(0xf4b6d0))}
+ // A few distant rocky islets give the ocean a horizon and a sense of scale.
+ for(let i=0;i<5;i++){let a=i*1.256,r=76+(i%2)*10,x=Math.cos(a)*r,z=Math.sin(a)*r;let island=group(scene,x,-.35,z);let base=ball(island,0,0,0,7,mat.sand);base.scale.set(1,.12,.72);let top=ball(island,0,.55,0,5.5,mat.grass);top.scale.set(1,.12,.72);for(let t=0;t<3;t++){let trunk=cyl(island,(t-1)*1.5,1.5,0,.22,.28,2.8,mat.wood);ball(island,(t-1)*1.5,3.1,0,1.5,mat.leaf)}}
 }
 function addPlacedObjects(){(data.placed||[]).forEach((o,i)=>makeBuildObject(o.id,o.x,o.z,o.rot||0,false))}
 const catalog=[["tree","🌳","Inselbaum"],["lamp","🏮","Mondlaterne"],["bench","🪑","Holzbank"],["flower","🌼","Sternblume"],["fountain","⛲","Quellbrunnen"],["campfire","🔥","Lagerfeuer"],["pond","🪷","Seerosenteich"]];
