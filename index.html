@@ -37,6 +37,9 @@
             <button class="nav-item" data-page="flashcards">
                 <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
             </button>
+            <button class="nav-item" data-page="empire">
+                <span class="nav-icon">♜</span><span class="nav-text">Imperium</span>
+            </button>
         </nav>
 
         <div class="sidebar-bottom">
@@ -106,11 +109,7 @@
                         <h3>Fortschritt</h3>
                         <p>Behalte deine Entwicklung im Blick.</p>
                     </button>
-                    <button class="dashboard-card island-launch-card" type="button" onclick="window.location.href=\'island-preview.html\'">
-                        <span class="card-icon green">🌿</span>
-                        <h3>Neue Copilot-Insel entdecken</h3>
-                        <p>Erkunde die vollständige neue 3D-Welt mit Dorf, Windmühle, Hafen, Boot und Leuchtturm.</p>
-                    </button>
+                    <button class="dashboard-card empire-launch-card" data-goto="empire"><span class="card-icon orange">♜</span><h3>Dein Imperium</h3><p>Gründe ein Reich, baue Städte und erweitere dein Gebiet durch echtes Lernen.</p></button>
                 </div>
             </div>
 
@@ -305,6 +304,11 @@
         </section>
 
         <!-- LERNPLAN -->
+        <section class="page" id="page-empire"><div class="empire-app" id="empireApp">
+<div class="empire-hero"><div><span class="empire-kicker">STUDYSPACE · STRATEGIE & AUFBAU</span><h1>Chroniken von Aurelion</h1><p>Aus einer kleinen Grenzsiedlung soll ein blühendes Imperium werden. Baue Städte, lenke deine Bevölkerung, erforsche Technologien und erschließe neue Provinzen. Dein Wissen öffnet die Grenzen.</p><button class="empire-btn gold" data-tab="map">Reich betreten →</button></div><div class="empire-emblem">♜<small>A U R E L I O N</small></div></div>
+<div id="empireResources" class="empire-resources"></div>
+<nav class="empire-tabs"><button data-tab="map" class="active">🗺️ Reichskarte</button><button data-tab="build">🏗️ Bauen</button><button data-tab="research">📜 Forschung</button><button data-tab="council">⚖️ Staatsrat</button><button data-tab="story">📖 Chronik</button><button data-tab="trade">⚓ Handel</button></nav>
+<div id="empireContent"></div><footer class="empire-footer">Dein Reich wächst durch Wissen. Dein Spielstand wird automatisch gespeichert.</footer></div></section>
         <!-- EINSTELLUNGEN -->
         <section class="page" id="page-settings">
             <div class="page-intro">
@@ -358,10 +362,6 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 <script src="nutrition.js?v=10"></script>
-<script src="adventure.js?v=13"></script>
-
-<link rel="stylesheet" href="island-game.css?v=8">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
-<script type="module" src="island-game.js?v=23"></script>
+<script src="empire.js?v=1"></script>
 </body>
 </html>
