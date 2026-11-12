@@ -71,3 +71,20 @@
  .adv-project-action{margin-left:66px;align-items:flex-start}
  .adv-objective-list{grid-template-columns:1fr}
 }
+
+/* Persönliche Bewohnergeschichten und das Briefarchiv */
+.adv-letter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0 22px}
+.adv-letter{padding:16px;border:1px solid #c7a66b55;border-radius:12px;background:linear-gradient(145deg,#d9c99b18,var(--panel-bg,#151a27))}
+.adv-letter small{font-size:9px;letter-spacing:1px;color:#d8bd83;font-weight:800}
+.adv-letter p{font-size:12px;line-height:1.65;color:var(--text-secondary,#b8c0ce);margin:9px 0 0}
+.adv-sidequest-list{display:grid;gap:10px;margin:12px 0 22px}
+.adv-sidequest{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid var(--border-color,#30394b);border-radius:13px;background:var(--panel-bg,#151a27)}
+.adv-sidequest.ready{border-color:#65c99b88}.adv-sidequest.complete{opacity:.72}
+.adv-sidequest-icon{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:12px;background:#8b7cff20;font-size:23px}
+.adv-sidequest-body{flex:1;min-width:0}
+.adv-sidequest-body>small:first-child{display:block;color:#aaa0ff;font-size:9px;font-weight:800;letter-spacing:.8px}
+.adv-sidequest-body>b{display:block;margin:3px 0;font-size:13px}
+.adv-sidequest-body p,.adv-sidequest-body>span{display:block;margin:4px 0;color:var(--text-secondary,#9ba5b8);font-size:11px;line-height:1.45}
+.adv-sidequest-body .adv-track{margin:8px 0 3px}.adv-sidequest-progress{font-size:10px;color:#d6c7ff}
+.adv-sidequest-action{display:flex;flex-direction:column;align-items:flex-end;gap:5px;white-space:nowrap;font-size:10px}
+@media(max-width:650px){.adv-sidequest{align-items:flex-start;flex-wrap:wrap}.adv-sidequest-action{margin-left:57px;align-items:flex-start}}
