@@ -43,7 +43,7 @@ const chapters=[
 ["Ein Reich entsteht","Gesandter Rowan","Aurelion ist längst mehr als ein Außenposten. Die Nachbarreiche erkennen deine wachsende Bedeutung. Nun beginnt die Zeit der Bündnisse, Forschung und großen Bauwerke.","Erreiche Reichsstufe 7 und errichte den Königspalast.",17,12]
 ];
 const fresh=()=>({version:3,coins:900,xp:0,level:1,knowledge:35,wood:125,stone:85,wheat:160,flour:0,bread:35,planks:0,ore:0,iron:0,pop:18,mood:78,food:160,units:10,archers:0,cavalry:0,buildings:[{id:"b0",type:"hall",x:11,y:7,l:1},{id:"b1",type:"field",x:9,y:7,l:1},{id:"b2",type:"field",x:9,y:9,l:1},{id:"b3",type:"house",x:12,y:8,l:1},{id:"b4",type:"lumber",x:13,y:6,l:1}],inventory:{scouts:3,healingHerbs:2},tech:[],chapter:0,province:false,tax:"normal",processedSessions:[],lastProduction:Date.now(),daily:{date:DAY(),cards:0,trainers:0,minutes:0,claimed:[]},weekly:{week:"",cards:0,minutes:0,claimed:[]},allTimeMinutes:0,missions:[],introGift:true,welcomePackage:true,capacity:500,populationTicks:0});
-let s;try{const stored=JSON.parse(localStorage.getItem(KEY)||"null");s={...fresh(),...(stored||{})};const f=fresh();for(const k of Object.keys(f))if(s[k]===undefined)s[k]=f[k];s.inventory=s.inventory||{};s.daily=s.daily||f.daily;s.daily.minutes=s.daily.minutes||0;s.daily.cards=s.daily.cards||0;s.daily.trainers=s.daily.trainers||0;s.daily.claimed=s.daily.claimed||[];s.weekly=s.weekly||f.weekly;s.weekly.cards=s.weekly.cards||0;s.weekly.minutes=s.weekly.minutes||0;s.weekly.claimed=s.weekly.claimed||[];s.processedSessions=s.processedSessions||[];s.buildings=s.buildings||f.buildings;s.tech=s.tech||[];s.capacity=s.capacity||500;if(stored&&!stored.welcomePackage){s.coins+=650;s.wood+=90;s.stone+=60;s.wheat+=80;s.units+=5;s.welcomePackage=true}s.regions=s.regions||[];s.populationTicks=s.populationTicks||0}catch{s=fresh()}
+let s;try{const stored=JSON.parse(localStorage.getItem(KEY)||"null");s={...fresh(),...(stored||{})};const f=fresh();for(const k of Object.keys(f))if(s[k]===undefined)s[k]=f[k];s.inventory=s.inventory||{};s.daily=s.daily||f.daily;s.daily.minutes=s.daily.minutes||0;s.daily.cards=s.daily.cards||0;s.daily.trainers=s.daily.trainers||0;s.daily.claimed=s.daily.claimed||[];s.weekly=s.weekly||f.weekly;s.weekly.cards=s.weekly.cards||0;s.weekly.minutes=s.weekly.minutes||0;s.weekly.claimed=s.weekly.claimed||[];s.processedSessions=s.processedSessions||[];s.buildings=Array.isArray(s.buildings)?s.buildings:f.buildings.map(b=>({...b}));s.buildings=s.buildings.filter(b=>b&&defs[b.type]&&Number.isFinite(Number(b.x))&&Number.isFinite(Number(b.y)));s.tech=s.tech||[];s.capacity=s.capacity||500;if(stored&&!stored.welcomePackage){s.coins+=650;s.wood+=90;s.stone+=60;s.wheat+=80;s.units+=5;s.welcomePackage=true}s.regions=Array.isArray(s.regions)?s.regions:[];s.populationTicks=s.populationTicks||0}catch{s=fresh()}
 let tab="overview",selected=null,placing=null,zoom=100,msg="",lastDaily=DAY();
 const count=id=>s.buildings.filter(b=>b.type===id).length,owned=id=>s.tech.includes(id),levelFor=xp=>Math.floor(Math.sqrt(Math.max(0,xp)/250))+1,xpNext=()=>s.level*s.level*250;
 const caps=()=>s.capacity+count("granary")*450;
@@ -92,7 +92,7 @@ document.addEventListener("click",e=>{
  try{click(e)}catch(error){
   console.error("Imperium-Klickfehler:",error);
   const content=$("empireContent");
-  if(content)content.innerHTML='<div class="empire-notice">Ein Spielfehler ist aufgetreten. Bitte lade StudySpace neu. Details stehen in der Browser-Konsole.</div>';
+  if(content)content.innerHTML='<div class="empire-notice">Kartenfehler: '+esc(error&&error.message?error.message:String(error))+'</div>';
  }
 },true);
 try{
@@ -107,7 +107,7 @@ try{
 }catch(error){
  console.error("Imperium-Startfehler:",error);
  const content=$("empireContent");
- if(content)content.innerHTML='<div class="empire-notice">Das Imperium konnte nicht vollständig geladen werden. Bitte lade StudySpace neu. Details stehen in der Browser-Konsole.</div>';
+ if(content)content.innerHTML='<div class="empire-notice">Startfehler: '+esc(error&&error.message?error.message:String(error))+'</div>';
 }
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
