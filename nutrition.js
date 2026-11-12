@@ -607,6 +607,7 @@
       if (id) nutritionData.recipes = nutritionData.recipes.map(item => item.id === id ? recipe : item);
       else nutritionData.recipes.unshift(recipe);
       if (saveStore()) {
+        if (!id) window.dispatchEvent(new CustomEvent("studyspace:adventure-event", { detail: { type: "recipe", id: recipe.id } }));
         editor.hidden = true;
         editor.innerHTML = "";
         renderRecipes();
