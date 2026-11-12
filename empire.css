@@ -79,3 +79,6 @@
 .empire-ai-offer p{line-height:1.5}
 .empire-card>small:last-child{display:block;margin-top:10px;color:#c3d0d8;line-height:1.5}
 @media(max-width:520px){.empire-ai-stats{grid-template-columns:1fr 1fr}.empire-ai-stats span:last-child{grid-column:1/-1}}
+
+/* Reichsverwaltung und dynamische Wirtschaftsübersicht */
+.empire-section{margin:24px 0}.empire-section>h3{margin:0 0 8px;color:var(--empire-text,#f1eee5)}.empire-section>p{color:var(--empire-muted,#a9a69d);margin:0 0 14px}.empire-section .empire-cards{margin-top:12px}.empire-section .empire-card{min-width:0}.empire-section .empire-card small{display:block;color:var(--empire-muted,#aaa);margin-top:8px}.empire-province-label select[data-district]{width:100%;margin:8px 0}.empire-section .empire-bar{margin:10px 0}.empire-tabs{scrollbar-width:thin}.empire-tabs button{white-space:nowrap}@media(max-width:700px){.empire-section .empire-cards{grid-template-columns:1fr}.empire-section .empire-card{min-width:0}}
