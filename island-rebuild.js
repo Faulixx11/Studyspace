@@ -5,6 +5,7 @@ const root=document.getElementById("game"),loading=document.getElementById("load
 try{
 const small=(navigator.deviceMemory||4)<=4||(navigator.hardwareConcurrency||4)<=4;
 const quality={pixelRatio:Math.min(devicePixelRatio||1,small?1.15:1.5),shadows:small?1024:1536,grass:small?2600:4800,trees:small?95:145};
+const clouds=[];
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xa9c9d0);scene.fog=new THREE.FogExp2(0xa9c9d0,.0036);
 const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,360);
 const renderer=new THREE.WebGLRenderer({antialias:!small,powerPreference:"high-performance",alpha:false});
