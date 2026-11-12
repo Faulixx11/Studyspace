@@ -179,6 +179,7 @@
     const area=$("spx-quiz"),card=quiz.cards[quiz.index];
     if(!card){
       const pct=Math.round(quiz.correct/quiz.cards.length*100);
+      window.dispatchEvent(new CustomEvent("studyspace:empire-trainer-complete",{detail:{count:1,correct:quiz.correct,total:quiz.cards.length}}));
       area.innerHTML='<h2>Test abgeschlossen</h2><p class="spx-muted">'+quiz.correct+' von '+quiz.cards.length+' Fragen richtig · '+pct+' %</p><div class="spx-progress"><span style="width:'+pct+'%"></span></div><button class="spx-btn primary" id="spx-again">Neuen Test starten</button>';
       $("spx-again").addEventListener("click",startQuiz);renderSchedule();return;
     }
@@ -192,7 +193,7 @@
   }
   function grade(knew,card){
     if(!card.studyStats)card.studyStats={attempts:0,correct:0,wrong:0,streak:0,history:[]};
-    const st=card.studyStats;st.attempts++;if(knew){st.correct++;st.streak++;quiz.correct++;}else{st.wrong++;st.streak=0;}
+    const st=card.studyStats;st.attempts++;window.dispatchEvent(new CustomEvent("studyspace:empire-card-reviewed",{detail:{cardId:card.id,knew:!!knew}}));if(knew){st.correct++;st.streak++;quiz.correct++;}else{st.wrong++;st.streak=0;}
     st.history.push(!!knew);if(st.history.length>20)st.history=st.history.slice(-20);st.lastReviewed=Date.now();
     review(card,knew);quiz.index++;renderQuestion();
   }
