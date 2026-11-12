@@ -15,3 +15,18 @@
 .adv-scene-land{position:relative;min-height:270px}.adv-place{position:absolute;border:0;background:transparent;font-size:29px;cursor:pointer;filter:drop-shadow(0 4px 3px #26482c55);transition:transform .15s}.adv-place:hover{transform:translateY(-5px) scale(1.12)}
 .adv-world-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.adv-muted{opacity:.68;font-size:12px}.adv-banner .adv-track{margin:9px 0}.adv-banner .adv-btn{margin-top:8px}
 @media(max-width:650px){.adv-story-scene{padding:12px;min-height:400px;display:flex;flex-direction:column;align-items:center}.adv-story-character{font-size:72px;align-self:center}.adv-story-card{padding:16px}.adv-world-actions .adv-btn{flex:1}}
+
+.adv-area-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0}
+.adv-area-tab{padding:13px;border:1px solid var(--border-color,#30394b);border-radius:12px;background:var(--panel-bg,#151a27);color:var(--text-primary,#f2f4fb);cursor:pointer;font-weight:700}
+.adv-area-tab.selected{border-color:#8b7cff;background:#8b7cff20}.adv-area-tab:disabled{opacity:.4;cursor:not-allowed}
+.adv-map-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(220px,.7fr);gap:14px}
+.adv-map-wrap{padding:12px;border-radius:16px;background:#5c9a70;border:1px solid #ffffff28;margin:12px 0}
+.adv-map-top{display:flex;justify-content:space-between;color:white;margin-bottom:10px;font-size:13px}
+.adv-map-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;aspect-ratio:8/6}
+.adv-tile{min-width:0;border:1px solid #ffffff25;border-radius:7px;background:linear-gradient(145deg,#9acb83,#72ae75);display:grid;place-items:center;font-size:clamp(16px,3vw,29px);cursor:pointer}
+.adv-tile:hover{filter:brightness(1.15);transform:scale(1.04)}.adv-tile.occupied{background:#9fca86}
+.adv-map-wrap.terrain-forest{background:#35674f}.adv-map-wrap.terrain-forest .adv-tile{background:#42765b}
+.adv-map-wrap.terrain-beach{background:#68b9c8}.adv-map-wrap.terrain-beach .adv-tile{background:#e8d39a}.adv-map-wrap.terrain-beach .adv-tile:nth-child(n+33){background:#68b9c8}
+.adv-map-wrap.terrain-garden{background:#78ad74}.adv-resident-face{font-size:65px;margin:10px 0}
+@media(max-width:850px){.adv-map-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.adv-area-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.adv-map-grid{gap:2px}.adv-map-wrap{padding:7px}}
