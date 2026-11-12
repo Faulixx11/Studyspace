@@ -43,3 +43,19 @@ body.ss3d-open{overflow:hidden}
 .adv-3d-copy>small{display:block;line-height:1.5}
 #ss3d-full{min-width:108px}
 @media(max-width:760px){.adv-3d-entry{grid-template-columns:1fr}.adv-3d-art{min-height:160px}#ss3d-full{min-width:0}}
+
+
+/* Premium-Spieloberfläche und hochauflösende Darstellung */
+#ss3d-game{background:#83b9cb;isolation:isolate}
+#ss3d-game canvas{position:absolute;inset:0;z-index:0;outline:none}
+.ss3d-top,.ss3d-bottom{z-index:4}
+.ss3d-brand{padding:9px 13px;border:1px solid #ffffff38;border-radius:16px;background:linear-gradient(135deg,#123b3cbd,#1b5b50a6);backdrop-filter:blur(18px);box-shadow:0 8px 28px #082e3440}
+.ss3d-brand>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#ffe6a7,#d49b58);color:#5a492f;text-shadow:none;box-shadow:0 3px 14px #f5d89b66}
+.ss3d-stats span{background:linear-gradient(135deg,#123d3bd9,#235e54c9);border-color:#ffffff4d;box-shadow:0 5px 20px #082e3438}
+.ss3d-controls button{background:linear-gradient(145deg,#205c50ed,#123d3bea);border-color:#ffffff66;box-shadow:0 5px 18px #082e3444;transition:transform .18s,filter .18s}
+.ss3d-controls button:hover{transform:translateY(-2px);filter:brightness(1.15)}
+.ss3d-quest{background:linear-gradient(135deg,#103b38e8,#1d5b50dc);border-color:#ffffff5c;box-shadow:0 12px 36px #092d3155}
+.ss3d-hint{background:#103b38dc;border-color:#ffffff55}
+.ss3d-dialogue{box-shadow:0 22px 80px #092b31a6}
+.ss3d-build,.ss3d-map{background:linear-gradient(145deg,#123e3bf2,#205d50f0);border-color:#ffffff66}
+@media(min-width:1100px){.ss3d-top{padding:22px 30px}.ss3d-bottom{left:30px;right:30px;bottom:28px}.ss3d-quest{max-width:390px;padding:18px 22px}.ss3d-quest b{font-size:17px}.ss3d-quest span{font-size:13px}}
