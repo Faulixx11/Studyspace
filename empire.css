@@ -29,3 +29,12 @@
 @keyframes empireNoticeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 @media(hover:none){.empire-card:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){.empire-card,.empire-info,.empire-tile,.empire-btn,.empire-bar i,.empire-notice{transition:none;animation:none}}
+
+/* Bewegliche Armee und strategische Fronten */
+.empire-tile{position:relative}
+.empire-tile.army-here{outline:2px solid #f4d27a;outline-offset:-3px;z-index:1}
+.empire-army-marker{position:absolute;right:2px;top:1px;display:grid;place-items:center;width:21px;height:21px;border-radius:50%;background:#f2d27a;color:#18212a;font-size:13px;box-shadow:0 2px 8px #0008}
+.empire-tile.army-here strong{filter:brightness(1.2)}
+.empire-card .empire-cards{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:12px}
+.empire-region-status{line-height:1.45}
+@media(max-width:620px){.empire-card .empire-cards{grid-template-columns:1fr}}
