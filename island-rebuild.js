@@ -1,4 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/RGBELoader.js";
 (()=>{
 "use strict";
 const root=document.getElementById("game"),loading=document.getElementById("loading"),fpsEl=document.getElementById("fps"),errorEl=document.getElementById("error");
@@ -12,6 +13,10 @@ const sky=new THREE.Mesh(new THREE.SphereGeometry(280,32,18),new THREE.ShaderMat
 const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,360);
 const renderer=new THREE.WebGLRenderer({antialias:!small,powerPreference:"high-performance",alpha:false});
 renderer.setPixelRatio(quality.pixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;root.prepend(renderer.domElement);
+// Image-based lighting: a real HDR environment supplies reflections and soft ambient light to every PBR material.
+// Poly Haven: Kloppenheim 06 Pure Sky, CC0. Kept at 1K to limit download and GPU memory.
+const pmrem=new THREE.PMREMGenerator(renderer);pmrem.compileEquirectangularShader();
+new RGBELoader().setDataType(THREE.HalfFloatType).load("https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloppenheim_06_puresky_1k.hdr",hdr=>{try{const env=pmrem.fromEquirectangular(hdr).texture;scene.environment=env;if("environmentIntensity" in scene)scene.environmentIntensity=.78;hdr.dispose();pmrem.dispose();}catch(e){console.warn("HDR environment setup failed",e);hdr.dispose();pmrem.dispose();}},undefined,err=>{console.warn("HDR environment could not be loaded; using fallback lighting",err);pmrem.dispose();});
 const hemi=new THREE.HemisphereLight(0xd9efff,0x697b52,1.65);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffe5bc,3.1);sun.position.set(-48,68,-32);sun.castShadow=true;sun.shadow.mapSize.set(quality.shadows,quality.shadows);sun.shadow.camera.left=-58;sun.shadow.camera.right=58;sun.shadow.camera.top=58;sun.shadow.camera.bottom=-58;sun.shadow.camera.near=1;sun.shadow.camera.far=160;sun.shadow.bias=-.00016;sun.shadow.normalBias=.025;sun.target.position.set(0,0,0);scene.add(sun,sun.target);
 const mat=(color,rough=.85,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
