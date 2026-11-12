@@ -117,7 +117,7 @@ function ridge(points,depth,material){const v=[],idx=[];for(let i=0;i<points.len
 const mountainMat=new THREE.MeshStandardMaterial({color:0x657e83,roughness:1,flatShading:true});
 const snowMat=new THREE.MeshStandardMaterial({color:0xe7e9e2,roughness:.94,flatShading:true});
 ridge([[-105,9],[-86,25],[-70,13],[-52,37],[-35,17],[-14,32],[7,14],[28,35],[49,16],[69,30],[88,12],[110,26]],-86,mountainMat);
-ridge([[-95,20],[-86,25],[-80,18],[-70,13],[-52,37],[-44,24],[-35,17],[-14,32],[-5,20],[7,14],[28,35],[38,22],[49,16],[69,30],[78,18]],-86,snowMat);
+for(const [x,y,w] of [[-52,37,7],[-14,32,6],[28,35,7],[69,30,6]]){const cap=mesh(new THREE.ConeGeometry(w,y*.34,5),snowMat,scene,[x,y-2,-85],[1,1,1],false,false);cap.rotation.y=.35;}
 // Near cliffs behind the village create strong vertical silhouettes.
 for(let i=0;i<13;i++){const x=-38+i*6.2,z=-35-Math.random()*5,h=8+Math.random()*13;const cliff=mesh(new THREE.DodecahedronGeometry(1,1),i%3?stoneDark:stoneLight,scene,[x,h*.38,z],[3+Math.random()*2,h,3.5+Math.random()*2],false,true);cliff.rotation.y=Math.random()*2}
  // Windmill with a detailed timber tower and four rotating sails.
