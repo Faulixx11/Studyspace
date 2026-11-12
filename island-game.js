@@ -60,9 +60,51 @@ function collider(x,z,r){colliders.push({x,z,r})}
 function tree(x,z,s=1,kind=0){let g=group(scene,x,0,z);let bark=M(kind===1?0x76513b:0x805238,.94);let trunk=cyl(g,0,.98*s,0,.19*s,.28*s,1.96*s,bark,14);trunk.rotation.z=.025;for(let side of [-1,1]){let branch=cyl(g,side*.37*s,1.48*s,0,.065*s,.105*s,1.05*s,bark,10);branch.rotation.z=side*.62;branch.rotation.x=side*.12}const colors=kind===1?[0x426d60,0x5c9270,0x79aa83,0x91bd91]:[0x286b43,0x397f4e,0x55995b,0x79b56b];for(let i=0;i<11;i++){let a=i*2.399,r=(i%4)*.28*s,y=1.9*s+(i%4)*.25*s;let leaf=new THREE.Mesh(new THREE.IcosahedronGeometry((.57+(i%3)*.08)*s,2),M(colors[i%colors.length],.9));leaf.position.set(Math.cos(a)*r,y,Math.sin(a)*r);leaf.scale.set(1.05,.88,.98);leaf.castShadow=true;leaf.receiveShadow=true;g.add(leaf)}let crown=new THREE.Mesh(new THREE.IcosahedronGeometry(.72*s,2),M(colors[3],.9));crown.position.y=2.7*s;crown.castShadow=true;g.add(crown);if(kind===2)for(let i=0;i<9;i++){let a=i*2.4;ball(g,Math.cos(a)*.58*s,1.95*s,Math.sin(a)*.58*s,.105*s,mat.gold)}treeInstances.push({group:g,scale:s,kind});collider(x,z,.82*s)}
 function loadNatureModels(){const files=["tree1.glb","tree2.glb","tree3.glb"];files.forEach((file,index)=>modelLoader.load(NATURE_ASSETS+file,gltf=>{natureModels[index]=gltf.scene;treeInstances.forEach(item=>{if((item.kind===1?1:0)===index%2||item.kind===0&&index===0)replaceTreeWithModel(item,index)})},undefined,error=>console.warn("Naturmodell konnte nicht geladen werden:",file,error)));}
 function replaceTreeWithModel(item,index){const source=natureModels[index];if(!source||!item.group?.parent)return;const model=source.clone(true);model.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=true}});let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());if(!size.y)return;model.scale.setScalar(4.8*item.scale/size.y);bounds.setFromObject(model);center=bounds.getCenter(new THREE.Vector3());model.position.set(-center.x,-bounds.min.y,-center.z);item.group.clear();item.group.add(model);item.group.userData.authoredModel=true;}
-function flower(x,z,color){let g=group(scene,x,0,z);let stem=cyl(g,0,.27,0,.018,.026,.54,M(0x347b45),7);stem.rotation.z=.07;for(let side of [-1,1]){let leaf=ball(g,side*.09,.22,side*.02,.105,M(0x4e9a56));leaf.scale.set(1,.35,.55);leaf.rotation.z=side*.45}for(let i=0;i<7;i++){let a=i*Math.PI*2/7;let petal=ball(g,Math.cos(a)*.17,.57,Math.sin(a)*.17,.105,M(color,.7));petal.scale.set(1,.58,.82)}ball(g,0,.59,0,.09,M(0xf6c85e,.55))}
+
+function addHouseCraftDetails(g,wallMat,roofMat,trim){
+ const woodDark=M(0x513c2d,.9),stone=M(0x827c6d,.96),stoneLight=M(0xb4aa94,.94),glass=new THREE.MeshPhysicalMaterial({color:0x9dcbd1,roughness:.12,metalness:.08,clearcoat:1,clearcoatRoughness:.04});
+ // Exposed timber framing and corner posts.
+ for(const x of [-2.08,2.08]){box(g,x,1.08,1.82,.16,1.88,.13,woodDark);box(g,x,1.08,-1.82,.16,1.88,.13,woodDark)}
+ box(g,0,.18,1.84,4.18,.14,.16,woodDark);box(g,0,1.96,1.84,4.18,.14,.16,woodDark);
+ for(const x of [-1.72,1.72]){let brace=box(g,x,.72,1.9,.12,.86,.12,woodDark);brace.rotation.z=x<0?-.65:.65}
+ // Irregular masonry courses around the base.
+ for(let row=0;row<2;row++)for(let i=0;i<9;i++){let x=-2.02+i*.505+(row%2)*.23;if(x>2.04)continue;let b=box(g,x,.22+row*.22,1.89,.46,.19,.20,i%3?stone:stoneLight);b.rotation.y=(i%2-.5)*.035}
+ // Roof edge boards and ridge caps.
+ for(let side of [-1,1]){let fascia=box(g,side*1.58,2.42,0,.13,.18,4.18,woodDark);fascia.rotation.z=side<0?.62:-.62;
+ for(let k=0;k<14;k++){let cap=cyl(g,side*.03,3.55,-1.95+k*.30,.105,.105,.28,roofMat,10);cap.rotation.x=Math.PI/2}}
+ // Window recesses, deep frames, sills and divided panes.
+ for(let x of [-1.25,1.25]){
+ box(g,x,1.4,1.755,1.12,.94,.10,woodDark);
+ box(g,x,1.4,1.82,.91,.72,.035,glass);
+ for(let dx of [-.51,.51])box(g,x+dx,1.4,1.91,.10,.98,.12,trim);
+ for(let y of [1.0,1.8])box(g,x,y,1.91,1.12,.10,.12,trim);
+ box(g,x,1.4,1.94,.065,.72,.08,trim);box(g,x,1.4,1.94,.91,.065,.08,trim);
+ box(g,x, .91,2.02,1.3,.13,.38,stoneLight);
+ for(let shutter of [-1,1]){let sh=box(g,x+shutter*.72,1.4,1.9,.30,.84,.12,roofMat);sh.rotation.y=shutter*.08;for(let k=0;k<4;k++)box(g,x+shutter*.72,1.15+k*.17,1.98,.26,.035,.04,woodDark)}
+ }
+ // Door planks and hardware.
+ for(let i=0;i<5;i++)box(g,-.32+i*.16,.82,2.035,.025,1.22,.035,M(i%2?0x765039:0x896043,.9));
+ box(g,.28,.9,2.075,.07,.07,.05,M(0xd9b66f,.4));
+ // Decorative eaves and corner stone quoins.
+ for(let x of [-2.18,2.18])for(let y of [.36,.72,1.08,1.44])box(g,x,y,1.89,.22,.22,.22,stoneLight);
+}
+function addNaturalFlower(x,z,color,scale=1){
+ const g=group(scene,x,terrainHeight(x,z),z),green=M(0x426d38,.95),lightGreen=M(0x6c9b4f,.92),petalMat=M(color,.62),centerMat=M(0xdcae48,.58);
+ const stem=cyl(g,0,.34*scale,0,.018*scale,.027*scale,.68*scale,green,8);stem.rotation.z=.035;
+ for(let k=0;k<3;k++){let side=k%2?1:-1,leaf=ball(g,side*.12*scale,.20*scale+k*.11*scale,(k-1)*.035*scale,.16*scale,lightGreen);leaf.scale.set(1.55,.24,.58);leaf.rotation.z=side*.42}
+ const bloom=group(g,0,.70*scale,0);bloom.rotation.y=(x*13+z*7)%6.28;
+ for(let i=0;i<9;i++){let a=i*Math.PI*2/9,p=ball(bloom,Math.cos(a)*.16*scale,.018*scale,Math.sin(a)*.16*scale,.125*scale,petalMat);p.scale.set(1.15,.34,.72);p.rotation.y=-a}
+ ball(bloom,0,.055*scale,0,.095*scale,centerMat);
+}
+function addDetailedRock(x,y,z,scale=1,material=null){
+ const geo=new THREE.IcosahedronGeometry(1,1),pos=geo.attributes.position;
+ for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i);const n=1+Math.sin(v.x*8+v.y*5+v.z*7)*.09;pos.setXYZ(i,v.x*n,v.y*n,v.z*n)}geo.computeVertexNormals();
+ const rock=new THREE.Mesh(geo,material||M(0x777e7b,.97));rock.position.set(x,y,z);rock.scale.set(scale*1.25,scale*.78,scale);rock.rotation.set(.12,x*.13,z*.17);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);return rock;
+}
+
+function flower(x,z,color){addNaturalFlower(x,z,color,.82+((Math.abs(x*7+z*3)%5)/12))}
 function path(x,z,w,d){flat(x,z,w,d,mat.path,.075)}
-function house(x,z,walls,roof,name,kind="home"){let g=group(scene,x,0,z),wall=M(walls,.92),trim=M(0xfff0d5,.72),glass=new THREE.MeshPhysicalMaterial({color:0x9bd6e4,metalness:.18,roughness:.12,clearcoat:1}),roofMat=M(roof,.82);box(g,0,1,0,4.3,2,3.5,wall);box(g,0,2.05,1.78,4.5,.18,.16,trim);let foundation=box(g,0,.16,0,4.55,.32,3.72,M(0x8d8170,.98));foundation.position.y=.16;let left=box(g,-.78,2.9,0,2.25,.2,4.05,roofMat);left.rotation.z=.62;let right=box(g,.78,2.9,0,2.25,.2,4.05,roofMat);right.rotation.z=-.62;addRoofDetail(g,-1,roofMat);addRoofDetail(g,1,roofMat);box(g,0,3.58,0,.18,.18,4.25,M(0x79513f));let chimney=box(g,1.35,3.65,-.85,.48,1.15,.52,M(0xb66f5c));box(g,1.35,4.23,-.85,.62,.12,.66,trim);box(g,0,.78,1.82,.92,1.55,.18,mat.dark);box(g,0,.82,1.93,.68,1.28,.035,M(0x80553d));ball(g,.27,.83,1.99,.055,mat.gold);box(g,0,.1,2.05,1.65,.16,.72,mat.wood);for(let q of [-1.25,1.25]){box(g,q,1.4,1.82,.96,.78,.16,glass);for(let dx of [-.52,.52])box(g,q+dx,1.4,1.93,.10,.94,.10,trim);box(g,q,1.4,1.94,1.08,.10,.10,trim);box(g,q,1.4,1.98,.10,.78,.08,trim);for(let side of [-1,1])box(g,q+side*.57,1.4,1.8,.16,.9,.18,M(roof));box(g,q,1.4,1.84,1.04,.06,.06,trim)}box(g,-1.6,.22,1.98,.14,.44,.14,mat.wood);box(g,1.6,.22,1.98,.14,.44,.14,mat.wood);for(let side of [-1,1]){let pot=group(g,side*1.95,.05,2.1);box(pot,0,.22,0,.42,.38,.42,M(0xb86f5c));for(let k=0;k<3;k++){let stem=cyl(pot,(k-1)*.1,.56,0,.025,.035,.48,M(0x43834e),6);stem.rotation.z=(k-1)*.18;ball(pot,(k-1)*.13,.78,0,.17,M(k%2?0xe7a3b7:0xf2d078))}}box(g,0,2.16,1.84,1.25,.12,.12,trim);collider(x,z,2.2);let b={x,z,r:3.5,title:name,kind:"building",building:kind};things.push(b);buildings.push({g,x,z,kind,name})}
+function house(x,z,walls,roof,name,kind="home"){let g=group(scene,x,0,z),wall=M(walls,.92),trim=M(0xfff0d5,.72),glass=new THREE.MeshPhysicalMaterial({color:0x9bd6e4,metalness:.18,roughness:.12,clearcoat:1}),roofMat=M(roof,.82);box(g,0,1,0,4.3,2,3.5,wall);box(g,0,2.05,1.78,4.5,.18,.16,trim);let foundation=box(g,0,.16,0,4.55,.32,3.72,M(0x8d8170,.98));foundation.position.y=.16;let left=box(g,-.78,2.9,0,2.25,.2,4.05,roofMat);left.rotation.z=.62;let right=box(g,.78,2.9,0,2.25,.2,4.05,roofMat);right.rotation.z=-.62;addRoofDetail(g,-1,roofMat);addRoofDetail(g,1,roofMat);box(g,0,3.58,0,.18,.18,4.25,M(0x79513f));let chimney=box(g,1.35,3.65,-.85,.48,1.15,.52,M(0xb66f5c));box(g,1.35,4.23,-.85,.62,.12,.66,trim);box(g,0,.78,1.82,.92,1.55,.18,mat.dark);box(g,0,.82,1.93,.68,1.28,.035,M(0x80553d));ball(g,.27,.83,1.99,.055,mat.gold);box(g,0,.1,2.05,1.65,.16,.72,mat.wood);for(let q of [-1.25,1.25]){box(g,q,1.4,1.82,.96,.78,.16,glass);for(let dx of [-.52,.52])box(g,q+dx,1.4,1.93,.10,.94,.10,trim);box(g,q,1.4,1.94,1.08,.10,.10,trim);box(g,q,1.4,1.98,.10,.78,.08,trim);for(let side of [-1,1])box(g,q+side*.57,1.4,1.8,.16,.9,.18,M(roof));box(g,q,1.4,1.84,1.04,.06,.06,trim)}box(g,-1.6,.22,1.98,.14,.44,.14,mat.wood);box(g,1.6,.22,1.98,.14,.44,.14,mat.wood);for(let side of [-1,1]){let pot=group(g,side*1.95,.05,2.1);box(pot,0,.22,0,.42,.38,.42,M(0xb86f5c));for(let k=0;k<3;k++){let stem=cyl(pot,(k-1)*.1,.56,0,.025,.035,.48,M(0x43834e),6);stem.rotation.z=(k-1)*.18;ball(pot,(k-1)*.13,.78,0,.17,M(k%2?0xe7a3b7:0xf2d078))}}box(g,0,2.16,1.84,1.25,.12,.12,trim);addHouseCraftDetails(g,wall,roofMat,trim);collider(x,z,2.2);let b={x,z,r:3.5,title:name,kind:"building",building:kind};things.push(b);buildings.push({g,x,z,kind,name})}
 function bench(x,z){let g=group(scene,x,0,z);box(g,0,.58,0,1.5,.18,.48,mat.wood);for(let q of [-.55,.55])box(g,q,.3,0,.13,.6,.42,mat.dark)}
 function lamp(x,z){let g=group(scene,x,0,z);cyl(g,0,1,0,.07,.09,2,mat.dark);ball(g,0,2.1,0,.26,mat.gold);let light=new THREE.PointLight(0xffd78a,.8,6);light.position.set(0,2.1,0);g.add(light)}
 function makeNpc(x,z,name,shirt,skin,lines,role){let g=group(scene,x,0,z),body=group(g);cyl(body,0,.82,0,.38,.43,.86,M(shirt));ball(body,0,1.53,0,.34,M(skin));ball(body,0,1.82,-.03,.36,M(0x684b39));ball(body,-.13,1.6,.3,.055,mat.dark);ball(body,.13,1.6,.3,.055,mat.dark);ball(body,0,1.43,.32,.045,M(0xc87870));for(let side of [-1,1]){let arm=box(body,side*.42,.93,0,.16,.62,.17,M(shirt));arm.rotation.z=side*.18;let hand=ball(body,side*.43,.61,.02,.12,M(skin));let leg=cyl(body,side*.15,.22,0,.13,.14,.42,M(0x665a52),9);leg.position.z=0}let hat=cone(body,0,2.02,0,.43,.3,M(0xe5c27b),8);hat.rotation.y=.2;npcs.push({g,x,z,phase:npcs.length*1.7,baseX:x,baseZ:z,body});things.push({x,z,r:2.8,title:name,kind:"npc",lines,role})}
@@ -110,9 +152,9 @@ function addSceneryDetails(){
  // Uneven grassy knolls make the island silhouette feel less like a flat disc.
  for(let i=0;i<15;i++){let a=i*2.399,r=35+(i%4)*2.1,g=group(scene,Math.cos(a)*r,0,Math.sin(a)*r);let mound=ball(g,0,.18,0,1.8+(i%3)*.35,mat.grass2);mound.scale.set(1.35,.32,1.05);mound.rotation.y=a;}
  // Bushes and small plants around paths and under the trees.
- for(let i=0;i<64;i++){let a=i*2.41,r=13+(i%7)*3.8,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.hypot(x,z)<10)continue;let g=group(scene,x,0,z);for(let j=0;j<3;j++){let b=ball(g,(j-1)*.34,.38+(j%2)*.12,(j%2)*.12,.48,j%2?shrubA:shrubB);b.scale.set(1,.82,1)}if(i%5===0){cyl(g,.12,.18,.3,.035,.04,.36,M(0x477c49),6);ball(g,.12,.4,.3,.19,cap);ball(g,.12,.31,.3,.12,mushroom)}}
+ for(let i=0;i<64;i++){let a=i*2.41,r=13+(i%7)*3.8,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.hypot(x,z)<10)continue;let g=group(scene,x,0,z);for(let j=0;j<5;j++){let a=j*2.4,r=.28+(j%2)*.12,b=ball(g,Math.cos(a)*r,.34+(j%3)*.10,Math.sin(a)*r,.42,j%2?shrubA:shrubB);b.scale.set(1.08,.82,.94);b.rotation.y=a;for(let k=0;k<3;k++){let leaf=ball(g,Math.cos(a+k*2.1)*.42,.55+(k%2)*.16,Math.sin(a+k*2.1)*.42,.16,k%2?shrubA:shrubB);leaf.scale.set(1.4,.35,.62);leaf.rotation.z=.5}}if(i%5===0){cyl(g,.12,.18,.3,.035,.04,.36,M(0x477c49),6);ball(g,.12,.4,.3,.19,cap);ball(g,.12,.31,.3,.12,mushroom)}}
  // Natural stone clusters along the beach and forest edge.
- for(let i=0;i<42;i++){let a=i*2.17,r=i%2?43.5:31.5,x=Math.cos(a)*r,z=Math.sin(a)*r,g=group(scene,x,0,z);for(let j=0;j<2+(i%3);j++){let rock=ball(g,(j-1)*.42,.22+(j%2)*.12,(j%2)*.2,.42+(j%2)*.12,j%2?pebble:darkRock);rock.scale.set(1.25,.72,.9);rock.rotation.y=a+j}}
+ for(let i=0;i<42;i++){let a=i*2.17,r=i%2?43.5:31.5,x=Math.cos(a)*r,z=Math.sin(a)*r,g=group(scene,x,0,z);for(let j=0;j<2+(i%3);j++){let rock=addDetailedRock(x+(j-1)*.52,.22+(j%2)*.12,z+(j%2)*.2,.40+(j%2)*.12,j%2?pebble:darkRock);rock.rotation.y=a+j}}
  // Flowering bushes and tiny ground flowers add a more layered garden.
  for(let i=0;i<36;i++){let a=i*2.4,r=20+(i%4)*1.5,x=Math.cos(a)*r,z=Math.sin(a)*r;for(let j=0;j<3;j++){let g=group(scene,x+(j-1)*.32,.02,z+((j%2)-.5)*.35);ball(g,0,.25,0,.3,j%2?shrubB:shrubA);if(i%2===0)ball(g,0,.52,0,.13,M([0xf3a8c8,0xffd978,0xc6b0ff][(i+j)%3]))}}
  // Wooden fences frame the village garden and make spaces feel designed.
