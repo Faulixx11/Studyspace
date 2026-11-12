@@ -8,6 +8,8 @@ const areas=[{id:"village",name:"Dorfplatz",icon:"🏡",unlock:()=>true},{id:"ga
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(s));return true}catch(e){console.error(e);notice("Speichern nicht möglich – eventuell ist der Speicher voll.");return false}};
 const level=x=>Math.floor(Math.sqrt(Math.max(0,x)/100))+1;
 const items=[
+{id:"starter_house",name:"Kleines Inselhaus",cat:"Gebäude",price:0,icon:"🏡",desc:"Dein erstes Zuhause auf der Sterneninsel."},
+{id:"starter_tree",name:"Alter Inselbaum",cat:"Natur",price:0,icon:"🌳",desc:"Ein alter Baum, unter dem die Inselgeschichten beginnen."},
 {id:"lamp",name:"Mondlaterne",cat:"Licht",price:45,icon:"🏮",desc:"Ein warmes Licht für den Abend."},
 {id:"flower",name:"Sternblume",cat:"Natur",price:35,icon:"🌼",desc:"Eine Blume, die auf deiner Insel leuchtet."},
 {id:"path",name:"Kieselweg",cat:"Wege",price:60,icon:"🪨",desc:"Verbindet die Lieblingsorte deiner Insel."},
