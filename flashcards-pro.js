@@ -300,7 +300,7 @@
   function showAnswer() { const list=activeCards();if(!list.length)return;answerShown=true;renderReview(list); }
   function rateCurrent(knew) {
     const list=activeCards();const card=list.find(c=>c.id===currentCardId);if(!card||!answerShown)return;
-    const st=statsFor(card);st.attempts++;if(knew){st.correct++;st.streak++;}else{st.wrong++;st.streak=0;}
+    const st=statsFor(card);st.attempts++;window.dispatchEvent(new CustomEvent("studyspace:empire-card-reviewed",{detail:{cardId:card.id,source:"flashcards"}}));if(knew){st.correct++;st.streak++;}else{st.wrong++;st.streak=0;}
     st.history.push(!!knew);if(st.history.length>20)st.history=st.history.slice(-20);
     st.lastReviewed=Date.now();
     if(window.StudySpaceScheduler) window.StudySpaceScheduler.review(card,knew);
