@@ -70,3 +70,12 @@
 .empire-ai-offer p{margin:7px 0}.empire-ai-offer small{display:block;opacity:.7;margin-bottom:8px}
 
 .empire-province-card.locked{border-color:rgba(190,170,110,.2);background:linear-gradient(145deg,rgba(34,43,49,.9),rgba(26,35,43,.92))}.empire-province-card.locked .empire-province-state{color:#d8c58d;background:rgba(190,160,90,.12)}.empire-province-card .empire-muted{font-size:12px;line-height:1.5;opacity:.72;margin:12px 0}.empire-world-node:disabled{cursor:default}.empire-world-node.locked{border-style:dashed;filter:saturate(.55)}.empire-world-node.reachable{border-color:#d2b66b;background:rgba(75,65,35,.78)}.empire-info>p small{opacity:.6;margin-left:8px}
+
+/* Erweiterte Nachbarreiche und dynamische Diplomatie */
+.empire-ai-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0;padding:10px;border-radius:10px;background:rgba(110,140,160,.08)}
+.empire-ai-stats span{display:flex;flex-direction:column;gap:4px;color:#aebaca;font-size:10px}
+.empire-ai-stats b{color:#edf3f7;font-size:15px}
+.empire-ai-offer{display:grid;gap:7px}
+.empire-ai-offer p{line-height:1.5}
+.empire-card>small:last-child{display:block;margin-top:10px;color:#c3d0d8;line-height:1.5}
+@media(max-width:520px){.empire-ai-stats{grid-template-columns:1fr 1fr}.empire-ai-stats span:last-child{grid-column:1/-1}}
