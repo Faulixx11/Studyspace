@@ -67,7 +67,8 @@ const pageTitles = {
     materials: "Hefter & Materialien",
     tutor: "KI-Tutor",
     flashcards: "Karteikarten",
-    settings: "Einstellungen"
+    settings: "Einstellungen",
+    empire: "Dein Imperium"
 };
 
 function openPage(pageName) {
