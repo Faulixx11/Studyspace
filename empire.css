@@ -65,3 +65,6 @@
 .empire-continent-map .empire-world-node.region-river{left:8%;top:35%}.empire-continent-map .empire-world-node.region-iron{right:8%;top:8%}.empire-continent-map .empire-world-node.region-coast{right:7%;bottom:7%}.empire-continent-map .empire-world-node.region-north{left:10%;bottom:6%}
 .empire-continent-map .empire-world-node.current{outline:2px solid #e5c66e;box-shadow:0 0 22px rgba(229,198,110,.32)}
 @media(max-width:600px){.empire-continent-map{height:500px}.empire-continent-map .empire-world-node{width:112px;min-height:76px;font-size:12px}.empire-continent-map .empire-world-node.region-river{left:2%;top:29%}.empire-continent-map .empire-world-node.region-iron{right:2%;top:5%}.empire-continent-map .empire-world-node.region-coast{right:2%;bottom:5%}.empire-continent-map .empire-world-node.region-north{left:2%;bottom:5%}}
+
+.empire-ai-offer{margin-top:14px;padding:13px;border:1px solid rgba(130,170,190,.2);border-radius:12px;background:rgba(100,140,160,.07)}
+.empire-ai-offer p{margin:7px 0}.empire-ai-offer small{display:block;opacity:.7;margin-bottom:8px}
