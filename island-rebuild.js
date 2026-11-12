@@ -7,13 +7,32 @@ const small=(navigator.deviceMemory||4)<=4||(navigator.hardwareConcurrency||4)<=
 const quality={pixelRatio:Math.min(devicePixelRatio||1,small?1.15:1.5),shadows:small?1024:1536,grass:small?2600:4800,trees:small?95:145};
 const clouds=[];
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xa9c9d0);scene.fog=new THREE.FogExp2(0xa9c9d0,.0036);
+const sky=new THREE.Mesh(new THREE.SphereGeometry(280,32,18),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,vertexShader:"varying vec3 vWorld; void main(){vec4 w=modelMatrix*vec4(position,1.0);vWorld=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",fragmentShader:"varying vec3 vWorld; void main(){float h=normalize(vWorld).y;vec3 low=vec3(.78,.84,.82);vec3 mid=vec3(.42,.67,.75);vec3 high=vec3(.13,.34,.49);vec3 col=mix(low,mid,smoothstep(-.18,.28,h));col=mix(col,high,smoothstep(.28,.9,h));gl_FragColor=vec4(col,1.0);}"}));scene.add(sky);
+
 const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,360);
 const renderer=new THREE.WebGLRenderer({antialias:!small,powerPreference:"high-performance",alpha:false});
-renderer.setPixelRatio(quality.pixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;root.prepend(renderer.domElement);
+renderer.setPixelRatio(quality.pixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;root.prepend(renderer.domElement);
 const hemi=new THREE.HemisphereLight(0xd9efff,0x697b52,1.65);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffe5bc,3.1);sun.position.set(-48,68,-32);sun.castShadow=true;sun.shadow.mapSize.set(quality.shadows,quality.shadows);sun.shadow.camera.left=-58;sun.shadow.camera.right=58;sun.shadow.camera.top=58;sun.shadow.camera.bottom=-58;sun.shadow.camera.near=1;sun.shadow.camera.far=160;sun.shadow.bias=-.00016;sun.shadow.normalBias=.025;sun.target.position.set(0,0,0);scene.add(sun,sun.target);
 const mat=(color,rough=.85,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
 const m={grass:mat(0x668d58),grass2:mat(0x779e63),sand:mat(0xd9c394),soil:mat(0x77634c),bark:mat(0x59402e),leaf1:mat(0x315d43),leaf2:mat(0x467a50),leaf3:mat(0x6b9660),stone:mat(0x777d76),wood:mat(0x866047),cream:mat(0xe8d9b7),roof:mat(0x76544b),dark:mat(0x3d4842),glass:new THREE.MeshPhysicalMaterial({color:0x9ccbd0,roughness:.13,metalness:.08,clearcoat:1}),gold:mat(0xe0b96e,.38,.35)};
+function proceduralTexture(base,accent,scale=1,kind="grain"){
+ const size=256,canvas=document.createElement("canvas");canvas.width=canvas.height=size;const ctx=canvas.getContext("2d"),img=ctx.createImageData(size,size);let seed=base>>>0;
+ const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ const b=new THREE.Color(base),a=new THREE.Color(accent);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){const i=(y*size+x)*4;let n=(rand()-.5)*.17,pattern=kind==="grain"?(Math.sin(y*.19+Math.sin(x*.035)*2)*.045):(kind==="stone"?(Math.sin(x*.12)*Math.cos(y*.09)*.08):(Math.sin(x*.07+y*.11)*.035));let k=THREE.MathUtils.clamp(.78+rand()*.24+n+pattern,0,1);img.data[i]=Math.round((b.r*(1-k)+a.r*k)*255);img.data[i+1]=Math.round((b.g*(1-k)+a.g*k)*255);img.data[i+2]=Math.round((b.b*(1-k)+a.b*k)*255);img.data[i+3]=255}
+ ctx.putImageData(img,0,0);
+ for(let i=0;i<900;i++){ctx.globalAlpha=.035+rand()*.09;ctx.fillStyle=rand()>.5?"#ffffff":"#171b17";const w=kind==="grain"?1+rand()*2:1+rand()*3;ctx.fillRect(rand()*size,rand()*size,w,w)}
+ const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(scale,scale);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return tex;
+}
+m.bark.map=proceduralTexture(0x59402e,0x9a7550,2,"grain");m.bark.bumpMap=m.bark.map;m.bark.bumpScale=.12;
+m.wood.map=proceduralTexture(0x866047,0xc49a6a,2,"grain");m.wood.bumpMap=m.wood.map;m.wood.bumpScale=.07;
+m.roof.map=proceduralTexture(0x76544b,0xb07b68,3,"grain");m.roof.bumpMap=m.roof.map;m.roof.bumpScale=.045;
+m.cream.map=proceduralTexture(0xe8d9b7,0xffffff,2,"grain");m.cream.bumpMap=m.cream.map;m.cream.bumpScale=.035;
+m.sand.map=proceduralTexture(0xd9c394,0xf4e4bd,4,"stone");m.sand.bumpMap=m.sand.map;m.sand.bumpScale=.025;
+m.grass.map=proceduralTexture(0x668d58,0x9db879,7,"stone");m.grass.bumpMap=m.grass.map;m.grass.bumpScale=.025;
+[m.bark,m.wood,m.roof,m.cream,m.sand,m.grass].forEach(v=>v.needsUpdate=true);
+
 const sphere=(r,w=24,h=16)=>new THREE.SphereGeometry(r,w,h);
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 function mesh(geo,material,parent=scene,pos=[0,0,0],scale=[1,1,1],cast=true,receive=true){const o=new THREE.Mesh(geo,material);o.position.set(...pos);o.scale.set(...scale);o.castShadow=cast;o.receiveShadow=receive;parent.add(o);return o}
@@ -30,7 +49,7 @@ const waterGeo=new THREE.PlaneGeometry(600,600,1,1);waterGeo.rotateX(-Math.PI/2)
 const waterMat=new THREE.ShaderMaterial({transparent:false,uniforms:{uTime:{value:0}},vertexShader:"varying vec3 vPos; uniform float uTime; void main(){vec3 p=position; p.y += sin(p.x*.035+uTime*.7)*.16+cos(p.z*.043-uTime*.55)*.12; vPos=p; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);}",fragmentShader:"varying vec3 vPos; void main(){float wave=.5+.5*sin(vPos.x*.035+vPos.z*.027);vec3 deep=vec3(.035,.22,.29);vec3 shallow=vec3(.12,.43,.48);vec3 col=mix(deep,shallow,wave*.45);gl_FragColor=vec4(col,1.0);}",side:THREE.DoubleSide});
 const water=mesh(waterGeo,waterMat,scene,[0,-1.9,0],[1,1,1],false,false);
 // Beach coves and a pale path network.
-const sandMat=mat(0xe4cda0,.98);const beach=mesh(new THREE.RingGeometry(39,43,180),sandMat,scene,[0,-.25,0],[1,1,1],false,true);beach.rotation.x=-Math.PI/2;
+const sandMat=mat(0xe4cda0,.98);const beach=mesh(new THREE.RingGeometry(39,43,180),m.sand,scene,[0,-.25,0],[1,1,1],false,true);beach.rotation.x=-Math.PI/2;
 function path(x,z,len,width,angle=0){const p=mesh(new THREE.BoxGeometry(width,.035,len),mat(0xc6ad7c,.99),scene,[x,terrainY(x,z)+.035,z],[1,1,1],false,true);p.rotation.y=angle;return p}
 path(0,12,31,3.4,0);path(-3,-2,24,2.7,.48);path(8,-13,23,2.5,-.55);path(-15,7,16,2.3,.2);
 // Efficient repeated vegetation: one instanced trunk and three canopy layers.
@@ -40,7 +59,7 @@ let treeCount=0;const treeSpots=[];
 for(let i=0;i<quality.trees*3&&treeCount<quality.trees;i++){const a=Math.random()*Math.PI*2,r=15+Math.random()*28,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)<9&&z>-15&&z<18)continue;if(Math.hypot(x+17,z+15)<7||Math.hypot(x-20,z-17)<7)continue;const y=terrainY(x,z);treeSpots.push([x,y,z]);dummy.position.set(x,y+1.35,z);dummy.rotation.set(0,Math.random()*6,0);const s=.8+Math.random()*.65;dummy.scale.set(s,s,s);dummy.updateMatrix();trunks.setMatrixAt(treeCount,dummy.matrix);dummy.position.set(x,y+3.0*s,z);dummy.scale.set(2.15*s,2.15*s,2.15*s);dummy.rotation.set(Math.random()*.2,Math.random()*6,Math.random()*.2);dummy.updateMatrix();canopyA.setMatrixAt(treeCount,dummy.matrix);dummy.position.set(x-.7*s,y+3.45*s,z+.35*s);dummy.scale.set(1.45*s,1.55*s,1.5*s);dummy.updateMatrix();canopyB.setMatrixAt(treeCount,dummy.matrix);dummy.position.set(x+.65*s,y+3.5*s,z-.3*s);dummy.scale.set(1.5*s,1.55*s,1.45*s);dummy.updateMatrix();canopyC.setMatrixAt(treeCount,dummy.matrix);treeCount++}
 [trunks,canopyA,canopyB,canopyC].forEach(o=>{o.count=treeCount;o.instanceMatrix.needsUpdate=true;o.castShadow=true;o.receiveShadow=true;scene.add(o)});
 // Instanced grass tufts; only a few thousand triangles for the entire meadow.
-const bladeGeo=new THREE.BufferGeometry();bladeGeo.setAttribute("position",new THREE.Float32BufferAttribute([-.045,0,0,.045,0,0,0,.42,0,0,0,-.045,0,0,.045,0,.42,0],3));bladeGeo.setIndex([0,1,2,3,4,5]);bladeGeo.computeVertexNormals();const grass=new THREE.InstancedMesh(bladeGeo,new THREE.MeshStandardMaterial({color:0x9ebc72,side:THREE.DoubleSide,roughness:1}),quality.grass);let gc=0;
+const bladeGeo=new THREE.BufferGeometry();bladeGeo.setAttribute("position",new THREE.Float32BufferAttribute([-.045,0,0,.045,0,0,0,.42,0,0,0,-.045,0,0,.045,0,.42,0],3));bladeGeo.setIndex([0,1,2,3,4,5]);bladeGeo.computeVertexNormals();const grass=new THREE.InstancedMesh(bladeGeo,new THREE.MeshStandardMaterial({color:0xb0c68a,map:m.grass.map,side:THREE.DoubleSide,roughness:1}),quality.grass);let gc=0;
 for(let i=0;i<quality.grass*2&&gc<quality.grass;i++){const x=(Math.random()-.5)*78,z=(Math.random()-.5)*78,r=Math.hypot(x,z);if(r<12||r>39)continue;if(Math.abs(x)<5&&z>-18&&z<20)continue;dummy.position.set(x,terrainY(x,z)+.02,z);dummy.rotation.set(0,Math.random()*6.28,0);const s=.55+Math.random()*1.1;dummy.scale.set(s,s,s);dummy.updateMatrix();grass.setMatrixAt(gc++,dummy.matrix)}grass.count=gc;grass.instanceMatrix.needsUpdate=true;grass.frustumCulled=true;scene.add(grass);
 // Flower patches, stones and fallen logs, batched where possible.
 const flowerGeo=new THREE.SphereGeometry(.12,8,6),flowerMat=[mat(0xe8c7bd),mat(0xf0d88d),mat(0xd8a6bd)];for(let k=0;k<3;k++){const flowers=new THREE.InstancedMesh(flowerGeo,flowerMat[k],120);let n=0;for(let i=0;i<120;i++){const x=(Math.random()-.5)*58,z=(Math.random()-.5)*58;if(Math.hypot(x,z)<13)continue;dummy.position.set(x,terrainY(x,z)+.45,z);dummy.scale.set(1.2,.55,1.2);dummy.updateMatrix();flowers.setMatrixAt(n++,dummy.matrix)}flowers.count=n;flowers.instanceMatrix.needsUpdate=true;scene.add(flowers)}
@@ -75,12 +94,12 @@ renderer.domElement.addEventListener("pointerup",()=>drag=false);
 renderer.domElement.addEventListener("pointermove",e=>{if(!drag)return;yaw-=(e.clientX-lastX)*.004;pitch=THREE.MathUtils.clamp(pitch+(e.clientY-lastY)*.003,-.08,.8);lastX=e.clientX;lastY=e.clientY});
 renderer.domElement.addEventListener("wheel",e=>{distance=THREE.MathUtils.clamp(distance+e.deltaY*.012,7,25)},{passive:true});
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio||1,quality.pixelRatio));renderer.setSize(innerWidth,innerHeight)});
-let frames=0,lastFps=performance.now(),fps=60;
+let frames=0,lastFps=performance.now(),fps=60,renderScale=quality.pixelRatio,lastAdaptive=performance.now();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;waterMat.uniforms.uTime.value=t;
 let forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const len=Math.hypot(forward,side)||1;forward/=len;side/=len;
 if(forward||side){const speed=keys.shift?9:5.2,dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed*dt,dz=(Math.cos(yaw)*forward-Math.sin(yaw)*side)*speed*dt,nx=player.position.x+dx,nz=player.position.z+dz;if(Math.hypot(nx,nz)<38){player.position.x=nx;player.position.z=nz}body.position.y=Math.sin(t*11)*.045;body.rotation.y=Math.atan2(side,forward); }else{body.position.y=Math.sin(t*1.7)*.012}
 player.position.y=terrainY(player.position.x,player.position.z);updateCamera();clouds.forEach(c=>{c.position.x+=c.userData.speed*dt;if(c.position.x>100)c.position.x=-100});
-renderer.render(scene,camera);frames++;const now=performance.now();if(now-lastFps>800){fps=Math.round(frames*1000/(now-lastFps));fpsEl.textContent=fps+" FPS";frames=0;lastFps=now}}
+renderer.render(scene,camera);frames++;const now=performance.now();if(now-lastFps>800){fps=Math.round(frames*1000/(now-lastFps));fpsEl.textContent=fps+" FPS";frames=0;lastFps=now}if(now-lastAdaptive>2400){if(fps<38&&renderScale>.72){renderScale=Math.max(.72,renderScale-.12);renderer.setPixelRatio(renderScale);renderer.setSize(innerWidth,innerHeight)}else if(fps>56&&renderScale<quality.pixelRatio){renderScale=Math.min(quality.pixelRatio,renderScale+.06);renderer.setPixelRatio(renderScale);renderer.setSize(innerWidth,innerHeight)}lastAdaptive=now}}
 loading.style.display="none";animate();
 }catch(err){console.error(err);errorEl.hidden=false;errorEl.textContent="Die 3D-Vorschau konnte nicht gestartet werden: "+(err?.message||err);loading.style.display="none"}
 })();
