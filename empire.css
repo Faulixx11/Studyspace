@@ -13,3 +13,19 @@
 .empire-tile small{display:block;max-width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px}
 .empire-tile i{font-style:normal;font-size:8px;opacity:.8}
 @media(max-width:620px){.empire-policy-grid{grid-template-columns:1fr}}
+
+/* Erweiterte Weltkarte, Provinzen und Touch-Bedienung */
+.empire-world-strip{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 20px}
+.empire-world-strip span{padding:9px 13px;border:1px solid rgba(155,177,196,.2);border-radius:999px;background:rgba(19,35,47,.72);color:#dce7ef;font-size:12px}
+.empire-region-status{padding:8px 10px;border-radius:8px;background:rgba(17,29,39,.65);font-size:12px}
+.empire-card,.empire-info,.empire-tile,.empire-btn{transition:transform .16s ease,border-color .16s ease,background-color .16s ease,box-shadow .16s ease}
+.empire-card:hover{transform:translateY(-2px);border-color:rgba(126,190,174,.45)}
+.empire-tile{touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent}
+.empire-tile:active{transform:scale(.96)}
+.empire-btn:focus-visible,.empire-tile:focus-visible,.empire-tabs button:focus-visible{outline:2px solid #9bd9c4;outline-offset:2px}
+.empire-map-viewport{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.empire-bar i{transition:width .35s ease}
+.empire-notice{animation:empireNoticeIn .22s ease-out}
+@keyframes empireNoticeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(hover:none){.empire-card:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.empire-card,.empire-info,.empire-tile,.empire-btn,.empire-bar i,.empire-notice{transition:none;animation:none}}
