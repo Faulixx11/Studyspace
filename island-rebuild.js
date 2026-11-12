@@ -84,6 +84,64 @@ const rockBatch=new THREE.InstancedMesh(rockGeo,rockMat,110);let rb=0;for(let i=
 const player=new THREE.Group();scene.add(player);const body=new THREE.Group();player.add(body);mesh(new THREE.CapsuleGeometry(.36,.72,5,10),mat(0x3d6570),body,[0,1.05,0]);mesh(new THREE.SphereGeometry(.31,18,14),mat(0xd9aa83),body,[0,1.78,.02]);mesh(new THREE.SphereGeometry(.34,18,14),mat(0x493a31),body,[0,1.98,-.04],[1,.55,1]);for(const s of [-1,1]){mesh(new THREE.SphereGeometry(.055,8,8),m.dark,body,[s*.12,1.8,.29]);mesh(new THREE.CapsuleGeometry(.12,.38,3,7),mat(0x5d5148),body,[s*.17,.35,0])}player.position.set(0,terrainY(0,14),14);
 // Soft cloud clusters.
 const cloudMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.55,depthWrite:false});for(let i=0;i<12;i++){const cloud=new THREE.Group();cloud.position.set((Math.random()-.5)*170,34+Math.random()*20,(Math.random()-.5)*170);for(let j=0;j<5;j++)mesh(new THREE.SphereGeometry(2.5+Math.random()*2.5,12,8),cloudMat,cloud,[j*2.8,Math.random()*1.5,Math.random()*1.8],[1,.55,1],false,false);scene.add(cloud);cloud.userData.speed=.15+Math.random()*.25;clouds.push(cloud)}
+
+/* EXPANDED WORLD PASS: layered terrain, village architecture and landmarks */
+const stoneLight=mat(0x8b8d82,.94),stoneDark=mat(0x535d58,.98),plasterWarm=mat(0xd8c49e,.92),plasterRose=mat(0xb98269,.92),roofBlue=mat(0x3d4c50,.8),roofTerracotta=mat(0x9a5540,.86),timberDark=mat(0x49372b,.9),leafBright=mat(0x83a967,.95),flowerWhite=mat(0xf1e9cf,.75);
+function addBox(parent,material,x,y,z,sx,sy,sz,rz=0){const o=mesh(boxGeo,material,parent,[x,y,z],[sx,sy,sz]);o.rotation.z=rz;return o}
+function addVillageHouse(x,z,scale=1,wall=plasterWarm,roof=roofTerracotta){
+ const g=new THREE.Group();g.position.set(x,terrainY(x,z),z);g.scale.setScalar(scale);scene.add(g);
+ addBox(g,wall,0,1.55,0,5.2,3.1,4.4);
+ // Two pitched roof planes with visible rafters and fascia.
+ for(const side of [-1,1]){const p=addBox(g,roof,side*1.18,3.35,0,3.1,.22,4.95,side*.58);p.rotation.y=0;addBox(g,timberDark,side*2.25,2.72,0,.13,1.25,5,side*.58)}
+ addBox(g,timberDark,0,4.16,0,.16,.16,5);
+ // Gable front.
+ const gable=mesh(new THREE.ConeGeometry(2.75,1.75,4),wall,g,[0,3.35,2.17]);gable.rotation.y=Math.PI/4;gable.scale.set(1,.72,.42);
+ // Door and inset windows.
+ addBox(g,timberDark,0,1.05,2.24,1.02,2.05,.14);addBox(g,mat(0x694b35),0,1.05,2.33,.76,1.8,.06);
+ mesh(new THREE.SphereGeometry(.055,8,6),m.gold,g,[.28,1.05,2.39]);
+ for(const wx of [-1.65,1.65]){addBox(g,timberDark,wx,1.95,2.25,1.05,1.15,.14);addBox(g,m.glass,wx,1.95,2.34,.83,.91,.07);addBox(g,timberDark,wx,1.95,2.39,.07,1,.06);addBox(g,timberDark,wx,1.95,2.39,.9,.07,.06)}
+ // Chimney, roof ridge caps, porch and supports.
+ addBox(g,stoneLight,1.55,4.12,-1.15,.55,1.5,.65);addBox(g,stoneDark,1.55,4.88,-1.15,.72,.16,.8);
+ addBox(g,timberDark,0,2.35,2.9,6,.16,1.15);for(const px of [-2.55,2.55])addBox(g,timberDark,px,1.2,3.35,.14,2.4,.14);
+ for(let i=0;i<4;i++)addBox(g,stoneLight,0,.12+i*.12,3.7+i*.23,2.7,.16,.6);
+ // Flower boxes with compact instanced blooms.
+ for(const wx of [-1.65,1.65]){addBox(g,timberDark,wx,1.35,2.55,1.18,.18,.32);for(let j=0;j<5;j++)mesh(flowerGeo,flowerMat[(j+Math.round(x))%3],g,[wx-.42+j*.21,1.52,2.55],[.8,.65,.8],false,false)}
+ const glow=new THREE.PointLight(0xffbd70,.45,7);glow.position.set(0,1.7,2.55);g.add(glow);return g;
+}
+addVillageHouse(-23,4,.82,plasterRose,roofBlue);
+addVillageHouse(22,-8,.78,plasterWarm,roofTerracotta);
+addVillageHouse(9,25,.72,plasterRose,roofBlue);
+addVillageHouse(-27,-19,.68,plasterWarm,roofTerracotta);
+// Dramatic distant mountain silhouettes, with snow ridges and layered foothills.
+function ridge(points,depth,material){const v=[],idx=[];for(let i=0;i<points.length;i++){const [x,y]=points[i];v.push(x,y,depth,x,y-13,depth+2)}for(let i=0;i<points.length-1;i++){let n=i*2;idx.push(n,n+1,n+2,n+1,n+3,n+2)}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.setIndex(idx);geo.computeVertexNormals();const o=mesh(geo,material,scene,[0,0,0],[1,1,1],false,false);o.material.side=THREE.DoubleSide;return o}
+const mountainMat=new THREE.MeshStandardMaterial({color:0x657e83,roughness:1,flatShading:true});
+const snowMat=new THREE.MeshStandardMaterial({color:0xe7e9e2,roughness:.94,flatShading:true});
+ridge([[-105,9],[-86,25],[-70,13],[-52,37],[-35,17],[-14,32],[7,14],[28,35],[49,16],[69,30],[88,12],[110,26]],-86,mountainMat);
+ridge([[-95,20],[-86,25],[-80,18],[-70,13],[-52,37],[-44,24],[-35,17],[-14,32],[-5,20],[7,14],[28,35],[38,22],[49,16],[69,30],[78,18]],-86,snowMat);
+// Near cliffs behind the village create strong vertical silhouettes.
+for(let i=0;i<13;i++){const x=-38+i*6.2,z=-35-Math.random()*5,h=8+Math.random()*13;const cliff=mesh(new THREE.DodecahedronGeometry(1,1),i%3?stoneDark:stoneLight,scene,[x,h*.38,z],[3+Math.random()*2,h,3.5+Math.random()*2],false,true);cliff.rotation.y=Math.random()*2}
+ // Windmill with a detailed timber tower and four rotating sails.
+const windmill=new THREE.Group();windmill.position.set(-3,terrainY(-3,-26),-26);scene.add(windmill);
+mesh(new THREE.CylinderGeometry(1.35,2.05,8,12),plasterWarm,windmill,[0,4,0]);
+mesh(new THREE.ConeGeometry(2.1,1.7,12),roofTerracotta,windmill,[0,8.8,0]);
+const axle=new THREE.Group();axle.position.set(0,6.8,1.65);windmill.add(axle);mesh(new THREE.CylinderGeometry(.18,.18,.8,12),m.wood,axle,[0,0,0],[1,1,1]).rotation.x=Math.PI/2;
+for(let i=0;i<4;i++){const sail=new THREE.Group();sail.rotation.z=i*Math.PI/2;axle.add(sail);addBox(sail,m.wood,0,2.1,0,.22,4.4,.12);addBox(sail,m.cream,0,2.35,.1,.92,2.4,.08);addBox(sail,m.wood,0,3.35,.17,.12,2.5,.1)}
+// Timber harbor piers, mooring posts and a small sailing boat.
+function pier(x,z,length=17){const g=new THREE.Group();g.position.set(x,terrainY(x,z)-.7,z);scene.add(g);addBox(g,m.wood,0,0,0,3.1,.32,length);for(let j=0;j<Math.floor(length/2);j++)for(const side of [-1,1])mesh(new THREE.CylinderGeometry(.13,.17,2.8,8),m.bark,g,[side*1.25,-1.2,-length/2+j*2.2]);for(const end of [-1,1])for(const side of [-1,1])mesh(new THREE.CylinderGeometry(.22,.25,1.1,8),m.wood,g,[side*1.25,.35,end*length/2]);return g}
+pier(27,5,18);pier(31,13,12);
+const boat=new THREE.Group();boat.position.set(35,-1.25,2);scene.add(boat);mesh(new THREE.BoxGeometry(5,.55,10),m.wood,boat,[0,0,0]);mesh(new THREE.ConeGeometry(2.3,.9,4),m.bark,boat,[0,-.4,0],[1,1,2]);mesh(new THREE.CylinderGeometry(.08,.08,7,8),m.wood,boat,[0,3,0]);mesh(new THREE.PlaneGeometry(3.4,5.4),m.cream,boat,[0,3.1,.2]).rotation.y=.04;
+// Fence sections around paths and cottage gardens.
+function fence(x,z,count,angle=0){const g=new THREE.Group();g.position.set(x,terrainY(x,z),z);g.rotation.y=angle;scene.add(g);for(let i=0;i<=count;i++){const px=i*1.6;mesh(new THREE.BoxGeometry(.18,1.35,.18),m.bark,g,[px,.68,0]);mesh(new THREE.SphereGeometry(.13,8,6),m.wood,g,[px,1.4,0])}for(const y of [.48,1.05])mesh(new THREE.BoxGeometry(count*1.6+.2,.13,.16),m.wood,g,[count*.8,y,0]);}
+fence(-24,10,9,.25);fence(-13,-22,8,-.3);fence(13,22,7,.7);
+// Foreground broadleaf trees with visible branch forks, varied leaf clusters.
+function heroTree(x,z,s=1){const g=new THREE.Group();g.position.set(x,terrainY(x,z),z);g.scale.setScalar(s);scene.add(g);mesh(new THREE.CylinderGeometry(.42,.72,7,10),m.bark,g,[0,3.5,0]);for(let i=0;i<5;i++){const branch=mesh(new THREE.CylinderGeometry(.12,.23,3.1,7),m.bark,g,[Math.sin(i*1.26)*1.1,5+i*.18,Math.cos(i*1.26)*.8]);branch.rotation.z=Math.sin(i*1.26)*.65;branch.rotation.x=Math.cos(i*1.26)*.55}for(let i=0;i<11;i++){const a=i*2.399,r=1.2+(i%3)*.55;mesh(new THREE.SphereGeometry(1.55,12,9),[m.leaf1,m.leaf2,m.leaf3][i%3],g,[Math.cos(a)*r,6.5+(i%4)*.55,Math.sin(a)*r],[1.1,1,.95],true,true)}}
+heroTree(-33,15,1.5);heroTree(34,25,1.25);heroTree(-31,-28,1.1);
+// Player equipment adds readable silhouette and depth.
+const pack=mesh(new THREE.BoxGeometry(.62,.78,.36),m.bark,body,[0,1.22,-.34]);pack.rotation.x=-.08;
+mesh(new THREE.BoxGeometry(.72,.12,.42),m.wood,body,[0,1.56,-.34]);
+for(const side of [-1,1]){const strap=mesh(new THREE.CapsuleGeometry(.045,.7,3,6),m.gold,body,[side*.24,1.3,-.12]);strap.rotation.z=side*.2}
+mesh(new THREE.CylinderGeometry(.12,.16,.34,8),m.wood,body,[.38,.93,-.32]).rotation.z=Math.PI/2;
+
 let yaw=0,pitch=.28,distance=13,drag=false,lastX=0,lastY=0,keys={},clock=new THREE.Clock(),mix=0;
 function updateCamera(){const target=new THREE.Vector3(player.position.x,player.position.y+1.5,player.position.z);camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(target)}
 updateCamera();
