@@ -506,6 +506,7 @@ document.getElementById("knownButton").addEventListener("click", () => {
     if (index === -1) return;
 
     data.flashcards[index].known = true;
+    window.dispatchEvent(new CustomEvent("studyspace:adventure-event", { detail: { type: "known", id: currentCardId + ":" + new Date().toISOString().slice(0,10) } }));
 
     const nextCard = data.flashcards[(index + 1) % data.flashcards.length];
     currentCardId = nextCard.id;
