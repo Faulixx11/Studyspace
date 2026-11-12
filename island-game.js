@@ -144,6 +144,19 @@ function loadIslandEnvironment(){
   error=>{console.warn("Insel-HDRI nicht erreichbar; Standardbeleuchtung bleibt aktiv.",error);pmrem.dispose();}
  );
 }
+
+/* New rebuild landmarks integrated into the playable island. */
+function addRebuildLandmarks(){
+ const wood=M(0x59402e,.9),plaster=M(0xd8c49e,.92),roof=M(0x9a5540,.86),glass=new THREE.MeshPhysicalMaterial({color:0x9ccbd0,roughness:.13,clearcoat:1});
+ function cottage(x,z,s=1,wall=plaster,top=roof){const g=group(scene,x,terrainHeight(x,z),z);g.scale.setScalar(s);box(g,0,1.5,0,5.2,3,4.4,wall);for(const side of [-1,1]){const p=box(g,side*1.2,3.3,0,3.1,.22,4.9,top);p.rotation.z=side*.58;box(g,side*2.2,2.7,0,.13,1.2,5,wood)}box(g,0,4.1,0,.16,.16,5,wood);cone(g,0,3.3,2.15,2.7,1.7,wall,4);box(g,0,1,2.25,.95,2,.14,wood);for(const wx of [-1.65,1.65]){box(g,wx,1.9,2.3,1.05,1.1,.13,wood);box(g,wx,1.9,2.38,.82,.9,.06,glass);box(g,wx,1.3,2.55,1.15,.16,.3,wood);for(let j=0;j<4;j++)ball(g,wx-.35+j*.23,1.48,2.55,.1,M([0xe8c7bd,0xf0d88d,0xd8a6bd][j%3]))}collider(x,z,2.3)}
+ cottage(-24,5,.72,M(0xb98269,.92),M(0x3d4c50,.8));cottage(24,-10,.7);cottage(11,28,.62,M(0xb98269,.92),M(0x3d4c50,.8));
+ const mill=group(scene,-29,terrainHeight(-29,25),25);cyl(mill,0,4,0,1.35,2.05,8,plaster,12);cone(mill,0,8.8,0,2.1,1.7,roof,12);const axle=group(mill,0,6.8,1.65);for(let i=0;i<4;i++){const sail=group(axle,0,0,0);sail.rotation.z=i*Math.PI/2;box(sail,0,2.1,0,.22,4.4,.12,wood);box(sail,0,2.35,.1,.9,2.4,.08,M(0xe8d9b7))}
+ function pier(x,z,len){const g=group(scene,x,terrainHeight(x,z)-.7,z);box(g,0,0,0,3.1,.32,len,M(0x866047));for(let j=0;j<len/2;j++)for(const side of [-1,1])cyl(g,side*1.25,-1.2,-len/2+j*2.2,.13,.17,2.8,wood,8)}
+ pier(34,-5,17);pier(38,-14,11);const boat=group(scene,40,-.95,-27);box(boat,0,0,0,4.6,.5,8.5,M(0x866047));cyl(boat,0,3,0,.08,.08,6.5,wood,8);const sail=new THREE.Mesh(new THREE.PlaneGeometry(3.2,4.6),M(0xe8d9b7));sail.position.set(0,3,.12);boat.add(sail);
+ function ridge(points,z,material){const v=[],idx=[];points.forEach(([x,y])=>v.push(x,y,z,x,y-17,z+2));for(let i=0;i<points.length-1;i++){let n=i*2;idx.push(n,n+1,n+2,n+1,n+3,n+2)}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.setIndex(idx);geo.computeVertexNormals();const m=new THREE.Mesh(geo,material);m.material.side=THREE.DoubleSide;m.frustumCulled=false;scene.add(m)}
+ ridge([[-105,9],[-86,25],[-70,13],[-52,37],[-35,17],[-14,32],[7,14],[28,35],[49,16],[69,30],[88,12],[110,26]],-86,M(0x657e83,.98));
+}
+
 function buildWorld(){
  applyPbrMaterials();
  scene.background=new THREE.Color(0x8fc5dc);scene.fog=new THREE.FogExp2(0x9fcbd5,.0034);addSky();
@@ -179,7 +192,7 @@ function buildWorld(){
  for(let i=0;i<12;i++)pickup(20+(i%4)*3,-8+Math.floor(i/4)*3,"fruit"+i,"fruit");
  for(let i=0;i<8;i++)pickup(-29+(i%4)*3,-26+Math.floor(i/4)*3,"crystal"+i,"crystal");const stoneSpots=[[-4,8],[3,9],[12,8],[-12,5],[15,-4],[-19,4],[-24,-10],[-33,-14],[27,8],[31,25]];stoneSpots.forEach((p,i)=>pickup(p[0],p[1],"stone"+i,"stone"));const branchSpots=[[-3,6],[2,10],[7,7],[-10,4],[13,6],[17,2],[-16,-4],[20,-7]];branchSpots.forEach((p,i)=>pickup(p[0],p[1],"branch"+i,"branch"));
  sign(0,10,"Insel-Kompass",["Die Wege führen zu Dorf, Garten, Wald und Strand.","Nutze WASD oder die Pfeiltasten. E öffnet Gespräche und sammelt Dinge."]);sign(5,8,"Das Schwarze Brett",["Heute auf der Sterneninsel: Schau bei deinen Nachbarn vorbei und entdecke, was sich verändert hat.","Die Bewohner haben eigene Wege und treffen sich nicht immer am selben Ort. Gespräche lassen eure Freundschaft wachsen."]);
- addPlacedObjects();if(adv.upgrades?.festival){lamp(-6,6);lamp(6,6);lamp(-6,-3);lamp(6,-3)}addSceneryDetails();loadFreeEnvironment();loadCloudModels();
+ addPlacedObjects();if(adv.upgrades?.festival){lamp(-6,6);lamp(6,6);lamp(-6,-3);lamp(6,-3)}addSceneryDetails();addRebuildLandmarks();loadFreeEnvironment();loadCloudModels();
 }
 function addSceneryDetails(){
  const pebble=M(0xa6aaa0),darkRock=M(0x747f7c),shrubA=M(0x477f55),shrubB=M(0x6da56a),mushroom=M(0xf0e3ca),cap=M(0xc96e62);
