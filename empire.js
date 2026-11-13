@@ -422,7 +422,7 @@ function courtWorldTick(){
  const q=s.court,now=Date.now(),elapsed=now-(Number(q.lastTick)||now);if(elapsed<300000)return;
  const steps=Math.min(6,Math.floor(elapsed/300000));q.lastTick=now;
  for(let i=0;i<steps;i++){
-  q.reign+=1/288;
+  q.reign+=1;
   for(const key of ["economy","education","diplomacy"]){const a=q.advisors[key];if(a&&a.loyalty<25&&Math.random()<.08){a.loyalty=0;a.name="Unbesetzt";a.trait="Vakant";s.ministers[key]="none";s.eventLog=(s.eventLog||[]).concat("Ein Berater hat den Hof verlassen.").slice(-15)}}
   if(q.reign>=30){q.reign=1;q.legacy.push("Regierungswechsel unter "+q.heir);q.legacy=q.legacy.slice(-12);q.dynasty=q.heir==="Prinzessin Elara"?"Haus Elara":"Haus Rowan";q.heir=q.heir==="Prinzessin Elara"?"Prinz Rowan":"Prinzessin Elara";s.intrigue.legitimacy=Math.max(0,Math.min(100,s.intrigue.legitimacy+(q.advisors.diplomacy.loyalty>=60?8:-12)));s.stability=Math.max(0,Math.min(100,s.stability+(q.advisors.diplomacy.loyalty>=60?8:-15)));s.eventLog=(s.eventLog||[]).concat("Ein neuer Herrscher aus "+q.dynasty+" hat den Thron bestiegen.").slice(-15);for(const k of ["economy","education","diplomacy"])q.advisors[k].loyalty=Math.max(35,q.advisors[k].loyalty-12)}
  }
