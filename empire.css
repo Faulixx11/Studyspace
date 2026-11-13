@@ -421,3 +421,25 @@
 .empire-plot-card{border-color:rgba(176,146,90,.35);background:linear-gradient(140deg,rgba(63,51,38,.38),rgba(25,31,29,.96))}.empire-plot-progress{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.empire-plot-progress span{padding:8px 12px;border-radius:99px;background:rgba(255,255,255,.07);font-size:.8rem}.empire-plot-progress span.found{background:rgba(99,142,93,.22);color:#b9d6a6}
 .empire-drama-card{border-color:rgba(203,163,86,.5);background:linear-gradient(140deg,rgba(83,61,34,.32),rgba(25,31,29,.96));margin-top:18px}
 @media(max-width:650px){.empire-court-hero{align-items:flex-start;flex-direction:column}.empire-rival-stats{grid-template-columns:1fr}}
+
+/* Aurelion v28 – großformatige, neu gezeichnete Regionskarte */
+.empire-map-layout{grid-template-columns:minmax(0,1fr)!important;gap:16px}
+.empire-map-viewport{width:100%;min-height:72vh;max-height:82vh;padding:20px;background:linear-gradient(145deg,#172a28,#20392f)!important;border:1px solid rgba(198,177,125,.5)!important;box-shadow:0 22px 60px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.06)}
+.empire-map-title{font-size:13px;letter-spacing:.08em;margin-bottom:14px}.empire-map-title small{display:block;margin-top:4px;letter-spacing:.16em}
+.empire-map-subtitle{font-size:12px;margin-bottom:16px;color:#d4ddc6}
+.empire-grid-stage{position:relative;display:block;min-width:max-content;min-height:max-content;margin:0 auto 18px}
+.empire-grid.painted-map-grid{display:grid;gap:0!important;padding:0!important;border:4px solid #b7a276;border-radius:18px;box-shadow:0 22px 55px rgba(0,0,0,.48),inset 0 0 0 2px rgba(255,239,190,.28);transform-origin:top left;overflow:hidden}
+.empire-grid.painted-map-grid .empire-landscape-art{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.empire-grid.painted-map-grid .empire-tile{width:64px;height:64px;min-width:64px;min-height:64px}
+.empire-grid.painted-map-grid .empire-tile.built strong{font-size:34px}
+.empire-grid.painted-map-grid .empire-tile.built small{font-size:9px;max-width:72px;padding:3px 5px}
+.empire-grid.painted-map-grid .empire-tile.built .building-plinth{inset:7px 6px 5px}
+.empire-grid.painted-map-grid .empire-tile:not(.built):hover,.empire-grid.painted-map-grid .empire-tile:not(.built):focus-visible{background:rgba(246,220,153,.2)!important;outline:2px solid rgba(255,232,167,.8);outline-offset:-7px}
+.empire-grid.painted-map-grid .empire-tile.blocked{opacity:1;background:rgba(44,49,37,.12)!important}
+.empire-grid.painted-map-grid .empire-tile.blocked .obstacle-mark{font-size:29px}
+.empire-map-legend{font-size:11px;gap:12px 20px;padding:15px 4px 3px}
+.empire-map-life{display:flex;flex-wrap:wrap;gap:9px 18px;margin-top:12px;padding:13px 15px;border:1px solid rgba(206,191,145,.22);border-radius:12px;background:rgba(12,28,24,.5);color:#d5ddc8;font-size:11px}
+.empire-map-layout>.empire-info{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.42fr);gap:12px;align-items:center}
+.empire-map-layout>.empire-info .empire-learning{margin:0;grid-column:2;grid-row:1/4}
+@media(max-width:760px){.empire-map-viewport{min-height:65vh;max-height:76vh;padding:10px}.empire-map-layout>.empire-info{grid-template-columns:1fr}.empire-map-layout>.empire-info .empire-learning{grid-column:1;grid-row:auto}.empire-grid.painted-map-grid .empire-tile.built strong{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.empire-grid.painted-map-grid{transition:none}}
