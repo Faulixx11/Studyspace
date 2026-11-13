@@ -184,3 +184,6 @@
 .empire-world-zoom-head .empire-zoom input{flex:1}
 .empire-world-zoom-head .empire-btn{white-space:nowrap}
 @media(max-width:620px){.empire-world-zoom-head .empire-zoom{min-width:0;width:100%}.empire-world-zoom-head .empire-zoom input{min-width:80px}}
+
+/* v27 – political systems and social stability */
+.empire-law-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}.empire-law-grid>article{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:15px;border:1px solid rgba(173,190,204,.16);border-radius:14px;background:rgba(255,255,255,.025)}.empire-law-grid>article>b{font-size:14px;margin-bottom:3px}.empire-law-grid small{color:var(--empire-muted,#aab7c4);line-height:1.45}.empire-law-grid .empire-choice{width:100%;text-align:left}.empire-law-grid .empire-btn{margin-top:5px}@media(max-width:680px){.empire-law-grid{grid-template-columns:1fr}.empire-law-grid>article{padding:12px}}
