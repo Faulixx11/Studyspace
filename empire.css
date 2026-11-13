@@ -374,3 +374,12 @@
 .empire-unlock-preview{padding:9px 10px;border-radius:9px;background:#5b75402b;border:1px solid #8eaa5b55}
 .empire-unlock-preview p{margin:5px 0 0;font-size:13px}
 .empire-upgrade-preview>small,.empire-upgrade-preview .muted{font-size:11px;opacity:.75}
+
+/* Aurelion v42 – reichhaltigeres Gelände und Forschungslabor */
+.empire-grid.painted-map-grid .empire-tile:not(.built):not(.blocked){background-color:#66844e!important;background-image:radial-gradient(ellipse at 18% 24%,rgba(222,220,151,.34) 0 1px,transparent 3px),radial-gradient(ellipse at 76% 72%,rgba(27,54,32,.32) 0 2px,transparent 4px),linear-gradient(145deg,#91a96a,#66894f 54%,#496f43)!important;border-color:rgba(185,202,131,.55)}
+.empire-grid.painted-map-grid .empire-tile.terrain-forest:not(.built){background-image:radial-gradient(ellipse at 24% 28%,#284e35 0 7px,transparent 8px),radial-gradient(ellipse at 72% 68%,#3d6740 0 8px,transparent 9px),linear-gradient(145deg,#648453,#3f6544)!important}
+.empire-grid.painted-map-grid .empire-tile.terrain-grove:not(.built){background-image:radial-gradient(ellipse at 25% 28%,#527b49 0 5px,transparent 6px),linear-gradient(145deg,#91a76b,#597c4d)!important}
+.empire-grid.painted-map-grid .empire-tile.terrain-hill:not(.built),.empire-grid.painted-map-grid .empire-tile.terrain-rock:not(.built){background-image:linear-gradient(145deg,#a5a58c,#7b866f 48%,#586958)!important}
+.empire-grid.painted-map-grid .empire-tile.terrain-meadow:not(.built),.empire-grid.painted-map-grid .empire-tile.terrain-field:not(.built){background-image:radial-gradient(ellipse at 24% 27%,#e0d58d 0 2px,transparent 3px),linear-gradient(145deg,#a2ae69,#7b9553 60%,#587447)!important}
+.empire-grid.painted-map-grid .empire-tile.terrain-river:not(.built){background:linear-gradient(145deg,#78b5bd,#397b91 55%,#285d76)!important;border-color:#a4d1c5}
+.empire-grid.painted-map-grid .empire-tile.building-lab{background:linear-gradient(145deg,#647c7c,#344e54)!important;border-color:#b5d2c5!important}
