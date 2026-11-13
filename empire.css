@@ -90,3 +90,10 @@
 .empire-objectives{display:grid;gap:8px;margin:12px 0}.empire-objective{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid rgba(180,190,200,.13);border-radius:9px;background:rgba(255,255,255,.025)}.empire-objective>span{font-size:18px;color:#d5b36c}.empire-objective.done{border-color:rgba(90,180,125,.35);background:rgba(60,150,100,.08)}.empire-objective.done>span{color:#8bd7ae}.empire-objective small{display:block;color:var(--empire-muted,#aebaca);margin-top:3px}.empire-economy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:9px;margin:14px 0}.empire-economy-stock{display:grid;grid-template-columns:1fr auto;gap:5px 10px;padding:12px;border:1px solid rgba(150,170,190,.18);border-radius:11px;background:rgba(120,145,170,.06)}.empire-economy-stock b{font-size:17px}.empire-economy-stock small{grid-column:1/-1;color:var(--empire-muted,#aebaca);font-size:10px}.empire-economy-alert{padding:10px 12px;border-radius:9px;background:rgba(205,165,80,.09);color:#e6d3a7}.empire-chain-card{min-height:180px}.empire-tech-card.locked{opacity:.68;border-style:dashed}.empire-tech-card.complete{border-color:rgba(90,180,125,.4)}.empire-tech-card small{line-height:1.5}@media(max-width:620px){.empire-economy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.empire-economy-stock{padding:9px}}
 
 .empire-nav-group [data-tab="economy"]{border-color:rgba(120,190,160,.28)}.empire-economy-alert b{color:#f0d38b}.empire-objective b{font-size:13px}
+
+
+/* Wirtschaftszentrale: Arbeitskräfte- und Lagerübersicht */
+.empire-economy-grid{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}
+.empire-economy-stock{min-width:0}
+.empire-economy-alert{margin-top:14px}
+.empire-chain-card{min-width:0}
