@@ -236,3 +236,6 @@
 .empire-grid.painted-map-grid .empire-landscape-art{filter:saturate(1.08) contrast(1.035)}
 .empire-map-subtitle{color:#c3d0b2!important;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .empire-grid.painted-map-grid .empire-tile.blocked .obstacle-mark{filter:drop-shadow(0 3px 3px rgba(0,0,0,.7))}
+
+/* Stadtqualität: kompakte, klare Versorgungsanzeigen */
+.empire-service-card{min-width:130px;flex:1 1 145px}.empire-service-card h3{margin:7px 0 9px;font-size:1.25rem}.empire-service-card .empire-bar{margin-top:8px}.empire-service-card .empire-bar i{transition:width .25s ease}
