@@ -360,3 +360,17 @@
 .empire-grid.painted-map-grid .empire-tile:not(.built):nth-child(5n){background-image:radial-gradient(ellipse at 30% 70%,#d6c38a55 0 2px,transparent 3px),linear-gradient(145deg,#8b9b60,#5d7849 65%,#435f3c)}
 .empire-grid.painted-map-grid .empire-tile.blocked{background:linear-gradient(145deg,#67715a,#414c3d)}
 .empire-map-viewport{background:radial-gradient(ellipse at 50% 25%,#334b37,#1d3028 68%,#16251f);border-color:#53694b}
+
+/* Performance pass */
+.empire-grid.painted-map-grid .empire-tile{box-shadow:none!important;filter:none!important;transition:none!important}
+.empire-grid.painted-map-grid .empire-tile.built{box-shadow:inset 0 1px 0 #ffffff26!important}
+.empire-grid.painted-map-grid .empire-tile.built .building-art{filter:none!important}
+.empire-grid.painted-map-grid .empire-tile:not(.built){background-image:linear-gradient(145deg,#7b965d,#587b4c 55%,#3f6845)!important;border-color:#6e8b58}
+.empire-grid.painted-map-grid .empire-tile:not(.built):nth-child(5n){background-image:linear-gradient(145deg,#899d63,#617f4c 65%,#4c6a42)!important}
+.empire-upgrade-preview{margin:14px 0;padding:13px;border:1px solid #a58b554d;border-radius:12px;background:linear-gradient(145deg,#343b2d,#252e28)}
+.empire-upgrade-preview h4{margin:5px 0 8px;font-size:15px}
+.empire-upgrade-preview ul{margin:8px 0 12px;padding-left:19px}
+.empire-upgrade-preview li{margin:5px 0;font-size:13px}
+.empire-unlock-preview{padding:9px 10px;border-radius:9px;background:#5b75402b;border:1px solid #8eaa5b55}
+.empire-unlock-preview p{margin:5px 0 0;font-size:13px}
+.empire-upgrade-preview>small,.empire-upgrade-preview .muted{font-size:11px;opacity:.75}
