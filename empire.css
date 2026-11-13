@@ -301,3 +301,36 @@
 .empire-grid.painted-map-grid .empire-tile.built i{top:1px;right:1px}
 .empire-grid.painted-map-grid .empire-tile.selected{outline:2px solid #f9e2a2!important;outline-offset:-4px}
 .empire-grid.painted-map-grid .empire-landscape-art{filter:saturate(.92) contrast(1.04)}
+
+/* Aurelion v42 – lebendige 2D-Atmosphäre */
+.building-model{overflow:visible}
+.bm-smoke{position:absolute;left:27px;top:-8px;width:9px;height:15px;pointer-events:none}
+.bm-smoke i{position:absolute;bottom:0;left:0;width:5px;height:5px;border-radius:50%;background:rgba(229,231,216,.55);filter:blur(1px);animation:chimney-drift 2.8s ease-out infinite}
+.bm-smoke i:nth-child(2){left:3px;animation-delay:.9s}
+.bm-smoke i:nth-child(3){left:-2px;animation-delay:1.8s}
+@keyframes chimney-drift{0%{transform:translate(0,3px) scale(.55);opacity:0}20%{opacity:.55}100%{transform:translate(5px,-14px) scale(1.5);opacity:0}}
+.bm-flag{position:absolute;right:0;top:-7px;width:2px;height:19px;background:#ddcfaa;transform:rotate(7deg);transform-origin:bottom}
+.bm-flag:after{content:"";position:absolute;left:2px;top:1px;width:10px;height:6px;background:linear-gradient(90deg,#a64d3f 0 50%,#e2c27e 50%);clip-path:polygon(0 0,100% 15%,78% 100%,0 80%);transform-origin:left center;animation:flag-wave 2.4s ease-in-out infinite}
+@keyframes flag-wave{0%,100%{transform:skewY(0) scaleX(1)}50%{transform:skewY(-9deg) scaleX(.82)}}
+.bm-bird{position:absolute;right:-6px;top:0;color:#f2e6bd;font-size:9px;animation:bird-glide 4s ease-in-out infinite}
+@keyframes bird-glide{0%,100%{transform:translate(0,0);opacity:.45}50%{transform:translate(5px,-5px);opacity:1}}
+.map-citizen{position:absolute;z-index:5;left:50%;bottom:7px;width:4px;height:7px;border-radius:3px 3px 1px 1px;background:#e7c48c;box-shadow:0 -3px 0 -1px #5b4030,1px 2px 0 rgba(0,0,0,.3);pointer-events:none;animation:citizen-walk 3.5s ease-in-out infinite}
+.map-citizen:after{content:"";position:absolute;left:-2px;bottom:0;width:8px;height:2px;border-radius:50%;background:rgba(20,30,20,.3)}
+.citizen-1{left:36%;animation-delay:-1.2s;background:#a9c5b0}
+.citizen-2{left:65%;animation-delay:-2.3s;background:#d3a1a0}
+@keyframes citizen-walk{0%,100%{transform:translateX(-2px)}50%{transform:translateX(4px)}}
+.empire-map-viewport.season-0{--season-glow:rgba(160,202,120,.08)}
+.empire-map-viewport.season-1{--season-glow:rgba(229,171,87,.13)}
+.empire-map-viewport.season-2{--season-glow:rgba(190,120,68,.16)}
+.empire-map-viewport.season-3{--season-glow:rgba(183,214,232,.2)}
+.empire-map-viewport:after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--season-glow);mix-blend-mode:screen;z-index:1;border-radius:inherit}
+.city-development-panel{border-color:rgba(206,177,112,.35);background:linear-gradient(135deg,rgba(129,105,61,.13),rgba(38,49,42,.42))}
+.city-development-head{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.city-tier-emblem{display:grid;place-items:center;width:54px;height:54px;border-radius:16px;background:linear-gradient(145deg,rgba(218,184,112,.22),rgba(110,91,56,.18));border:1px solid rgba(226,196,130,.35);font-size:29px;flex:0 0 auto}
+.city-development-head h3{margin:3px 0}
+.city-development-panel>small{display:block;margin-top:8px;color:var(--empire-muted,#aab5a5)}
+.civic-request-card{border-color:rgba(183,157,102,.24)}
+.civic-request-card>div:first-child{font-size:25px}
+.civic-request-card small{display:block;min-height:34px;margin:10px 0;color:var(--empire-muted,#aab5a5)}
+.civic-board-note{font-size:.9rem}
+@media(max-width:640px){.city-development-head{align-items:flex-start}.city-tier-emblem{width:46px;height:46px;font-size:24px}.civic-request-card{min-width:0}}
