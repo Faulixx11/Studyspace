@@ -223,3 +223,11 @@
 @media(prefers-reduced-motion:reduce){.map-life-birds,.map-life-cart{display:none}}
 
 .empire-tile.building-lumber:before{background:linear-gradient(145deg,#8a6540,#533a2a)}.empire-tile.building-quarry:before,.empire-tile.building-ironmine:before{background:linear-gradient(145deg,#999a91,#555b59)}.empire-tile.building-mill:before{background:linear-gradient(145deg,#c7a76a,#80613b)}.empire-tile.building-bakery:before{background:linear-gradient(145deg,#a95e48,#743b30)}.empire-tile.building-smelter:before{background:linear-gradient(145deg,#55565c,#282d34)}.empire-tile.building-school:before,.empire-tile.building-library:before{background:linear-gradient(145deg,#697c9a,#394d68)}.empire-tile.building-house:before{background:linear-gradient(145deg,#ad7950,#70472f)}.empire-tile.building-park:before{background:linear-gradient(145deg,#78a15d,#41683e)}.empire-tile.building-road{border-radius:3px}.empire-map-life{line-height:1.5}
+
+/* Aurelion map depth and terrain texture */
+.empire-grid.painted-map-grid{background:#718b59!important;box-shadow:0 18px 42px rgba(0,0,0,.46),inset 0 0 0 3px rgba(242,224,174,.22),inset 0 0 70px rgba(24,44,27,.22)}
+.empire-grid.painted-map-grid .empire-tile:not(.built):not(.blocked){opacity:.075}
+.empire-grid.painted-map-grid .empire-tile:not(.built):not(.blocked):hover,.empire-grid.painted-map-grid .empire-tile:not(.built):not(.blocked):focus-visible{opacity:.48;background:rgba(245,224,166,.22)!important}
+.empire-grid.painted-map-grid .empire-tile.built .building-plinth{box-shadow:0 5px 9px rgba(12,23,16,.5),inset 0 2px 4px rgba(255,255,255,.38),inset 0 -4px 5px rgba(59,39,23,.25)}
+.empire-grid.painted-map-grid .empire-tile.built strong{filter:drop-shadow(0 3px 2px rgba(0,0,0,.62));transform:translateY(-2px)}
+.empire-grid.painted-map-grid .empire-tile.built i{background:rgba(35,42,30,.72);border:1px solid rgba(255,230,175,.25)}
