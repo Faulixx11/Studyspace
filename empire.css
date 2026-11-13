@@ -239,3 +239,65 @@
 
 /* Stadtqualität: kompakte, klare Versorgungsanzeigen */
 .empire-service-card{min-width:130px;flex:1 1 145px}.empire-service-card h3{margin:7px 0 9px;font-size:1.25rem}.empire-service-card .empire-bar{margin-top:8px}.empire-service-card .empire-bar i{transition:width .25s ease}
+
+/* Aurelion v41 – detailreiche, pseudo-3D Stadtgrafik */
+.empire-map-viewport{background:linear-gradient(145deg,#263c32,#182c29)!important;border-color:#8c9873!important}
+.empire-grid.painted-map-grid{background:linear-gradient(135deg,#75865a,#3c6145)!important;box-shadow:0 18px 38px rgba(0,0,0,.42),inset 0 0 0 2px rgba(255,239,190,.18)}
+.empire-grid.painted-map-grid .empire-tile.built{z-index:calc(var(--tile-y,0) + 2);overflow:visible!important;filter:none!important}
+.empire-grid.painted-map-grid .empire-tile.built .building-plinth{inset:auto;left:4px;right:4px;bottom:3px;height:13px;border:1px solid rgba(232,213,164,.44);border-radius:48%;background:linear-gradient(180deg,rgba(199,181,130,.6),rgba(74,69,49,.28));box-shadow:0 5px 6px rgba(15,26,17,.4);opacity:.7}
+.building-model{position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:44px;height:42px;z-index:2;filter:drop-shadow(0 4px 3px rgba(16,25,17,.55));pointer-events:none}
+.bm-shadow{position:absolute;left:7px;right:4px;bottom:1px;height:8px;border-radius:50%;background:rgba(16,26,17,.45);filter:blur(2px)}
+.bm-body{position:absolute;left:10px;top:16px;width:25px;height:22px;background:linear-gradient(90deg,#8a7b62 0%,#d0b990 42%,#a68e6a 100%);clip-path:polygon(0 18%,50% 0,100% 18%,100% 100%,0 100%);border-bottom:2px solid #574b38}
+.bm-roof{position:absolute;left:5px;top:3px;width:35px;height:22px;background:linear-gradient(135deg,#713d32 0%,#b3634a 46%,#603b31 100%);clip-path:polygon(50% 0,100% 46%,100% 65%,50% 23%,0 65%,0 46%);filter:drop-shadow(0 2px 1px rgba(0,0,0,.35))}
+.bm-door{position:absolute;left:20px;bottom:4px;width:7px;height:11px;background:linear-gradient(90deg,#3d3025,#815d3d);border:1px solid #463626;border-bottom:0;border-radius:4px 4px 0 0}
+.bm-window{position:absolute;left:13px;top:23px;width:5px;height:6px;background:linear-gradient(135deg,#b9d4c7,#537c78);border:1px solid #493f30;box-shadow:12px 0 0 -1px #83aaa0,12px 0 0 0 #493f30}
+.bm-detail{position:absolute;right:7px;top:2px;width:5px;height:9px;background:#6b5441;border:1px solid rgba(35,31,24,.55)}
+.model-hall .bm-body,.model-monument .bm-body,.model-tower .bm-body,.model-guardpost .bm-body,.model-wall .bm-body{background:linear-gradient(90deg,#5f6662,#c0b9a3 45%,#777d75);border-bottom:3px solid #4d514a}
+.model-hall .bm-roof,.model-monument .bm-roof,.model-tower .bm-roof,.model-guardpost .bm-roof{background:linear-gradient(135deg,#46545a,#87928b 45%,#39484b)}
+.model-monument .bm-body{left:12px;top:9px;width:21px;height:29px}
+.model-monument .bm-roof,.model-tower .bm-roof{left:8px;top:0;width:29px;height:19px;clip-path:polygon(50% 0,100% 55%,100% 70%,50% 24%,0 70%,0 55%)}
+.model-tower .bm-body,.model-guardpost .bm-body{left:14px;width:17px;height:28px;top:11px}
+.model-tower .bm-door,.model-guardpost .bm-door{display:none}
+.model-house .bm-body{background:linear-gradient(90deg,#8e7c61,#e1c99e 45%,#a68a63)}
+.model-house .bm-roof,.model-bakery .bm-roof{background:linear-gradient(135deg,#693c2e,#b85d42 48%,#673b2f)}
+.model-farmstead .bm-body,.model-lumber .bm-body,.model-sawmill .bm-body,.model-fishing .bm-body{background:linear-gradient(90deg,#62452e,#b58a55 45%,#765336)}
+.model-farmstead .bm-roof,.model-lumber .bm-roof,.model-sawmill .bm-roof,.model-fishing .bm-roof{background:linear-gradient(135deg,#554334,#97724b 50%,#4c392c)}
+.model-library .bm-body,.model-school .bm-body,.model-clinic .bm-body{background:linear-gradient(90deg,#77786e,#d8c8a6 46%,#8e8875)}
+.model-library .bm-roof,.model-school .bm-roof,.model-clinic .bm-roof{background:linear-gradient(135deg,#3e4c54,#697d80 50%,#35444b)}
+.model-clinic .bm-detail{background:#a94d40;width:8px;height:8px;right:6px;top:17px;border:0}
+.model-clinic .bm-detail:before,.model-clinic .bm-detail:after{content:"";position:absolute;background:#f5e9d4}
+.model-clinic .bm-detail:before{width:2px;height:7px;left:3px;top:1px}
+.model-clinic .bm-detail:after{width:7px;height:2px;left:1px;top:3px}
+.model-market .bm-roof{background:repeating-linear-gradient(90deg,#a34f3e 0 5px,#e5d1a7 5px 10px);height:18px;top:7px;clip-path:polygon(0 0,100% 0,100% 70%,0 70%)}
+.model-market .bm-body{top:21px;height:16px;background:linear-gradient(90deg,#6a4c32,#d0a76a 50%,#795634);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.model-market .bm-door,.model-market .bm-window{display:none}
+.model-mill .bm-roof{background:linear-gradient(135deg,#72503b,#c5a36b 50%,#624a35)}
+.model-mill .bm-detail{right:4px;top:1px;width:18px;height:18px;background:transparent;border:0}
+.model-mill .bm-detail:before,.model-mill .bm-detail:after{content:"";position:absolute;left:8px;top:-3px;width:2px;height:24px;background:#eadbb6;box-shadow:0 0 2px #4a3827}
+.model-mill .bm-detail:after{transform:rotate(90deg)}
+.model-field .bm-body,.model-farmstead .bm-body{left:4px;top:25px;width:36px;height:12px;background:repeating-linear-gradient(90deg,#8b713e 0 3px,#c2a45e 3px 6px);clip-path:polygon(0 10%,100% 0,100% 85%,0 100%);border:1px solid #735b32}
+.model-field .bm-roof,.model-field .bm-door,.model-field .bm-window,.model-field .bm-detail{display:none}
+.model-farmstead .bm-roof{top:5px;height:22px}
+.model-quarry .bm-body,.model-ironmine .bm-body{left:5px;top:17px;width:35px;height:21px;background:linear-gradient(135deg,#c5c1a9,#7b8277 55%,#4d5b54);clip-path:polygon(0 75%,20% 25%,42% 40%,60% 0,83% 30%,100% 75%,100% 100%,0 100%);border:0}
+.model-quarry .bm-roof,.model-ironmine .bm-roof,.model-quarry .bm-door,.model-ironmine .bm-door,.model-quarry .bm-window,.model-ironmine .bm-window{display:none}
+.model-bakery .bm-detail,.model-smelter .bm-detail{right:8px;top:-1px;width:6px;height:16px;background:linear-gradient(90deg,#51453a,#a58b6c);border:1px solid #574633}
+.model-bakery .bm-detail:after,.model-smelter .bm-detail:after{content:"";position:absolute;left:-2px;top:-2px;width:8px;height:3px;background:#463b31}
+.model-park .bm-body{left:19px;top:22px;width:6px;height:16px;background:linear-gradient(90deg,#5d412a,#947044);clip-path:none}
+.model-park .bm-roof{left:5px;top:2px;width:34px;height:31px;background:radial-gradient(ellipse at 35% 28%,#a1b96e 0 13%,#527c45 35%,#2d583b 75%);clip-path:polygon(50% 0,87% 23%,100% 61%,72% 100%,25% 96%,0 57%,15% 20%)}
+.model-park .bm-door,.model-park .bm-window,.model-park .bm-detail{display:none}
+.model-road .bm-body{left:4px;top:24px;width:36px;height:13px;background:repeating-linear-gradient(90deg,#7c7565 0 5px,#b1a58c 5px 8px);clip-path:polygon(0 20%,100% 0,100% 85%,0 100%)}
+.model-road .bm-roof,.model-road .bm-door,.model-road .bm-window,.model-road .bm-detail{display:none}
+.model-shipyard .bm-body{left:3px;top:23px;width:38px;height:13px;background:repeating-linear-gradient(90deg,#765033 0 4px,#b78b52 4px 7px);clip-path:polygon(0 20%,100% 0,88% 100%,12% 100%)}
+.model-shipyard .bm-roof{display:none}
+.model-shipyard .bm-detail{width:18px;height:3px;right:13px;top:17px;background:#d0ae75;border:0}
+.model-shipyard .bm-door,.model-shipyard .bm-window{display:none}
+.model-barracks .bm-body{background:linear-gradient(90deg,#6b5944,#c3aa7b 45%,#756248)}
+.model-barracks .bm-roof{background:linear-gradient(135deg,#4e4e45,#8d8b73 50%,#4a5149)}
+.model-lumber .bm-detail,.model-sawmill .bm-detail{right:5px;top:24px;width:9px;height:5px;background:repeating-linear-gradient(90deg,#6b462b 0 2px,#c59b61 2px 4px);border:0}
+.model-granary .bm-roof{background:linear-gradient(135deg,#5c4932,#b18a56 50%,#55402d)}
+.model-granary .bm-detail{right:6px;top:1px;width:6px;height:7px;background:#d6c49a}
+.empire-grid.painted-map-grid .empire-tile.built strong{display:none}
+.empire-grid.painted-map-grid .empire-tile.built small{bottom:-1px;max-width:58px;padding:2px 4px;background:rgba(23,31,25,.86);font-size:6.5px;letter-spacing:.1px;box-shadow:0 2px 4px rgba(0,0,0,.32)}
+.empire-grid.painted-map-grid .empire-tile.built i{top:1px;right:1px}
+.empire-grid.painted-map-grid .empire-tile.selected{outline:2px solid #f9e2a2!important;outline-offset:-4px}
+.empire-grid.painted-map-grid .empire-landscape-art{filter:saturate(.92) contrast(1.04)}
