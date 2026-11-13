@@ -221,3 +221,5 @@
 .empire-map-viewport.season-3 .empire-landscape-art{filter:saturate(.38) brightness(1.08) hue-rotate(175deg)}
 .empire-pop-group{min-width:0}.empire-pop-group h3{font-size:24px;margin:6px 0}.empire-pop-group small{color:#aebdcb}
 @media(prefers-reduced-motion:reduce){.map-life-birds,.map-life-cart{display:none}}
+
+.empire-tile.building-lumber:before{background:linear-gradient(145deg,#8a6540,#533a2a)}.empire-tile.building-quarry:before,.empire-tile.building-ironmine:before{background:linear-gradient(145deg,#999a91,#555b59)}.empire-tile.building-mill:before{background:linear-gradient(145deg,#c7a76a,#80613b)}.empire-tile.building-bakery:before{background:linear-gradient(145deg,#a95e48,#743b30)}.empire-tile.building-smelter:before{background:linear-gradient(145deg,#55565c,#282d34)}.empire-tile.building-school:before,.empire-tile.building-library:before{background:linear-gradient(145deg,#697c9a,#394d68)}.empire-tile.building-house:before{background:linear-gradient(145deg,#ad7950,#70472f)}.empire-tile.building-park:before{background:linear-gradient(145deg,#78a15d,#41683e)}.empire-tile.building-road{border-radius:3px}.empire-map-life{line-height:1.5}
