@@ -174,3 +174,13 @@
 .empire-map-subtitle{color:#c4d0b6;font-size:11px;line-height:1.5;margin:-4px 0 12px}
 .empire-map-legend{display:flex;flex-wrap:wrap;gap:10px 16px;padding:12px 3px 2px;color:#d3dec6;font-size:10px}
 @media(max-width:620px){.empire-grid.painted-map-grid{border-width:2px;border-radius:10px}.empire-grid.painted-map-grid .empire-tile.built strong{font-size:22px}.empire-grid.painted-map-grid .empire-tile.built small{font-size:6px;max-width:45px}.empire-map-legend{gap:7px 10px;font-size:9px}}
+
+/* Seamless map zoom: village close-up to regional world view */
+.empire-grid.painted-map-grid{margin-bottom:calc((var(--zoom-factor,1) - 1)*var(--map-base-height,736px))!important;transition:transform .12s ease;cursor:crosshair}
+.empire-zoom{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.empire-zoom input{min-width:110px;max-width:190px;accent-color:#d6ad62;cursor:ew-resize}
+.empire-world-zoom-head{align-items:center}
+.empire-world-zoom-head .empire-zoom{min-width:250px}
+.empire-world-zoom-head .empire-zoom input{flex:1}
+.empire-world-zoom-head .empire-btn{white-space:nowrap}
+@media(max-width:620px){.empire-world-zoom-head .empire-zoom{min-width:0;width:100%}.empire-world-zoom-head .empire-zoom input{min-width:80px}}
