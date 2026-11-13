@@ -392,3 +392,22 @@
 .empire-sell-card button:disabled{opacity:.4;filter:saturate(.4);cursor:not-allowed}
 .empire-market-grid .empire-market-row{background:linear-gradient(120deg,rgba(255,255,255,.035),rgba(0,0,0,.12));border-radius:10px;padding:12px}
 @media(max-width:700px){.empire-treasury-panel .empire-cards{grid-template-columns:1fr}}
+
+/* Hofintrigen: politische Machtgruppen und geheime Missionen */
+.empire-intrigue-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 24px}
+.empire-intrigue-summary>div,.empire-faction-card,.empire-spy-card{background:linear-gradient(145deg,rgba(65,74,58,.42),rgba(24,31,29,.92));border:1px solid rgba(202,174,111,.22);border-radius:15px;padding:18px;box-shadow:0 12px 28px rgba(0,0,0,.12)}
+.empire-intrigue-summary small,.empire-intrigue-summary span{display:block;color:var(--empire-muted,#aeb7a9);font-size:.76rem;letter-spacing:.08em}
+.empire-intrigue-summary b{display:block;font-size:1.35rem;margin:8px 0}
+.empire-intrigue-meter{height:8px;background:rgba(255,255,255,.09);border-radius:99px;overflow:hidden;margin:10px 0}
+.empire-intrigue-meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#a9874b,#dfc47f);box-shadow:0 0 12px rgba(223,196,127,.25)}
+.empire-faction-card{position:relative;min-height:180px}
+.empire-faction-icon{font-size:1.7rem}
+.empire-faction-score{display:flex;align-items:baseline;gap:8px;margin-top:16px}
+.empire-faction-score b{font-size:1.35rem}
+.empire-faction-score span,.empire-spy-card small{font-size:.78rem;color:var(--empire-muted,#aeb7a9)}
+.empire-subheading{margin:26px 0 12px;color:var(--empire-text,#eee7d6)}
+.empire-intrigue-crisis{margin:18px 0;border-color:rgba(207,117,79,.55);background:linear-gradient(140deg,rgba(117,57,39,.25),rgba(31,30,27,.94))}
+.empire-spy-card{min-height:210px}
+.empire-spy-card .empire-btn{margin-top:12px}
+.empire-spy-card p{min-height:72px}
+@media(max-width:700px){.empire-intrigue-summary{grid-template-columns:1fr}.empire-faction-card,.empire-spy-card{min-height:unset}.empire-spy-card p{min-height:unset}}
