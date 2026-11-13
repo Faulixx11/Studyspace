@@ -187,3 +187,7 @@
 
 /* v27 – political systems and social stability */
 .empire-law-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}.empire-law-grid>article{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:15px;border:1px solid rgba(173,190,204,.16);border-radius:14px;background:rgba(255,255,255,.025)}.empire-law-grid>article>b{font-size:14px;margin-bottom:3px}.empire-law-grid small{color:var(--empire-muted,#aab7c4);line-height:1.45}.empire-law-grid .empire-choice{width:100%;text-align:left}.empire-law-grid .empire-btn{margin-top:5px}@media(max-width:680px){.empire-law-grid{grid-template-columns:1fr}.empire-law-grid>article{padding:12px}}
+
+/* Gebäude-Lager und Abholsystem */
+.empire-building-stock{margin:14px 0;padding:13px;border:1px solid rgba(191,160,94,.28);border-radius:12px;background:rgba(191,160,94,.07)}
+.empire-stock-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.9rem}.empire-stock-head strong{color:var(--empire-gold,#d7b66d);font-variant-numeric:tabular-nums}.empire-stock-track{height:9px;margin:9px 0 7px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}.empire-stock-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6e9e61,#c3ad63);transition:width .25s}.empire-building-stock p{font-size:.82rem;opacity:.78;margin:6px 0 10px}.empire-building-stock .empire-btn{width:100%}
