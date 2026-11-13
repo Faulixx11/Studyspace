@@ -123,3 +123,34 @@
 .empire-map-layout>.empire-info{background:linear-gradient(155deg,#213a38,#192b31);border-color:#526b5d;box-shadow:0 8px 24px rgba(0,0,0,.14)}.empire-map-layout>.empire-info h3{color:#f0d99e}.empire-learning{border:1px solid rgba(197,180,119,.22);background:rgba(12,28,28,.48)}
 @media(max-width:620px){.empire-map-viewport{padding:10px;border-radius:13px}.empire-map-title{font-size:10px}.empire-map-title small{font-size:8px}.empire-grid{gap:1px;padding:4px}.empire-tile{width:40px;height:40px;min-width:40px;min-height:40px}.empire-tile strong{font-size:20px}.empire-tile small{max-width:39px;font-size:6px}.terrain-mark{font-size:14px}.empire-map-legend{gap:7px 10px;font-size:9px}}
 @media(prefers-reduced-motion:reduce){.empire-tile{transition:none}}
+
+
+/* Aurelion v24 – organische Landschaft statt sichtbarer Kacheln */
+.empire-map-viewport{background:
+ radial-gradient(ellipse at 18% 24%,rgba(125,151,83,.24),transparent 34%),
+ radial-gradient(ellipse at 77% 68%,rgba(145,132,75,.18),transparent 31%),
+ radial-gradient(ellipse at 50% 48%,#55764b 0%,#3e6345 48%,#294b3d 100%)!important}
+.empire-grid.organic-map-grid{gap:0!important;padding:12px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.empire-grid.organic-map-grid .empire-tile{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important;text-shadow:0 2px 4px #172a20}
+.empire-grid.organic-map-grid .empire-tile:before{content:"";position:absolute;inset:-9px;z-index:0;pointer-events:none;opacity:.8;border-radius:42%;background:radial-gradient(ellipse at 48% 48%,rgba(139,174,94,.23),rgba(90,132,72,.12) 42%,transparent 72%)}
+.empire-grid.organic-map-grid .terrain-meadow:before{background:radial-gradient(ellipse at 45% 45%,rgba(192,197,119,.48),rgba(144,169,91,.28) 48%,transparent 76%)}
+.empire-grid.organic-map-grid .terrain-forest:before{inset:-12px;border-radius:48%;background:radial-gradient(ellipse,rgba(23,68,45,.9),rgba(35,83,52,.72) 54%,transparent 78%)}
+.empire-grid.organic-map-grid .terrain-grove:before{background:radial-gradient(ellipse,rgba(60,112,61,.55),rgba(82,139,70,.28) 56%,transparent 78%)}
+.empire-grid.organic-map-grid .terrain-hill:before{inset:-13px;border-radius:50%;background:radial-gradient(ellipse at 50% 54%,rgba(167,158,99,.72),rgba(128,137,81,.35) 50%,transparent 76%)}
+.empire-grid.organic-map-grid .terrain-rock:before{background:radial-gradient(ellipse,rgba(150,157,137,.7),rgba(113,132,115,.28) 48%,transparent 76%)}
+.empire-grid.organic-map-grid .terrain-field:before{inset:-10px;border-radius:35%;background:repeating-linear-gradient(155deg,transparent 0 5px,rgba(224,193,105,.35) 6px 8px),radial-gradient(ellipse,rgba(176,151,73,.7),rgba(143,127,62,.3) 60%,transparent 78%)}
+.empire-grid.organic-map-grid .terrain-river{z-index:1}
+.empire-grid.organic-map-grid .terrain-river:before{content:"";inset:-5px -12px;border-radius:48%;opacity:1;background:linear-gradient(90deg,rgba(34,92,111,.12),rgba(64,143,165,.96) 22%,#69b1bf 49%,#397f9b 78%,rgba(34,92,111,.12));box-shadow:inset 0 0 8px rgba(191,235,229,.35),0 0 9px rgba(33,105,126,.3)}
+.empire-grid.organic-map-grid .terrain-river:after{content:"";position:absolute;z-index:0;inset:-2px -9px;pointer-events:none;border-radius:50%;background:repeating-linear-gradient(170deg,transparent 0 8px,rgba(207,239,224,.22) 9px 10px,transparent 11px 17px)}
+.empire-grid.organic-map-grid .terrain-mark{z-index:2;font-size:20px;filter:drop-shadow(0 3px 3px rgba(15,35,20,.65))}
+.empire-grid.organic-map-grid .terrain-dots{z-index:2}
+.empire-grid.organic-map-grid .empire-tile.built{z-index:4;background:transparent!important;border:0!important;outline:0;box-shadow:none!important}
+.empire-grid.organic-map-grid .building-plinth{inset:8px 6px 5px;border:0;border-radius:45% 45% 36% 36%;background:radial-gradient(ellipse at 50% 35%,rgba(224,201,151,.78),rgba(120,92,58,.92) 62%,rgba(55,55,39,.68));box-shadow:0 5px 8px rgba(13,28,18,.55),inset 0 2px 3px rgba(255,240,193,.35)}
+.empire-grid.organic-map-grid .empire-tile.built:before{inset:7px 5px 5px;border:1px solid rgba(255,230,168,.38);border-radius:45% 45% 36% 36%;opacity:1;background:linear-gradient(145deg,rgba(255,255,255,.18),transparent 52%)}
+.empire-grid.organic-map-grid .empire-tile.built strong{font-size:27px;line-height:28px;filter:drop-shadow(0 3px 2px rgba(25,31,20,.75))}
+.empire-grid.organic-map-grid .empire-tile.built small{max-width:44px;margin-top:-1px;border-radius:8px;background:rgba(27,37,25,.78);font-size:7px}
+.empire-grid.organic-map-grid .empire-tile.selected{filter:brightness(1.2);outline:2px solid #ffe08b!important;outline-offset:-8px;border-radius:30%!important}
+.empire-grid.organic-map-grid .empire-tile.army-here{outline:2px solid #f6e5a4!important;outline-offset:-8px;border-radius:30%!important}
+.empire-grid.organic-map-grid .empire-tile:hover{z-index:8;filter:brightness(1.2) saturate(1.12);transform:scale(1.07)}
+.empire-grid.organic-map-grid .empire-tile:focus-visible{outline:2px solid #fff0b5;outline-offset:-7px;border-radius:25%}
+@media(max-width:620px){.empire-grid.organic-map-grid{padding:8px!important}.empire-grid.organic-map-grid .terrain-mark{font-size:17px}.empire-grid.organic-map-grid .empire-tile.built strong{font-size:23px}}
