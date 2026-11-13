@@ -349,7 +349,7 @@
 /* Grid city-builder: multi-cell footprints and compositor-friendly zoom */
 .empire-map-viewport{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .empire-grid-stage{position:relative;display:block;flex:none;contain:layout style}
-.empire-grid.painted-map-grid{display:grid;gap:4px;padding:8px;width:max-content;margin:0;transform:scale(var(--zoom-factor,1));transform-origin:top left;will-change:transform;backface-visibility:hidden;contain:layout paint style;transition:none}
+.empire-grid.painted-map-grid{display:grid;grid-auto-rows:46px;gap:4px;padding:8px;width:max-content;margin:0;transform:scale(var(--zoom-factor,1));transform-origin:top left;will-change:transform;backface-visibility:hidden;contain:layout paint style;transition:none}
 .empire-grid.painted-map-grid .empire-tile{width:auto;height:auto;min-width:46px;min-height:46px;aspect-ratio:1;box-sizing:border-box;border-radius:5px}
 .empire-grid.painted-map-grid .empire-tile.built{z-index:2;overflow:visible;border:1px solid rgba(239,211,151,.8);background:linear-gradient(145deg,#718b58,#465e3c);box-shadow:0 3px 7px #101a17a8,inset 0 1px 0 #ffffff40}
 .empire-grid.painted-map-grid .empire-tile.built .building-art{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;filter:drop-shadow(0 5px 3px #17201588)}
