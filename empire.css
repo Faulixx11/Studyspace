@@ -191,3 +191,6 @@
 /* Gebäude-Lager und Abholsystem */
 .empire-building-stock{margin:14px 0;padding:13px;border:1px solid rgba(191,160,94,.28);border-radius:12px;background:rgba(191,160,94,.07)}
 .empire-stock-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.9rem}.empire-stock-head strong{color:var(--empire-gold,#d7b66d);font-variant-numeric:tabular-nums}.empire-stock-track{height:9px;margin:9px 0 7px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}.empire-stock-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6e9e61,#c3ad63);transition:width .25s}.empire-building-stock p{font-size:.82rem;opacity:.78;margin:6px 0 10px}.empire-building-stock .empire-btn{width:100%}
+
+/* Hindernisse auf der Baukarte */
+.empire-tile.blocked{cursor:pointer;filter:saturate(.78)}.empire-tile .obstacle-mark{position:relative;z-index:2;font-size:clamp(17px,2.2vw,31px);filter:drop-shadow(0 3px 2px rgba(0,0,0,.45))}.empire-tile.blocked small{position:relative;z-index:2;display:block;font-size:8px;color:#fff;text-shadow:0 1px 3px #172018;background:rgba(28,34,27,.62);border-radius:5px;padding:2px 3px}
