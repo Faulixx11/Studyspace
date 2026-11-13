@@ -231,3 +231,8 @@
 .empire-grid.painted-map-grid .empire-tile.built .building-plinth{box-shadow:0 5px 9px rgba(12,23,16,.5),inset 0 2px 4px rgba(255,255,255,.38),inset 0 -4px 5px rgba(59,39,23,.25)}
 .empire-grid.painted-map-grid .empire-tile.built strong{filter:drop-shadow(0 3px 2px rgba(0,0,0,.62));transform:translateY(-2px)}
 .empire-grid.painted-map-grid .empire-tile.built i{background:rgba(35,42,30,.72);border:1px solid rgba(255,230,175,.25)}
+
+/* Extra terrain richness */
+.empire-grid.painted-map-grid .empire-landscape-art{filter:saturate(1.08) contrast(1.035)}
+.empire-map-subtitle{color:#c3d0b2!important;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.empire-grid.painted-map-grid .empire-tile.blocked .obstacle-mark{filter:drop-shadow(0 3px 3px rgba(0,0,0,.7))}
