@@ -411,3 +411,13 @@
 .empire-spy-card .empire-btn{margin-top:12px}
 .empire-spy-card p{min-height:72px}
 @media(max-width:700px){.empire-intrigue-summary{grid-template-columns:1fr}.empire-faction-card,.empire-spy-card{min-height:unset}.empire-spy-card p{min-height:unset}}
+
+/* Dynasty, rival personalities and autonomous court drama */
+.empire-court-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px;border:1px solid rgba(211,181,113,.35);border-radius:18px;background:radial-gradient(circle at 85% 20%,rgba(181,139,69,.22),transparent 36%),linear-gradient(125deg,rgba(53,62,48,.95),rgba(25,31,30,.98));margin:18px 0 24px}
+.empire-court-hero small,.empire-court-hero span{display:block;color:var(--empire-muted,#b8b9a9);font-size:.75rem;letter-spacing:.09em}.empire-court-hero h2{margin:8px 0}.empire-court-hero strong{display:block;font-size:2rem;color:#e3c47d;margin:6px 0}
+.empire-court-advisor,.empire-rival-card{background:linear-gradient(150deg,rgba(72,75,57,.34),rgba(25,32,30,.95));border:1px solid rgba(205,178,111,.2);border-radius:15px;padding:18px}.empire-court-advisor .empire-btn{margin-top:12px}
+.empire-rival-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.empire-rival-stats span{font-size:.75rem;color:var(--empire-muted,#b8b9a9)}.empire-rival-stats b{display:block;color:var(--empire-text,#eee)}
+.empire-prestige-list{padding-left:24px}.empire-prestige-list li{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,.07)}.empire-prestige-list li.you{background:rgba(191,157,86,.13);border-radius:8px;color:#e7cd8f}
+.empire-plot-card{border-color:rgba(176,146,90,.35);background:linear-gradient(140deg,rgba(63,51,38,.38),rgba(25,31,29,.96))}.empire-plot-progress{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.empire-plot-progress span{padding:8px 12px;border-radius:99px;background:rgba(255,255,255,.07);font-size:.8rem}.empire-plot-progress span.found{background:rgba(99,142,93,.22);color:#b9d6a6}
+.empire-drama-card{border-color:rgba(203,163,86,.5);background:linear-gradient(140deg,rgba(83,61,34,.32),rgba(25,31,29,.96));margin-top:18px}
+@media(max-width:650px){.empire-court-hero{align-items:flex-start;flex-direction:column}.empire-rival-stats{grid-template-columns:1fr}}
