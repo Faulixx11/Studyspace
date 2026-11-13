@@ -345,3 +345,18 @@
 .building-art-field{width:64px;height:58px}.building-art-park{width:66px;height:64px}.building-art-wall,.building-art-road{width:68px;height:58px}
 .empire-grid.painted-map-grid .empire-tile.built.selected{outline:2px solid #f4d58c!important;outline-offset:-3px;filter:brightness(1.08)}
 @media(max-width:700px){.building-art{width:68px;height:64px}.empire-grid.painted-map-grid .empire-tile.built small{font-size:6px}}
+
+/* Grid city-builder: multi-cell footprints and compositor-friendly zoom */
+.empire-map-viewport{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.empire-grid-stage{position:relative;display:block;flex:none;contain:layout style}
+.empire-grid.painted-map-grid{display:grid;gap:4px;padding:8px;width:max-content;margin:0;transform:scale(var(--zoom-factor,1));transform-origin:top left;will-change:transform;backface-visibility:hidden;contain:layout paint style;transition:none}
+.empire-grid.painted-map-grid .empire-tile{width:auto;height:auto;min-width:46px;min-height:46px;aspect-ratio:1;box-sizing:border-box;border-radius:5px}
+.empire-grid.painted-map-grid .empire-tile.built{z-index:2;overflow:visible;border:1px solid rgba(239,211,151,.8);background:linear-gradient(145deg,#718b58,#465e3c);box-shadow:0 3px 7px #101a17a8,inset 0 1px 0 #ffffff40}
+.empire-grid.painted-map-grid .empire-tile.built .building-art{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;filter:drop-shadow(0 5px 3px #17201588)}
+.empire-grid.painted-map-grid .empire-tile.built>small{position:absolute;bottom:3px;left:3px;right:3px;z-index:3;font-size:9px;line-height:1.1;padding:2px 3px;border-radius:4px;background:#1b261bd9;text-align:center;white-space:normal;max-width:none}
+.empire-grid.painted-map-grid .empire-tile.built>i{position:absolute;top:3px;right:4px;z-index:3;font-size:8px;padding:2px 3px;background:#18251cdb;border-radius:4px}
+.empire-grid.painted-map-grid .empire-tile.placement-valid{outline:2px dashed #f2d58b;outline-offset:-4px;filter:brightness(1.18)}
+.empire-grid.painted-map-grid .empire-tile:not(.built){background-color:#54794b;background-image:radial-gradient(ellipse at 20% 25%,#c0cf7b35 0 2px,transparent 3px),radial-gradient(ellipse at 75% 70%,#203f2a42 0 3px,transparent 4px),linear-gradient(145deg,#76935a,#456a43 62%,#36563a);border:1px solid #6e8b58;box-shadow:inset 0 1px 2px #e1ef9a20,inset 0 -3px 5px #152a1d35}
+.empire-grid.painted-map-grid .empire-tile:not(.built):nth-child(5n){background-image:radial-gradient(ellipse at 30% 70%,#d6c38a55 0 2px,transparent 3px),linear-gradient(145deg,#8b9b60,#5d7849 65%,#435f3c)}
+.empire-grid.painted-map-grid .empire-tile.blocked{background:linear-gradient(145deg,#67715a,#414c3d)}
+.empire-map-viewport{background:radial-gradient(ellipse at 50% 25%,#334b37,#1d3028 68%,#16251f);border-color:#53694b}
