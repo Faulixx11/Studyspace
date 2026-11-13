@@ -200,3 +200,24 @@
 @media(max-width:620px){.empire-storage-list{grid-template-columns:1fr}.empire-storage-head{align-items:flex-start;flex-direction:column}}
 
 .empire-tile .building-stock-mark{position:absolute;z-index:9;left:2px;top:2px;font-size:8px;font-style:normal;font-weight:800;color:#18251c;background:#e8d28e;border:1px solid #fff0bc;border-radius:5px;padding:1px 3px;text-shadow:none;box-shadow:0 1px 4px #17251a}.empire-tile.building-field:after,.empire-tile.building-farmstead:after,.empire-tile.building-mill:after,.empire-tile.building-bakery:after{content:"";position:absolute;right:5px;top:5px;width:5px;height:5px;border-radius:50%;background:rgba(255,235,180,.6);box-shadow:0 0 7px rgba(255,235,180,.55);animation:empire-work-glow 3.5s ease-in-out infinite alternate}@keyframes empire-work-glow{from{opacity:.25;transform:translateY(1px)}to{opacity:.9;transform:translateY(-3px)}}@media(prefers-reduced-motion:reduce){.empire-tile.building-field:after,.empire-tile.building-farmstead:after,.empire-tile.building-mill:after,.empire-tile.building-bakery:after{animation:none}}
+
+/* Aurelion: Straßennetz, Stadtleben und saisonale Landschaft */
+.empire-tile{position:relative;isolation:isolate}
+.empire-tile.built{background:linear-gradient(145deg,#71875e,#3e6249);border-color:#d8bf82;box-shadow:inset 0 -5px 0 rgba(28,40,30,.2),0 2px 5px rgba(0,0,0,.28)}
+.empire-tile.built .building-plinth{position:absolute;bottom:5px;left:6px;right:6px;height:12px;border-radius:3px;background:linear-gradient(180deg,#b8a47b,#796348);border:1px solid rgba(241,218,170,.6);box-shadow:0 2px 2px rgba(0,0,0,.3)}
+.empire-tile.built:before{content:"";position:absolute;z-index:0;left:10px;right:10px;top:8px;height:17px;background:linear-gradient(145deg,#a85d42,#713d31);clip-path:polygon(50% 0,100% 75%,92% 100%,8% 100%,0 75%);filter:drop-shadow(0 2px 1px rgba(0,0,0,.35))}
+.empire-tile.built:after{content:"";position:absolute;z-index:0;left:14px;right:14px;top:20px;height:18px;background:linear-gradient(90deg,#c8ad7d,#e4d0a5 48%,#a98c60);border:1px solid rgba(80,55,35,.65);border-radius:2px 2px 1px 1px;box-shadow:inset 0 -4px rgba(85,57,37,.2)}
+.empire-tile.built strong{position:relative;z-index:2;font-size:19px;line-height:20px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.7))}
+.empire-tile.built small,.empire-tile.built i,.empire-tile.built .building-stock-mark{z-index:3;position:relative}
+.empire-tile.building-hall:before,.empire-tile.building-monument:before{background:linear-gradient(145deg,#c7c0a7,#756b59);height:20px;top:5px}
+.empire-tile.building-hall:after,.empire-tile.building-monument:after{background:linear-gradient(90deg,#bcb39c,#e2d9c2,#9d927b);height:22px;top:19px}
+.empire-tile.building-road{background:linear-gradient(90deg,#79664b,#c0a77b 48%,#79664b)!important;border:1px solid #d7c18f!important;box-shadow:inset 0 0 0 3px rgba(70,55,38,.22)}
+.empire-tile.building-road:before,.empire-tile.building-road:after{display:none}
+.empire-tile.building-road strong{font-size:20px}
+.empire-map-life{display:flex;flex-wrap:wrap;gap:8px 16px;padding:10px 12px;margin-top:10px;border:1px solid rgba(195,177,130,.25);border-radius:9px;background:linear-gradient(90deg,rgba(48,69,51,.9),rgba(35,55,60,.9));color:#d9e2c9;font-size:11px}
+.empire-map-life span{white-space:nowrap}
+.empire-map-viewport.season-1 .empire-landscape-art{filter:saturate(.88) hue-rotate(9deg)}
+.empire-map-viewport.season-2 .empire-landscape-art{filter:saturate(.68) sepia(.15)}
+.empire-map-viewport.season-3 .empire-landscape-art{filter:saturate(.38) brightness(1.08) hue-rotate(175deg)}
+.empire-pop-group{min-width:0}.empire-pop-group h3{font-size:24px;margin:6px 0}.empire-pop-group small{color:#aebdcb}
+@media(prefers-reduced-motion:reduce){.map-life-birds,.map-life-cart{display:none}}
