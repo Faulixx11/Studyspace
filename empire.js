@@ -74,15 +74,23 @@ function storeBuildingOutput(b,key,amount){if(!amount||amount<=0)return 0;b.stoc
 
 function hallLevel(){const h=(s.buildings||[]).find(b=>b.type==="hall");return Math.max(1,Number(h?.l)||1)}
 function upgradePreview(b){
- const next=Math.min(10,Math.max(1,Number(b.l)||1)+1),type=b.type;
- const effects={hall:["Stadtentwicklung +"+(next*5)+" Punkte","Neue Bauoptionen und Stadtfunktionen"],field:["Weizenertrag steigt","Feldlager wird größer"],lumber:["Holzertrag steigt","Holzlager wird größer"],quarry:["Steinertrag steigt","Steinlager wird größer"],mill:["Mehlverarbeitung steigt","Verarbeitung wird effizienter"],bakery:["Brotproduktion steigt","Warenpuffer wird größer"],sawmill:["Bauholzproduktion steigt","Holzlager wird größer"],granary:["Gesamte Lagerkapazität steigt","Mehr Vorrat für schlechte Ernten"],market:["Handelsbonus steigt","Zusätzliche Handelsangebote auf höheren Stufen"],library:["Wissensgewinn steigt","Forschungsbonus auf höheren Stufen"],school:["Bildungswert steigt","Zufriedenheit durch Bildung steigt"],clinic:["Gesundheitswert steigt","Versorgung verbessert sich"],park:["Freizeitwert steigt","Zufriedenheit steigt"],house:["Wohnraum +8 Einwohner","Mehr verfügbare Arbeitskräfte"],farmstead:["Nahrungsertrag steigt","Hoflager wird größer"],fishing:["Nahrungsversorgung steigt","Vorratslager wird größer"],ironmine:["Erzförderung steigt","Erzlager wird größer"],smelter:["Eisenverarbeitung steigt","Metallverarbeitung wird effizienter"],barracks:["Ausbildungskapazität steigt","Verwaltungsoptionen auf höheren Stufen"],wall:["Stadtverteidigung steigt","Schutz der Siedlung verbessert sich"],tower:["Sicherheitswert steigt","Provinzüberblick verbessert sich"],guardpost:["Sicherheitswert steigt","Stabilität im Stadtgebiet steigt"],shipyard:["Expeditionskapazität steigt","Neue Routen auf höheren Stufen"],monument:["Stadtansehen steigt","Zufriedenheit steigt"]};
- let unlocks=[];
- if(type==="hall"){if(next===2)unlocks=["Marktplatz","Stadtpark","Schule"];if(next===3)unlocks=["Bibliothek","Heilstube","Speicher"];if(next===4)unlocks=["Erweiterte Stadtverwaltung","Stadtbezirke-Ausbau"];if(next===5)unlocks=["Großstadt-Projekte","Monument-Ausbau"]}
- if(type==="market"&&next===3)unlocks=["Zusätzliche Handelsangebote"];
- if(type==="library"&&next===3)unlocks=["Erweiterte Forschungsoptionen"];
- return {next,rows:effects[type]||["Gebäudeleistung steigt","Lagerkapazität steigt"],unlocks};
+ const next=Math.min(10,Math.max(1,Number(b.l)||1)+1),type=b.type,cfg=buildingOutputs[type];
+ let rows=[],unlocks=[];
+ if(cfg){rows=["Produktion: "+buildingOutputRate(b,1)+" → "+buildingOutputRate({...b,l:next},1)+" "+cfg[0]+" pro 5 Minuten","Gebäudelager: "+buildingOutputCap(b)+" → "+buildingOutputCap({...b,l:next})+" Einheiten"]}
+ else if(type==="hall"){rows=["Rathaus erreicht Stufe "+next,"Neue Bauoptionen und Stadtfunktionen"];if(next===2)unlocks=["Marktplatz","Stadtpark","Schule"];if(next===3)unlocks=["Bibliothek","Heilstube","Speicher"];if(next===4)unlocks=["Erweiterte Stadtverwaltung","Stadtbezirke-Ausbau"];if(next===5)unlocks=["Großstadt-Projekte","Monument-Ausbau"]}
+ else if(type==="house")rows=["Wohnraum: +8 Einwohner","Mehr verfügbare Arbeitskräfte"];
+ else if(type==="farmstead")rows=["Wohnraum: +4 Einwohner","Nahrungsproduktion steigt mit der Gebäudestufe"];
+ else if(type==="monument")rows=["Wohnraum: +20 Einwohner","Stadtentwicklung wird erweitert"];
+ else if(type==="school"||type==="library")rows=["Bildungswert im Stadtindex: +30 Punkte","Bessere Lebensqualität durch Bildung"];
+ else if(type==="clinic")rows=["Gesundheitswert im Stadtindex: +32 Punkte","Bessere medizinische Versorgung"];
+ else if(type==="park")rows=["Freizeitwert im Stadtindex: +28 Punkte","Mehr Lebensqualität im Stadtgebiet"];
+ else if(type==="market")rows=["Freizeitwert im Stadtindex: +8 Punkte","Marktplatz weiter ausgebaut"];
+ else if(type==="guardpost")rows=["Sicherheitswert im Stadtindex: +24 Punkte","Mehr Stabilität im Stadtgebiet"];
+ else if(type==="tower")rows=["Sicherheitswert im Stadtindex: +20 Punkte","Mehr Stabilität im Stadtgebiet"];
+ else if(type==="wall")rows=["Sicherheitswert im Stadtindex: +12 Punkte","Schutz der Stadt wird ausgebaut"];
+ else rows=["Gebäude erreicht Stufe "+next,"Ausbau und Gebäudefunktion werden verbessert"];
+ return {next,rows,unlocks};
 }
-
 function buildingUpgradeCost(b){const l=Math.max(1,Number(b.l)||1),scale=Math.pow(l,1.42),d=defs[b.type]||[],discount=owned("engineering")?.85:1;return [Math.floor(Math.max(35,(Number(d[2])||0)*.65)*scale*discount),Math.floor((Number(d[3])||0)>0?Math.max(6,(Number(d[3])||0)*.55)*scale:0),Math.floor((Number(d[4])||0)>0?Math.max(4,d[4]*.55)*scale:0)]}
 function collectBuilding(b){if(!b||!b.stock)return 0;let total=0;for(const [key,value] of Object.entries(b.stock)){const before=Number(s[key])||0;add(key,Number(value)||0);const moved=Math.max(0,(Number(s[key])||0)-before);if(moved){total+=moved;b.stock[key]=Math.max(0,(Number(value)||0)-moved)}}return total}
 function collectAllBuildings(){return s.buildings.reduce((sum,b)=>sum+collectBuilding(b),0)}
