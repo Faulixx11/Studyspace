@@ -524,7 +524,7 @@
     else if(kind==="diplomacy")handleDiplomacy(action.dataset.kind,$("wo-dip-country")?.value);
     else if(kind==="select-diplomacy"){selectDiplomacyCountry(action.dataset.country);}
     else if(kind==="law")passLaw(action.dataset.law);
-    else if(kind==="appoint"){appointMinister(action.dataset.slot,$('wo-minister-'+action.dataset.slot)?.value||$('select[data-minister-slot="'+action.dataset.slot+'"]')?.value);}
+    else if(kind==="appoint"){appointMinister(action.dataset.slot,action.dataset.selected||document.querySelector('select[data-minister-slot="'+action.dataset.slot+'"]')?.value);}
     else if(kind==="country-detail")showCountryDetail(action.dataset.country);
     else if(kind==="close-detail"){$("wo-country-detail").hidden=true;}
     else if(kind==="go-diplomacy"){activeView="diplomacy";render();selectDiplomacyCountry(action.dataset.country);}
