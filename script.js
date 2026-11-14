@@ -66,6 +66,7 @@ const pageTitles = {
     subjects: "Meine Fächer",
     materials: "Hefter & Materialien",
     tutor: "KI-Tutor",
+    french: "Französisch-Test",
     flashcards: "Karteikarten",
     settings: "Einstellungen",
     empire: "Dein Imperium"
