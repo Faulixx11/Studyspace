@@ -311,7 +311,7 @@
     }
     return pageHead("WISSEN WIRD EINFLUSS","Lernakademie","Wiederhole deine StudySpace-Inhalte direkt im Spiel. Gewusste Antworten bringen Forschungspunkte und diplomatischen Einfluss.")+
       '<div class="wo-learning-stats"><div><strong>'+state.learningStats.answered+'</strong><span>beantwortete Fragen</span></div><div><strong>'+state.learningStats.known+'</strong><span>gewusst</span></div><div><strong>'+state.player.research+'</strong><span>Forschungspunkte</span></div><div><strong>'+state.learningStats.researchEarned+'</strong><span>durch Lernen verdient</span></div></div>'+
-      '<div class="wo-learning-layout"><section class="wo-panel wo-quiz-panel"><div class="wo-panel-head"><h2>Deine Lernmission</h2><span class="wo-tag positive">Lernen zahlt sich aus</span></div>'+quizHtml+'</section><section class="wo-panel"><h2>Deine StudySpace-Sammlung</h2><div class="wo-source-stat"><span>▣ Karteikarten</span><strong>'+cards+'</strong></div><div class="wo-source-stat"><span>∑ Wissen & Regeln</span><strong>'+knowledge+'</strong></div><div class="wo-source-stat"><span>📁 Materialeinträge</span><strong>'+getMaterialCount()+'</strong></div><p class="wo-muted">Deine Karten und Wissenseinträge werden direkt aus deinem StudySpace-Speicher gelesen. Es werden keine Schuldateien verändert.</p><div class="wo-learning-links"><button class="wo-btn ghost" data-action="open-studyspace" data-target="flashcards">Karteikarten öffnen ↗</button><button class="wo-btn ghost" data-action="open-studyspace" data-target="knowledge">Wissen & Regeln öffnen ↗</button></div></section></div>'+
+      '<div class="wo-learning-layout"><section class="wo-panel wo-quiz-panel"><div class="wo-panel-head"><h2>Deine Lernmission</h2><span class="wo-tag positive">Lernen zahlt sich aus</span></div>'+quizHtml+'</section><section class="wo-panel"><h2>Deine StudySpace-Sammlung</h2><div class="wo-source-stat"><span>▣ Karteikarten</span><strong>'+cards+'</strong></div><div class="wo-source-stat"><span>∑ Wissen & Regeln</span><strong>'+knowledge+'</strong></div><div class="wo-source-stat"><span>📁 Materialeinträge</span><strong>'+getMaterialCount()+'</strong></div><button class="wo-btn ghost full" data-action="start-material-quiz">Aus Hefter-OCR lernen</button><p class="wo-muted">Liest den erkannten Text deiner hochgeladenen Hefter aus dem StudySpace-Dateispeicher.</p><p class="wo-muted">Deine Karten und Wissenseinträge werden direkt aus deinem StudySpace-Speicher gelesen. Es werden keine Schuldateien verändert.</p><div class="wo-learning-links"><button class="wo-btn ghost" data-action="open-studyspace" data-target="flashcards">Karteikarten öffnen ↗</button><button class="wo-btn ghost" data-action="open-studyspace" data-target="knowledge">Wissen & Regeln öffnen ↗</button></div></section></div>'+
       '<div class="wo-learning-note"><strong>So funktioniert die Verbindung:</strong> Deine eigenen Lernfragen werden zuerst verwendet. Bei einer richtigen Wiederholung erhältst du +3 Forschung und +1 Einfluss. Bei einer unsicheren Antwort erhältst du +1 Forschung als Lernanreiz. Dieselbe Karte kann in einem späteren Spielmonat erneut belohnt werden.</div>';
   }
   function getMaterialCount() {
@@ -602,6 +602,26 @@
     quiz={items:shuffled.slice(0,Math.min(8,shuffled.length)),index:0,revealed:false,seen:[]};
     render();
   }
+
+  async function startMaterialQuiz(){
+    const box=$("wo-save-status");if(box)box.textContent="Lade Heftertexte …";
+    try{
+      const app=JSON.parse(localStorage.getItem("studyspaceData")||"{}"),materials=Array.isArray(app.materials)?app.materials:[];
+      if(!("indexedDB" in window))throw new Error("IndexedDB nicht verfügbar");
+      const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("StudySpaceFilesDB",1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      const records=await new Promise((resolve,reject)=>{const tx=db.transaction("files","readonly"),req=tx.objectStore("files").getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});
+      const items=[];
+      materials.forEach(m=>{const rec=records.find(x=>x.id===m.id),textContent=(rec?.extractedText||"").trim();if(!textContent)return;
+        const subject=app.subjects?.find(x=>x.id===m.subjectId)?.name||"Hefter";
+        const chunks=textContent.split(/(?<=[.!?])\s+/).filter(x=>x.length>35);
+        const excerpt=(chunks.slice(0,5).join(" ")||textContent).slice(0,1400);
+        items.push({id:"material:"+m.id,q:"Erkläre die wichtigsten Inhalte aus dem Material „"+(m.name||m.fileName||"Hefter")+"“ in eigenen Worten. Welche zentralen Begriffe, Zusammenhänge und Aussagen solltest du dir merken?",a:excerpt,subject,source:"StudySpace-Hefter · OCR",kind:"material"});
+      });
+      if(!items.length){notify("Keine erkannten Heftertexte gefunden. Öffne zuerst ein Material in StudySpace und lasse den Text erkennen.");if(box)box.textContent="Automatisch gespeichert";return;}
+      quiz={items:items.slice(0,8),index:0,revealed:false,seen:[]};activeView="learning";render();notify(items.length+" Hefter-Lernmaterialien geladen.");
+    }catch(error){console.warn(error);notify("Heftertexte konnten nicht geladen werden. Prüfe, ob die Materialien bereits per OCR erkannt wurden.");}
+    if(box)box.textContent="Automatisch gespeichert";
+  }
   function selectDiplomacyCountry(id) {
     const select=$("wo-dip-country");
     if(select){select.value=id;const profile=$("wo-dip-profile");if(profile)profile.innerHTML=diplomacyProfile(countryById(id));}
@@ -612,7 +632,7 @@
     const c=countryById(id);if(!c)return;
     const container=$("wo-country-detail");if(!container)return;
     container.hidden=false;
-    container.innerHTML='<div class="wo-panel-head"><h2>'+c.flag+' '+esc(c.name)+'</h2><button class="wo-btn small ghost" data-action="close-detail">Schließen ×</button></div><p>'+esc(c.description)+'</p><div class="wo-profile-stats"><span>Regierung <b>'+esc(c.government)+'</b></span><span>Orientierung <b>'+esc(c.orientation)+'</b></span><span>Hauptstadt <b>'+esc(c.capital)+'</b></span><span>Bevölkerung <b>'+c.population+' Mio.</b></span><span>Wirtschaft <b>'+c.economy+'/100</b></span><span>Technologie <b>'+c.technology+'/100</b></span></div>'+(c.id!==state.countryId?'<p>Beziehung zu deinem Land: <strong class="'+relationTone(relation(id))+'">'+relation(id)+'</strong></p><button class="wo-btn primary" data-action="go-diplomacy" data-country="'+id+'">Diplomatie mit diesem Staat</button>':'<span class="wo-tag positive">Dein Heimatstaat</span>');
+    container.innerHTML='<div class="wo-panel-head"><h2>'+c.flag+' '+esc(c.name)+'</h2><button class="wo-btn small ghost" data-action="close-detail">Schließen ×</button></div><p>'+esc(c.description)+'</p><div class="wo-profile-stats"><span>Regierung <b>'+esc(c.government)+'</b></span><span>Orientierung <b>'+esc(c.orientation)+'</b></span><span>Hauptstadt <b>'+esc(c.capital)+'</b></span><span>Bevölkerung <b>'+c.population+' Mio.</b></span><span>Wirtschaft <b>'+c.economy+'/100</b></span><span>Technologie <b>'+c.technology+'/100</b></span></div>'+(c.id!==state.countryId?'<p>Beziehung zu deinem Land: <strong class="'+relationTone(relation(id))+'">'+relation(id)+'</strong></p><div class="wo-country-actions"><button class="wo-btn primary" data-action="go-diplomacy" data-country="'+id+'">Diplomatie</button><button class="wo-btn small" data-action="ai-diplomacy" data-country="'+id+'" data-move="visit">Staatsbesuch · 35 €</button><button class="wo-btn small" data-action="ai-diplomacy" data-country="'+id+'" data-move="aid">Hilfspaket · 90 €</button><button class="wo-btn small" data-action="ai-diplomacy" data-country="'+id+'" data-move="sanction">Sanktionen · 50 €</button></div>':'<span class="wo-tag positive">Dein Heimatstaat</span>');
   }
   function exportSave() {
     if(!state)return;
@@ -641,6 +661,7 @@
     else if(kind==="go-diplomacy"){activeView="diplomacy";render();selectDiplomacyCountry(action.dataset.country);}
     else if(kind==="resolution")resolveResolution(action.dataset.type);
     else if(kind==="start-quiz")startQuiz();
+    else if(kind==="start-material-quiz")startMaterialQuiz();
     else if(kind==="reveal"){quiz.revealed=true;render();}
     else if(kind==="grade")gradeLearning(action.dataset.result);
     else if(kind==="open-studyspace"){try{if(window.parent&&typeof window.parent.openPage==="function")window.parent.openPage(action.dataset.target);}catch(error){notify("Öffne den entsprechenden Lernbereich über die StudySpace-Navigation.");}}
