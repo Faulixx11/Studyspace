@@ -35,6 +35,7 @@
             <button class="nav-item" data-page="tutor">
                 <span class="nav-icon">✧</span><span class="nav-text">KI-Tutor</span>
             </button>
+            <button class="nav-item" data-page="french"><span class="nav-icon">🇫🇷</span><span class="nav-text">Französisch-Test</span></button>
             <button class="nav-item" data-page="flashcards">
                 <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
             </button>
@@ -264,6 +265,9 @@
             </div>
         </section>
 
+        <!-- FRANZÖSISCH-TEST -->
+        <section class="page" id="page-french"><iframe title="Französisch-Test Lernbereich" src="french-test.html" style="width:100%;height:calc(100vh - 100px);min-height:900px;border:0;border-radius:14px;background:#10131d"></iframe></section>
+
         <!-- KARTEIKARTEN -->
         <section class="page" id="page-flashcards">
             <div class="page-intro">
@@ -370,6 +374,7 @@
 <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 <script src="nutrition.js?v=10"></script>
 <script src="empire.js?v=54"></script>
+<script>if(typeof pageTitles!=="undefined")pageTitles.french="Französisch-Test";</script>
 <script>
 /* Fallback-Navigation: stellt sicher, dass das Imperium auch dann geöffnet wird,
    wenn ein anderer Navigationshandler vorher nicht korrekt gebunden wurde. */
