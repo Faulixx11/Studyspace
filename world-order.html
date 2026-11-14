@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b111b">
+<title>WORLD ORDER – Internationale Politik</title>
+<link rel="stylesheet" href="world-order.css?v=1">
+</head>
+<body>
+<div class="wo-app" id="wo-app">
+  <header class="wo-topbar">
+    <div class="wo-brand">
+      <div class="wo-brand-mark">WO</div>
+      <div><strong>WORLD ORDER</strong><small>INTERNATIONALE POLITIK</small></div>
+    </div>
+    <div class="wo-top-stats" id="wo-top-stats"><span class="wo-muted">Deine neue internationale Simulation</span></div>
+    <div class="wo-top-actions">
+      <span class="wo-save-status" id="wo-save-status">Nicht gestartet</span>
+      <button class="wo-btn small ghost" id="wo-save-button" type="button">Speichern</button>
+    </div>
+  </header>
+  <div class="wo-layout">
+    <aside class="wo-sidebar">
+      <nav class="wo-nav-group" id="wo-nav">
+        <div class="wo-nav-label">REGIERUNG</div>
+        <button class="wo-nav-item active" data-view="dashboard"><span class="wo-nav-icon">▦</span> Lagezentrum</button>
+        <button class="wo-nav-item" data-view="world"><span class="wo-nav-icon">🌐</span> Weltkarte</button>
+        <button class="wo-nav-item" data-view="government"><span class="wo-nav-icon">🏛️</span> Regierung & Parlament</button>
+        <button class="wo-nav-item" data-view="economy"><span class="wo-nav-icon">📊</span> Wirtschaft & Haushalt</button>
+        <div class="wo-nav-label">AUSSENPOLITIK</div>
+        <button class="wo-nav-item" data-view="diplomacy"><span class="wo-nav-icon">🤝</span> Diplomatie</button>
+        <button class="wo-nav-item" data-view="organizations"><span class="wo-nav-icon">🌍</span> Weltforum</button>
+        <div class="wo-nav-label">STUDYSPACE</div>
+        <button class="wo-nav-item" data-view="learning"><span class="wo-nav-icon">📚</span> Lernakademie</button>
+        <button class="wo-nav-item" data-view="news"><span class="wo-nav-icon">📰</span> Nachrichten</button>
+      </nav>
+      <div class="wo-nav-footer">
+        <button class="wo-btn ghost full" id="wo-turn-button" type="button">Monat abschließen →</button>
+        <button class="wo-btn ghost full" id="wo-export-button" type="button">Spielstand exportieren</button>
+        <button class="wo-btn ghost full" id="wo-reset-button" type="button">Neues Spiel / Zurücksetzen</button>
+      </div>
+    </aside>
+    <main class="wo-main">
+      <section id="wo-setup"></section>
+      <section id="wo-view" hidden></section>
+    </main>
+  </div>
+</div>
+<div class="wo-toast" id="wo-toast" role="status" aria-live="polite"></div>
+<script src="world-order.js?v=1"></script>
+</body>
+</html>
