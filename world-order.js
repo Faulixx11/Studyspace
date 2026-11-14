@@ -329,9 +329,9 @@
   }
   const TECHS=[
     {id:"basic-research",name:"Grundlagenforschung",cost:0,desc:"Basis für wissenschaftliche Entwicklung.",effect:"Starttechnologie"},
-    {id:"clean-energy",name:"Erneuerbare Energien",cost:18,requires:"basic-research",desc:"Saubere Energie und geringere Emissionen.",effect:"+8 Umwelt, +4 Technologie"},
-    {id:"digital-state",name:"Digitaler Staat",cost:20,requires:"basic-research",desc:"Digitale Verwaltung und bessere öffentliche Dienste.",effect:"+7 Technologie, +3 Zustimmung"},
-    {id:"medical",name:"Medizinische Innovation",cost:22,requires:"basic-research",desc:"Gesundheit und gesellschaftliche Resilienz.",effect:"+7 Stabilität, +4 Zufriedenheit"},
+    {id:"clean-energy",name:"Erneuerbare Energien",cost:12,requires:"basic-research",desc:"Saubere Energie und geringere Emissionen.",effect:"+8 Umwelt, +4 Technologie"},
+    {id:"digital-state",name:"Digitaler Staat",cost:12,requires:"basic-research",desc:"Digitale Verwaltung und bessere öffentliche Dienste.",effect:"+7 Technologie, +3 Zustimmung"},
+    {id:"medical",name:"Medizinische Innovation",cost:14,requires:"basic-research",desc:"Gesundheit und gesellschaftliche Resilienz.",effect:"+7 Stabilität, +4 Zufriedenheit"},
     {id:"advanced-industry",name:"Industrie 4.0",cost:25,requires:"digital-state",desc:"Produktivere, wissensintensive Industrie.",effect:"+8 Wirtschaft, +5 Technologie"},
     {id:"climate-adapt",name:"Klimaanpassung",cost:24,requires:"clean-energy",desc:"Schützt Infrastruktur und Bevölkerung.",effect:"+10 Anpassung, +4 Umwelt"},
     {id:"education-network",name:"Internationales Bildungsnetz",cost:22,requires:"medical",desc:"Austausch und Humankapital.",effect:"+8 Forschung, +5 Einfluss"}
@@ -365,7 +365,7 @@
     const tree=state.researchTree;
     return pageHead("INNOVATION & BILDUNG","Forschung & Projekte","Investiere Forschungspunkte in Technologien und starte langfristige nationale Vorhaben.")+
       '<div class="wo-kpi-grid"><div class="wo-kpi"><span>🔬 Forschungspunkte</span><strong>'+Math.round(state.player.research)+'</strong></div><div class="wo-kpi"><span>Technologien</span><strong>'+tree.completed.length+'/'+(TECHS.length-1)+'</strong></div><div class="wo-kpi"><span>🏗️ Projekte</span><strong>'+state.projects.length+'</strong></div><div class="wo-kpi"><span>💡 Technologieindex</span><strong>'+Math.round(state.player.technology)+'</strong></div></div>'+
-      '<section class="wo-panel"><h2>Technologiebaum</h2><div class="wo-tech-grid">'+TECHS.filter(t=>t.id!=="basic-research").map(t=>{const done=tree.completed.includes(t.id),ready=tree.unlocked.includes(t.id)||tree.completed.includes(t.requires);return '<article class="wo-tech-card '+(done?'done':'')+'"><span class="wo-tag">'+(done?'Abgeschlossen':ready?'Verfügbar':'Voraussetzung fehlt')+'</span><h3>'+esc(t.name)+'</h3><p>'+esc(t.desc)+'</p><small>'+esc(t.effect)+' · '+t.cost+' Forschung</small><button class="wo-btn small '+(done?'ghost':'primary')+'" data-action="research" data-tech="'+t.id+'" '+(done||!ready?'disabled':'')+'>'+(done?'Erforscht':'Erforschen')+'</button></article>';}).join("")+'</div></section>'+
+      '<section class="wo-panel"><h2>Technologiebaum</h2><div class="wo-tech-grid">'+TECHS.filter(t=>t.id!=="basic-research").map(t=>{const done=tree.completed.includes(t.id),ready=tree.unlocked.includes(t.id)||tree.unlocked.includes(t.requires)||tree.completed.includes(t.requires);return '<article class="wo-tech-card '+(done?'done':'')+'"><span class="wo-tag">'+(done?'Abgeschlossen':ready?'Verfügbar':'Voraussetzung fehlt')+'</span><h3>'+esc(t.name)+'</h3><p>'+esc(t.desc)+'</p><small>'+esc(t.effect)+' · '+t.cost+' Forschung</small><button class="wo-btn small '+(done?'ghost':'primary')+'" data-action="research" data-tech="'+t.id+'" '+(done||!ready?'disabled':'')+'>'+(done?'Erforscht':'Erforschen')+'</button></article>';}).join("")+'</div></section>'+
       '<section class="wo-panel"><h2>Nationale Großprojekte</h2><form id="wo-project-form" class="wo-inline-form"><select id="wo-project-select">'+PROJECTS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+p.cost+' € · '+p.turns+' Monate</option>').join("")+'</select><button class="wo-btn primary" type="submit">Projekt starten</button></form><div class="wo-list-spaced">'+(state.projects.map(p=>'<div class="wo-policy-row"><div><b>'+esc(p.name)+'</b><small>Fortschritt: '+p.progress+'/'+p.turns+' Monate</small></div><span class="wo-tag">'+Math.round(p.progress/p.turns*100)+'%</span></div>').join("")||'<p class="wo-muted">Noch keine Großprojekte gestartet.</p>')+'</div></section>';
   }
   function applySocietyPolicy(policy){
@@ -393,7 +393,7 @@
   }
   function unlockResearch(id){
     const t=TECHS.find(x=>x.id===id);if(!t||state.researchTree.completed.includes(id))return;
-    if(!state.researchTree.completed.includes(t.requires)){notify("Die notwendige Vorstufe fehlt.");return;}
+    if(!state.researchTree.unlocked.includes(t.requires)&&!state.researchTree.completed.includes(t.requires)){notify("Die notwendige Vorstufe fehlt.");return;}
     if(state.player.research<t.cost){notify("Dir fehlen Forschungspunkte.");return;}if(!spendAP(1))return;
     state.player.research-=t.cost;state.researchTree.completed.push(id);state.researchTree.unlocked.push(id);
     const p=state.player,s=state.society,c=state.climate;
