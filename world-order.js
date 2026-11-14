@@ -111,7 +111,7 @@
       version:1, countryId:chosen.id, difficulty:difficulty || "normal", role:role || "head",
       year:2028, month:1, turn:0, actionPoints:3, nextElection:36,
       player:{treasury:1100,approval:58,stability:chosen.stability,economy:chosen.economy,military:chosen.military,technology:chosen.technology,influence:30,research:12,tax:22,parliament:56,relationships, budget:{education:20,health:22,infrastructure:20,defense:18,diplomacy:10,reserves:10}, tradePartners:[], alliances:[], laws:[], ministers:{}, memberships:["world-forum"], eventCount:0},
-      countries, news:[], resolutions:[], learningStats:{answered:0,known:0,unsure:0,researchEarned:0}, rewardLedger:[], achievements:[], currentEvent:null, lastEconomy:{income:0,expenses:0,net:0}, society:{happiness:64,inequality:42,freedom:72,mediaTrust:61,environment:55,employment:91}, policies:{welfare:50,freedom:65,green:45,industry:55,education:60}, trade:{imports:[],exports:[],agreements:[]}, researchTree:{unlocked:["basic-research"],completed:[]}, projects:[], climate:{emissions:52,renewables:38,adaptation:30}
+      countries, news:[], resolutions:[], politics:{parties:[{id:"civic",name:"Bürgerforum",ideology:"sozialliberal",support:31,government:true},{id:"conservative",name:"Konservative Allianz",ideology:"konservativ",support:24},{id:"social",name:"Soziale Gerechtigkeit",ideology:"sozialdemokratisch",support:19},{id:"green",name:"Zukunft & Klima",ideology:"ökologisch",support:15},{id:"liberal",name:"Freiheitspartei",ideology:"liberal",support:11}],campaigns:0,lastElection:null,coalition:["civic"],mandate:56}, learningStats:{answered:0,known:0,unsure:0,researchEarned:0}, rewardLedger:[], achievements:[], currentEvent:null, lastEconomy:{income:0,expenses:0,net:0}, society:{happiness:64,inequality:42,freedom:72,mediaTrust:61,environment:55,employment:91}, policies:{welfare:50,freedom:65,green:45,industry:55,education:60}, trade:{imports:[],exports:[],agreements:[]}, researchTree:{unlocked:["basic-research"],completed:[]}, projects:[], climate:{emissions:52,renewables:38,adaptation:30}
     };
     addNews("Regierungsübernahme", "Du übernimmst die Führung von "+chosen.name+". Dein erster Monat beginnt.", "success");
     saveGame();
@@ -166,7 +166,7 @@
     renderHeader(); renderNav();
     if(!state){$("wo-setup").hidden=false;$("wo-view").hidden=true;renderSetup();return;}
     $("wo-setup").hidden=true;$("wo-view").hidden=false;
-    const views={dashboard:renderDashboard,world:renderWorld,atlas:renderAtlas,society:renderSociety,trade:renderTrade,research:renderResearch,diplomacy:renderDiplomacy,economy:renderEconomy,government:renderGovernment,organizations:renderOrganizations,learning:renderLearning,news:renderNews};
+    const views={dashboard:renderDashboard,world:renderWorld,atlas:renderAtlas,society:renderSociety,trade:renderTrade,research:renderResearch,diplomacy:renderDiplomacy,economy:renderEconomy,government:renderGovernment,politics:renderPolitics,organizations:renderOrganizations,learning:renderLearning,news:renderNews};
     const renderFn=views[activeView]||renderDashboard;
     $("wo-view").innerHTML=renderFn();
   }
@@ -325,6 +325,8 @@
     data.researchTree=data.researchTree||{unlocked:["basic-research"],completed:[]};
     data.researchTree.unlocked=data.researchTree.unlocked||["basic-research"];data.researchTree.completed=data.researchTree.completed||[];
     data.projects=data.projects||[];data.climate=data.climate||{emissions:52,renewables:38,adaptation:30};
+    data.politics=data.politics||{parties:[{id:"civic",name:"Bürgerforum",ideology:"sozialliberal",support:31,government:true},{id:"conservative",name:"Konservative Allianz",ideology:"konservativ",support:24},{id:"social",name:"Soziale Gerechtigkeit",ideology:"sozialdemokratisch",support:19},{id:"green",name:"Zukunft & Klima",ideology:"ökologisch",support:15},{id:"liberal",name:"Freiheitspartei",ideology:"liberal",support:11}],campaigns:0,lastElection:null,coalition:["civic"],mandate:data.player.parliament||56};
+    data.politics.parties=data.politics.parties||[];data.politics.coalition=data.politics.coalition||["civic"];data.politics.campaigns=data.politics.campaigns||0;
     data.player.relationships=data.player.relationships||{};data.player.tradePartners=data.player.tradePartners||[];
   }
   const TECHS=[
@@ -427,6 +429,89 @@
     if(Math.random()<.12){const country=state.countries.filter(x=>x.id!==state.countryId).sort((a,b)=>a.stability-b.stability)[0];addNews("Internationale Lage","In "+country.name+" sorgen innenpolitische Entwicklungen für Unsicherheit.","warning");}
   }
 
+  function politicalDefaultParties(){
+    return [
+      {id:"civic",name:"Bürgerforum",ideology:"sozialliberal",support:31,government:true},
+      {id:"conservative",name:"Konservative Allianz",ideology:"konservativ",support:24},
+      {id:"social",name:"Soziale Gerechtigkeit",ideology:"sozialdemokratisch",support:19},
+      {id:"green",name:"Zukunft & Klima",ideology:"ökologisch",support:15},
+      {id:"liberal",name:"Freiheitspartei",ideology:"liberal",support:11}
+    ];
+  }
+  function renderPolitics(){
+    const pol=state.politics,parties=pol.parties||politicalDefaultParties();
+    const total=parties.reduce((sum,x)=>sum+x.support,0)||100;
+    const rows=parties.slice().sort((a,b)=>b.support-a.support).map((party,index)=>{
+      const seats=Math.round(party.support/total*100);
+      const coalition=pol.coalition.includes(party.id);
+      return '<div class="wo-policy-row"><div><b>'+(index+1)+'. '+esc(party.name)+'</b><small>'+esc(party.ideology)+(coalition?' · Regierungskoalition':' · Opposition')+'</small><div class="wo-bar" style="margin-top:7px"><i style="width:'+clamp(party.support,0,100)+'%"></i></div></div><span class="wo-tag">'+Math.round(party.support)+'% · '+seats+' Sitze</span></div>';
+    }).join("");
+    const coalitionSeats=parties.filter(x=>pol.coalition.includes(x.id)).reduce((sum,x)=>sum+x.support,0);
+    const last=pol.lastElection?'<p class="wo-muted">Letzte Wahl: '+esc(pol.lastElection.date)+' · '+esc(pol.lastElection.result)+'</p>':'<p class="wo-muted">Noch keine Wahl in dieser Amtszeit durchgeführt.</p>';
+    return pageHead("DEMOKRATIE & MEHRHEITEN","Parteien & Wahlen","Parteien reagieren auf deine Politik, konkurrieren um Stimmen und können nach einer Wahl Regierungsmehrheiten bilden.")+
+      '<div class="wo-government-summary"><div><span>Wahl in</span><strong>'+state.nextElection+' Monaten</strong></div><div><span>Koalitionsanteil</span><strong>'+Math.round(coalitionSeats)+'%</strong></div><div><span>Wahlkampfaktionen</span><strong>'+pol.campaigns+'</strong></div></div>'+
+      '<div class="wo-two-col"><section class="wo-panel"><h2>Parteienlandschaft</h2><p class="wo-muted">Die Umfragewerte verändern sich durch Wirtschaft, Zufriedenheit, Freiheit, Umweltpolitik und deine Entscheidungen.</p>'+rows+last+'</section>'+
+      '<section class="wo-panel"><h2>Demokratische Strategie</h2><p class="wo-muted">Ein Wahlkampf kostet Geld und einen politischen Aktionspunkt. Er stärkt je nach Schwerpunkt unterschiedliche Wählergruppen.</p>'+
+      '<div class="wo-action-stack"><button class="wo-btn primary" data-action="campaign" data-kind="jobs">Arbeitsplätze & Wirtschaft · 90 €</button><button class="wo-btn" data-action="campaign" data-kind="social">Soziale Sicherheit · 85 €</button><button class="wo-btn" data-action="campaign" data-kind="climate">Klima & Zukunft · 80 €</button><button class="wo-btn" data-action="campaign" data-kind="freedom">Freiheit & Transparenz · 75 €</button></div>'+
+      '<div class="wo-parliament-note">Aktuelle Koalitionsstärke: <strong>'+Math.round(coalitionSeats)+'%</strong>. Für eine stabile Mehrheit werden mindestens 50% benötigt.</div></section></div>'+
+      '<section class="wo-panel"><h2>Koalitionsverhandlungen</h2><p class="wo-muted">Nach einer Wahl kannst du Partner aufnehmen. Ein Koalitionswechsel kostet einen Aktionspunkt und kann politische Kompromisse erfordern.</p><div class="wo-inline-form"><select id="wo-coalition-party">'+parties.filter(x=>!pol.coalition.includes(x.id)).map(x=>'<option value="'+x.id+'">'+esc(x.name)+' · '+Math.round(x.support)+'%</option>').join("")+'</select><button class="wo-btn primary" data-action="coalition" data-party="selected">Partner aufnehmen</button></div></section>';
+  }
+  function runCampaign(kind){
+    const p=state.player,pol=state.politics,costs={jobs:90,social:85,climate:80,freedom:75};
+    if(!costs[kind])return;
+    if(p.treasury<costs[kind]){notify("Nicht genügend Geld für den Wahlkampf.");return;}
+    if(!spendAP(1))return;
+    p.treasury-=costs[kind];pol.campaigns++;
+    const target={jobs:"civic",social:"social",climate:"green",freedom:"liberal"}[kind];
+    const party=pol.parties.find(x=>x.id===target);
+    if(party)party.support=clamp(party.support+2.2,1,65);
+    const gov=pol.parties.find(x=>x.government);
+    if(gov&&gov.id!==target)gov.support=clamp(gov.support+.6,1,65);
+    normalizePartySupport();
+    addNews("Wahlkampf gestartet",({jobs:"Deine Regierung stellt Beschäftigung und Wachstum in den Mittelpunkt.",social:"Soziale Sicherheit wird zum Schwerpunkt deiner Kampagne.",climate:"Du wirbst mit Klimaschutz und langfristiger Modernisierung.",freedom:"Du setzt auf Bürgerrechte, Transparenz und Freiheit."})[kind],"success");
+    saveGame();render();notify("Wahlkampfmaßnahme durchgeführt.");
+  }
+  function formCoalition(id){
+    if(id==="selected")id=$("wo-coalition-party")?.value;
+    const pol=state.politics,party=pol.parties.find(x=>x.id===id);
+    if(!party||pol.coalition.includes(id)){notify("Diese Partei ist bereits Teil der Koalition.");return;}
+    if(!spendAP(1))return;
+    pol.coalition.push(id);party.government=true;
+    addNews("Koalitionsabkommen", "Mit "+party.name+" wurde eine Zusammenarbeit vereinbart. Neue Kompromisse werden erforderlich.","success");
+    saveGame();render();notify("Koalitionspartner aufgenommen.");
+  }
+  function normalizePartySupport(){
+    const parties=state.politics.parties,total=parties.reduce((s,x)=>s+x.support,0)||1;
+    parties.forEach(x=>x.support=clamp(x.support/total*100,1,80));
+    const adjusted=parties.reduce((s,x)=>s+x.support,0);
+    parties[0].support+=100-adjusted;
+  }
+  function runPoliticalMonth(){
+    const pol=state.politics;if(!pol||!Array.isArray(pol.parties))return;
+    const p=state.player,s=state.society;
+    pol.parties.forEach(party=>{
+      let delta=(Math.random()-.5)*.55;
+      if(party.id==="civic")delta+=(p.approval-50)*.012+(p.economy-60)*.006;
+      if(party.id==="social")delta+=(s.inequality-40)*.012+(s.happiness-60)*.008;
+      if(party.id==="green")delta+=(s.environment-50)*.014+(state.climate.renewables-40)*.006;
+      if(party.id==="liberal")delta+=(s.freedom-60)*.012+(s.mediaTrust-55)*.006;
+      if(party.id==="conservative")delta+=(p.stability-60)*.012+(p.military-50)*.004;
+      party.support=clamp(party.support+delta,2,70);
+    });
+    normalizePartySupport();
+  }
+  function runElection(){
+    const pol=state.politics,p=state.player;
+    normalizePartySupport();
+    const winner=pol.parties.slice().sort((a,b)=>b.support-a.support)[0];
+    const coalition=pol.parties.filter(x=>pol.coalition.includes(x.id)).reduce((sum,x)=>sum+x.support,0);
+    const mandate=clamp(coalition+(p.approval-50)*.22+(p.stability-55)*.1,10,85);
+    const won=pol.coalition.includes(winner.id)||coalition>=50;
+    p.parliament=mandate;pol.mandate=mandate;pol.lastElection={date:turnLabel(),result:won?"Regierung bestätigt":"Regierungswechsel / schwierige Mehrheitsbildung"};
+    if(won){p.influence=clamp(p.influence+8,0,100);p.approval=clamp(p.approval+3,0,100);addNews("Wahl: Regierung bestätigt","Die Regierungskoalition kann mit "+Math.round(mandate)+"% der Sitze weiterarbeiten.","success");}
+    else{p.stability=clamp(p.stability-7,0,100);p.parliament=clamp(p.parliament-8,0,100);p.influence=clamp(p.influence-4,0,100);addNews("Wahl: schwierige Regierungsbildung","Die stärkste Partei ist nicht Teil deiner Koalition. Verhandlungen werden notwendig.","warning");}
+    state.nextElection=36;
+  }
   function renderNews() {
     const rows=state.news.map(n=>'<article class="wo-news-card"><div class="wo-news-card-head"><span class="wo-news-dot '+esc(n.tone)+'"></span><span class="wo-tag">'+esc(n.date)+'</span></div><h3>'+esc(n.title)+'</h3><p>'+esc(n.text)+'</p></article>').join("");
     return pageHead("PRESSE & INFORMATION","Nachrichtenarchiv","Verfolge die Ereignisse in deinem Land und in der internationalen Ordnung.")+
@@ -568,12 +653,8 @@
     state.month++;
     if(state.month>12){state.month=1;state.year++;}
     state.nextElection--;
-    if(state.nextElection<=0){
-      const won=p.approval>=49&&p.parliament>=45;
-      if(won){p.influence=clamp(p.influence+8,0,100);p.approval=clamp(p.approval+3,0,100);addNews("Wahl bestätigt deine Regierung","Deine Regierung erhält erneut ein Mandat. Die Arbeit kann weitergehen.","success");}
-      else {p.stability=clamp(p.stability-8,0,100);p.parliament=clamp(p.parliament-10,0,100);p.influence=clamp(p.influence-5,0,100);addNews("Schwierige Wahl","Deine Regierung verliert an Rückhalt. Du musst Mehrheiten und Vertrauen neu aufbauen.","warning");}
-      state.nextElection=36;
-    }
+    if(state.nextElection<=0)runElection();
+    runPoliticalMonth();
     p.actionPoints=3;
     const eventSeed=EVENTS[Math.floor(Math.random()*EVENTS.length)];
     state.currentEvent={...eventSeed,choices:eventSeed.choices.map(x=>({...x,effects:{...x.effects}})),targetId:null};
@@ -671,6 +752,8 @@
     else if(kind==="trade-deal")makeTradeDeal(action.dataset.country);
     else if(kind==="research")unlockResearch(action.dataset.tech);
     else if(kind==="ai-diplomacy")runForeignOffice(action.dataset.country,action.dataset.move);
+    else if(kind==="campaign")runCampaign(action.dataset.kind);
+    else if(kind==="coalition")formCoalition(action.dataset.party);
   }
   function handleSubmit(event) {
     const form=event.target;
