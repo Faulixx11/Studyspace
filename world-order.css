@@ -252,3 +252,14 @@ button{cursor:pointer}
 .wo-inline-form{display:flex;gap:9px;flex-wrap:wrap}.wo-inline-form select{flex:1;min-width:200px;padding:10px;background:#101b29;color:#fff;border:1px solid var(--wo-border);border-radius:8px}
 @media(max-width:900px){.wo-atlas-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}.wo-atlas-region{grid-column:auto!important;grid-row:auto!important}.wo-tech-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.wo-tech-grid{grid-template-columns:1fr}.wo-atlas-grid{grid-template-columns:1fr}.wo-policy-row{align-items:flex-start}}
+
+/* Interaktive schematische Weltkarte */
+.wo-map-canvas{position:relative;min-height:420px;overflow:hidden;border:1px solid var(--wo-border);border-radius:14px;background:radial-gradient(ellipse at 50% 45%,#18354a,#0d1824 75%);margin:14px 0 20px}
+.wo-map-canvas>svg{position:absolute;inset:0;width:100%;height:100%;opacity:.95}
+.wo-map-canvas .wo-land{fill:#29465a;stroke:#54738b;stroke-width:2;stroke-linejoin:round}
+.wo-map-point{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;max-width:145px;padding:6px 8px;border:1px solid #536b80;border-radius:8px;background:#15283ae8;color:#edf5fc;box-shadow:0 4px 12px #0005;cursor:pointer;font-size:10px}
+.wo-map-point:hover{z-index:5;border-color:#b6d8f4;background:#294760;transform:translate(-50%,-50%) scale(1.06)}
+.wo-map-point span{font-size:17px}.wo-map-point b{font-size:9px;white-space:nowrap}
+.wo-map-point.own{border-color:#e2bd78;background:#493b27}.wo-map-point.ally{border-color:#65c9a1;background:#183b35}
+.wo-map-caption{position:absolute;bottom:9px;left:12px;color:#8297aa;font-size:9px}
+@media(max-width:650px){.wo-map-canvas{min-height:360px}.wo-map-point{padding:5px}.wo-map-point b{display:none}.wo-map-point span{font-size:18px}}
