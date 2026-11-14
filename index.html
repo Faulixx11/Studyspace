@@ -36,10 +36,11 @@
                 <span class="nav-icon">✧</span><span class="nav-text">KI-Tutor</span>
             </button>
             <button class="nav-item" data-page="french"><span class="nav-icon">🇫🇷</span><span class="nav-text">Französisch-Test</span></button>
+            <button class="nav-item" data-page="world-order"><span class="nav-icon">🌐</span><span class="nav-text">WORLD ORDER</span></button>
             <button class="nav-item" data-page="flashcards">
                 <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
             </button>
-            <button class="nav-item" data-page="empire">
+            <button class="nav-item" data-page="empire" style="display:none" aria-hidden="true">
                 <span class="nav-icon">♜</span><span class="nav-text">Imperium</span>
             </button>
         </nav>
@@ -111,7 +112,8 @@
                         <h3>Fortschritt</h3>
                         <p>Behalte deine Entwicklung im Blick.</p>
                     </button>
-                    <button class="dashboard-card empire-launch-card" data-goto="empire"><span class="card-icon orange">♜</span><h3>Dein Imperium</h3><p>Gründe ein Reich, baue Städte und erweitere dein Gebiet durch echtes Lernen.</p></button>
+                    <button class="dashboard-card" data-goto="world-order"><span class="card-icon purple">🌐</span><h3>WORLD ORDER</h3><p>Führe einen Staat, gestalte Diplomatie und lerne internationale Politik durch eigene Entscheidungen.</p></button>
+                    <button class="dashboard-card empire-launch-card" data-goto="empire" style="display:none" aria-hidden="true"><span class="card-icon orange">♜</span><h3>Dein Imperium</h3><p>Archiviertes Aufbauspiel.</p></button>
                 </div>
             </div>
 
@@ -268,6 +270,8 @@
         <!-- FRANZÖSISCH-TEST -->
         <section class="page" id="page-french"><iframe title="Französisch-Test Lernbereich" src="french-test.html" style="width:100%;height:calc(100vh - 100px);min-height:900px;border:0;border-radius:14px;background:#10131d"></iframe></section>
 
+        <section class="page" id="page-world-order"><iframe title="WORLD ORDER – Internationale Politik" src="world-order.html" style="width:100%;height:calc(100vh - 100px);min-height:1250px;border:0;border-radius:14px;background:#0b111b"></iframe></section>
+
         <!-- KARTEIKARTEN -->
         <section class="page" id="page-flashcards">
             <div class="page-intro">
@@ -355,6 +359,12 @@
                 <p class="muted" id="backupStatus" aria-live="polite">Der Import ersetzt die vorhandenen StudySpace-Daten auf diesem Gerät.</p>
                 <button class="danger-button" id="resetButton">Alle Daten löschen</button>
             </div>
+            <div class="panel">
+                <h3>Archiviertes Spiel</h3>
+                <p class="muted">Das bisherige Imperium-Spiel wurde vorübergehend deaktiviert. Der bisherige Spielcode und dein gespeicherter Imperium-Spielstand bleiben erhalten.</p>
+                <button class="secondary-button" type="button" id="restoreLegacyEmpireButton">Altes Imperium-Spiel wieder einblenden</button>
+            </div>
+            </div>
         </section>
 
     </main>
@@ -373,7 +383,24 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 <script src="nutrition.js?v=10"></script>
-<script src="empire.js?v=54"></script>
+<script>
+/* Das bisherige Imperium bleibt archiviert und wird erst auf ausdrücklichen Wunsch geladen. */
+window.restoreLegacyEmpire = function() {
+    const navItem = document.querySelector('.nav-item[data-page="empire"]');
+    const dashboardCard = document.querySelector('.dashboard-card[data-goto="empire"]');
+    if (navItem) { navItem.style.display = ""; navItem.removeAttribute("aria-hidden"); }
+    if (dashboardCard) { dashboardCard.style.display = ""; dashboardCard.removeAttribute("aria-hidden"); }
+    if (window.__studySpaceEmpireLoaded) { openPage("empire"); return; }
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "empire.css?v=44"; document.head.appendChild(css);
+    const game = document.createElement("script"); game.src = "empire.js?v=54";
+    game.onload = function() { window.__studySpaceEmpireLoaded = true; openPage("empire"); };
+    document.body.appendChild(game);
+};
+if (typeof pageTitles !== "undefined") pageTitles["world-order"] = "WORLD ORDER";
+document.getElementById("restoreLegacyEmpireButton")?.addEventListener("click", function() {
+    window.restoreLegacyEmpire();
+});
+</script>
 
 <script>
 /* Französisch-Seite direkt öffnen, unabhängig von anderen Navigations-Erweiterungen. */
