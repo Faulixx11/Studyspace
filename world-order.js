@@ -78,7 +78,7 @@
   function loadGame() {
     try {
       const data = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-      if (data && data.version === 1 && data.player && Array.isArray(data.countries)) return data;
+      if (data && data.version === 1 && data.player && Array.isArray(data.countries)) { migrateExtendedState(data); return data; }
     } catch (error) { console.warn("WORLD ORDER Spielstand konnte nicht gelesen werden.", error); }
     return null;
   }
@@ -111,7 +111,7 @@
       version:1, countryId:chosen.id, difficulty:difficulty || "normal", role:role || "head",
       year:2028, month:1, turn:0, actionPoints:3, nextElection:36,
       player:{treasury:1100,approval:58,stability:chosen.stability,economy:chosen.economy,military:chosen.military,technology:chosen.technology,influence:30,research:12,tax:22,parliament:56,relationships, budget:{education:20,health:22,infrastructure:20,defense:18,diplomacy:10,reserves:10}, tradePartners:[], alliances:[], laws:[], ministers:{}, memberships:["world-forum"], eventCount:0},
-      countries, news:[], resolutions:[], learningStats:{answered:0,known:0,unsure:0,researchEarned:0}, rewardLedger:[], achievements:[], currentEvent:null, lastEconomy:{income:0,expenses:0,net:0}
+      countries, news:[], resolutions:[], learningStats:{answered:0,known:0,unsure:0,researchEarned:0}, rewardLedger:[], achievements:[], currentEvent:null, lastEconomy:{income:0,expenses:0,net:0}, society:{happiness:64,inequality:42,freedom:72,mediaTrust:61,environment:55,employment:91}, policies:{welfare:50,freedom:65,green:45,industry:55,education:60}, trade:{imports:[],exports:[],agreements:[]}, researchTree:{unlocked:["basic-research"],completed:[]}, projects:[], climate:{emissions:52,renewables:38,adaptation:30}
     };
     addNews("Regierungsübernahme", "Du übernimmst die Führung von "+chosen.name+". Dein erster Monat beginnt.", "success");
     saveGame();
@@ -166,7 +166,7 @@
     renderHeader(); renderNav();
     if(!state){$("wo-setup").hidden=false;$("wo-view").hidden=true;renderSetup();return;}
     $("wo-setup").hidden=true;$("wo-view").hidden=false;
-    const views={dashboard:renderDashboard,world:renderWorld,diplomacy:renderDiplomacy,economy:renderEconomy,government:renderGovernment,organizations:renderOrganizations,learning:renderLearning,news:renderNews};
+    const views={dashboard:renderDashboard,world:renderWorld,atlas:renderAtlas,society:renderSociety,trade:renderTrade,research:renderResearch,diplomacy:renderDiplomacy,economy:renderEconomy,government:renderGovernment,organizations:renderOrganizations,learning:renderLearning,news:renderNews};
     const renderFn=views[activeView]||renderDashboard;
     $("wo-view").innerHTML=renderFn();
   }
@@ -317,6 +317,116 @@
   function getMaterialCount() {
     try { const app=JSON.parse(localStorage.getItem("studyspaceData")||"{}");return Array.isArray(app.materials)?app.materials.length:0; } catch { return 0; }
   }
+
+  function migrateExtendedState(data) {
+    data.society=data.society||{happiness:64,inequality:42,freedom:72,mediaTrust:61,environment:55,employment:91};
+    data.policies=data.policies||{welfare:50,freedom:65,green:45,industry:55,education:60};
+    data.trade=data.trade||{imports:[],exports:[],agreements:[]};data.trade.agreements=data.trade.agreements||[];
+    data.researchTree=data.researchTree||{unlocked:["basic-research"],completed:[]};
+    data.researchTree.unlocked=data.researchTree.unlocked||["basic-research"];data.researchTree.completed=data.researchTree.completed||[];
+    data.projects=data.projects||[];data.climate=data.climate||{emissions:52,renewables:38,adaptation:30};
+    data.player.relationships=data.player.relationships||{};data.player.tradePartners=data.player.tradePartners||[];
+  }
+  const TECHS=[
+    {id:"basic-research",name:"Grundlagenforschung",cost:0,desc:"Basis für wissenschaftliche Entwicklung.",effect:"Starttechnologie"},
+    {id:"clean-energy",name:"Erneuerbare Energien",cost:18,requires:"basic-research",desc:"Saubere Energie und geringere Emissionen.",effect:"+8 Umwelt, +4 Technologie"},
+    {id:"digital-state",name:"Digitaler Staat",cost:20,requires:"basic-research",desc:"Digitale Verwaltung und bessere öffentliche Dienste.",effect:"+7 Technologie, +3 Zustimmung"},
+    {id:"medical",name:"Medizinische Innovation",cost:22,requires:"basic-research",desc:"Gesundheit und gesellschaftliche Resilienz.",effect:"+7 Stabilität, +4 Zufriedenheit"},
+    {id:"advanced-industry",name:"Industrie 4.0",cost:25,requires:"digital-state",desc:"Produktivere, wissensintensive Industrie.",effect:"+8 Wirtschaft, +5 Technologie"},
+    {id:"climate-adapt",name:"Klimaanpassung",cost:24,requires:"clean-energy",desc:"Schützt Infrastruktur und Bevölkerung.",effect:"+10 Anpassung, +4 Umwelt"},
+    {id:"education-network",name:"Internationales Bildungsnetz",cost:22,requires:"medical",desc:"Austausch und Humankapital.",effect:"+8 Forschung, +5 Einfluss"}
+  ];
+  const PROJECTS=[
+    {id:"rail",name:"Transkontinentale Bahn",cost:180,turns:5,desc:"Verbindet wichtige Wirtschaftsregionen.",effect:"economy"},
+    {id:"university",name:"Forschungsuniversität",cost:150,turns:4,desc:"Stärkt Bildung und Innovation.",effect:"technology"},
+    {id:"grid",name:"Modernes Stromnetz",cost:200,turns:6,desc:"Erleichtert den Ausbau erneuerbarer Energien.",effect:"climate"},
+    {id:"housing",name:"Bezahlbares Wohnen",cost:130,turns:4,desc:"Stärkt Zusammenhalt und Lebensqualität.",effect:"society"}
+  ];
+  function renderAtlas(){
+    const regions=[...new Set(state.countries.map(c=>c.region))],coords={"Nördlicher Kontinent":[1,1],"Westlicher Kontinent":[0,2],"Mittlerer Kontinent":[2,2],"Östlicher Kontinent":[3,1],"Südlicher Kontinent":[2,3]};
+    const blocks=regions.map(region=>'<section class="wo-atlas-region" style="grid-column:'+(coords[region][0]+1)+';grid-row:'+(coords[region][1]+1)+'"><h3>'+esc(region)+'</h3>'+state.countries.filter(c=>c.region===region).map(c=>'<button class="wo-atlas-country '+(c.id===state.countryId?'own':'')+'" data-action="country-detail" data-country="'+c.id+'"><span>'+c.flag+'</span><b>'+esc(c.name)+'</b><small>'+esc(c.capital)+'</small><i style="width:'+c.economy+'%"></i></button>').join("")+'</section>').join("");
+    return pageHead("GEOPOLITISCHE ÜBERSICHT","Weltatlas","Schematische Übersicht der fünf Weltregionen. Wähle Staaten für Profile und diplomatische Aktionen.")+'<div class="wo-atlas-legend"><span>Dein Staat ist hervorgehoben</span><span>12 simulierte Staaten</span><span>Balken = Wirtschaftsindex</span></div><div class="wo-atlas-grid">'+blocks+'</div><div id="wo-country-detail" class="wo-panel wo-detail-panel" hidden></div>';
+  }
+  function renderSociety(){
+    const s=state.society, opts=[["welfare","Sozialleistungen ausbauen","65 € · Zufriedenheit und Stabilität"],["press","Pressefreiheit schützen","45 € · Freiheit und Medienvertrauen"],["jobs","Beschäftigungsprogramm","70 € · Beschäftigung und Zustimmung"],["anti-corruption","Transparenzpaket","55 € · Vertrauen und Institutionen"]];
+    return pageHead("INNENPOLITIK","Gesellschaft & Medien","Lebensqualität, Freiheit, Vertrauen und Beschäftigung beeinflussen die Stabilität deiner Regierung.")+
+      '<div class="wo-kpi-grid"><div class="wo-kpi"><span>😊 Zufriedenheit</span><strong>'+Math.round(s.happiness)+'/100</strong></div><div class="wo-kpi"><span>🗞️ Medienvertrauen</span><strong>'+Math.round(s.mediaTrust)+'/100</strong></div><div class="wo-kpi"><span>🕊️ Freiheit</span><strong>'+Math.round(s.freedom)+'/100</strong></div><div class="wo-kpi"><span>💼 Beschäftigung</span><strong>'+Math.round(s.employment)+'/100</strong></div></div>'+
+      '<div class="wo-two-col"><section class="wo-panel"><h2>Gesellschaftliche Lage</h2>'+bar("Zufriedenheit",s.happiness)+bar("Medienvertrauen",s.mediaTrust)+bar("Freiheit und Rechte",s.freedom)+bar("Beschäftigung",s.employment)+bar("Gleichheit",100-s.inequality)+bar("Umweltqualität",s.environment)+'</section><section class="wo-panel"><h2>Politische Maßnahmen</h2>'+opts.map(o=>'<div class="wo-policy-row"><div><b>'+o[1]+'</b><small>'+o[2]+'</small></div><button class="wo-btn small" data-action="society-policy" data-policy="'+o[0]+'">Umsetzen</button></div>').join("")+'</section></div>'+
+      '<div class="wo-panel"><h2>Politische Zielkonflikte</h2><p class="wo-muted">Sicherheit, Freiheit, soziale Gerechtigkeit und wirtschaftliche Dynamik können miteinander konkurrieren. Zustimmung allein ist kein vollständiger Maßstab für eine stabile Demokratie.</p></div>';
+  }
+  function renderTrade(){
+    const c=state.climate,s=state.society,deals=state.trade.agreements||[],partners=state.countries.filter(x=>x.id!==state.countryId);
+    return pageHead("WIRTSCHAFT & NACHHALTIGKEIT","Handel & Klima","Verhandle Wirtschaftsbeziehungen, verringere Abhängigkeiten und gestalte den ökologischen Umbau.")+
+      '<div class="wo-kpi-grid"><div class="wo-kpi"><span>🤝 Handelspartner</span><strong>'+deals.length+'</strong></div><div class="wo-kpi"><span>🌱 Erneuerbare</span><strong>'+c.renewables+'%</strong></div><div class="wo-kpi"><span>🏭 Emissionen</span><strong>'+c.emissions+'</strong></div><div class="wo-kpi"><span>🛡️ Anpassung</span><strong>'+c.adaptation+'</strong></div></div>'+
+      '<div class="wo-two-col"><section class="wo-panel"><h2>Handelsabkommen</h2><p class="wo-muted">Ein Abkommen kostet 70 € und verbessert schrittweise die Wirtschaftsbeziehungen.</p><form id="wo-trade-form"><label class="wo-field">Partnerstaat<select id="wo-trade-country">'+partners.map(x=>'<option value="'+x.id+'">'+x.flag+' '+esc(x.name)+'</option>').join("")+'</select></label><button class="wo-btn primary" type="submit">Abkommen aushandeln · 70 €</button></form><div class="wo-list-spaced">'+(deals.map(id=>{const x=countryById(id);return '<div class="wo-policy-row"><b>'+(x?x.flag+' '+esc(x.name):esc(id))+'</b><span class="wo-tag positive">Aktiv</span></div>';}).join("")||'<p class="wo-muted">Noch keine zusätzlichen Abkommen.</p>')+'</div></section><section class="wo-panel"><h2>Klimapolitik</h2>'+bar("Erneuerbare Energien",c.renewables)+bar("Klimaanpassung",c.adaptation)+bar("Umweltqualität",s.environment)+bar("Emissionen (niedrig ist besser)",100-c.emissions)+
+      '<div class="wo-policy-row"><div><b>Erneuerbaren-Offensive</b><small>100 € · saubere Energie</small></div><button class="wo-btn small" data-action="climate-policy" data-policy="renewables">Starten</button></div><div class="wo-policy-row"><div><b>Klimaanpassungsfonds</b><small>80 € · Schutz vor Klimafolgen</small></div><button class="wo-btn small" data-action="climate-policy" data-policy="adaptation">Starten</button></div><div class="wo-policy-row"><div><b>Emissionsstandards</b><small>55 € · weniger Emissionen</small></div><button class="wo-btn small" data-action="climate-policy" data-policy="standards">Einführen</button></div></section></div>';
+  }
+  function renderResearch(){
+    const tree=state.researchTree;
+    return pageHead("INNOVATION & BILDUNG","Forschung & Projekte","Investiere Forschungspunkte in Technologien und starte langfristige nationale Vorhaben.")+
+      '<div class="wo-kpi-grid"><div class="wo-kpi"><span>🔬 Forschungspunkte</span><strong>'+Math.round(state.player.research)+'</strong></div><div class="wo-kpi"><span>Technologien</span><strong>'+tree.completed.length+'/'+(TECHS.length-1)+'</strong></div><div class="wo-kpi"><span>🏗️ Projekte</span><strong>'+state.projects.length+'</strong></div><div class="wo-kpi"><span>💡 Technologieindex</span><strong>'+Math.round(state.player.technology)+'</strong></div></div>'+
+      '<section class="wo-panel"><h2>Technologiebaum</h2><div class="wo-tech-grid">'+TECHS.filter(t=>t.id!=="basic-research").map(t=>{const done=tree.completed.includes(t.id),ready=tree.unlocked.includes(t.id)||tree.completed.includes(t.requires);return '<article class="wo-tech-card '+(done?'done':'')+'"><span class="wo-tag">'+(done?'Abgeschlossen':ready?'Verfügbar':'Voraussetzung fehlt')+'</span><h3>'+esc(t.name)+'</h3><p>'+esc(t.desc)+'</p><small>'+esc(t.effect)+' · '+t.cost+' Forschung</small><button class="wo-btn small '+(done?'ghost':'primary')+'" data-action="research" data-tech="'+t.id+'" '+(done||!ready?'disabled':'')+'>'+(done?'Erforscht':'Erforschen')+'</button></article>';}).join("")+'</div></section>'+
+      '<section class="wo-panel"><h2>Nationale Großprojekte</h2><form id="wo-project-form" class="wo-inline-form"><select id="wo-project-select">'+PROJECTS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+p.cost+' € · '+p.turns+' Monate</option>').join("")+'</select><button class="wo-btn primary" type="submit">Projekt starten</button></form><div class="wo-list-spaced">'+(state.projects.map(p=>'<div class="wo-policy-row"><div><b>'+esc(p.name)+'</b><small>Fortschritt: '+p.progress+'/'+p.turns+' Monate</small></div><span class="wo-tag">'+Math.round(p.progress/p.turns*100)+'%</span></div>').join("")||'<p class="wo-muted">Noch keine Großprojekte gestartet.</p>')+'</div></section>';
+  }
+  function applySocietyPolicy(policy){
+    const p=state.player,s=state.society,costs={welfare:65,press:45,jobs:70,"anti-corruption":55},cost=costs[policy];if(!cost)return;
+    if(!spendAP(1))return;if(p.treasury<cost){p.actionPoints++;notify("Nicht genügend Geld.");return;}p.treasury-=cost;
+    if(policy==="welfare"){s.happiness=clamp(s.happiness+7,0,100);s.inequality=clamp(s.inequality-4,0,100);p.stability=clamp(p.stability+2,0,100);}
+    if(policy==="press"){s.freedom=clamp(s.freedom+8,0,100);s.mediaTrust=clamp(s.mediaTrust+5,0,100);}
+    if(policy==="jobs"){s.employment=clamp(s.employment+6,0,100);p.approval=clamp(p.approval+3,0,100);p.economy=clamp(p.economy+1,0,100);}
+    if(policy==="anti-corruption"){s.mediaTrust=clamp(s.mediaTrust+7,0,100);p.parliament=clamp(p.parliament+2,0,100);s.freedom=clamp(s.freedom+2,0,100);}
+    addNews("Gesellschaftspolitische Reform","Eine neue gesellschaftspolitische Maßnahme wurde beschlossen.","success");saveGame();render();
+  }
+  function applyClimatePolicy(policy){
+    const p=state.player,c=state.climate,s=state.society,costs={renewables:100,adaptation:80,standards:55},cost=costs[policy];if(!cost)return;
+    if(!spendAP(1))return;if(p.treasury<cost){p.actionPoints++;notify("Nicht genügend Geld.");return;}p.treasury-=cost;
+    if(policy==="renewables"){c.renewables=clamp(c.renewables+9,0,100);c.emissions=clamp(c.emissions-5,0,100);p.technology=clamp(p.technology+1,0,100);}
+    if(policy==="adaptation"){c.adaptation=clamp(c.adaptation+12,0,100);s.environment=clamp(s.environment+2,0,100);}
+    if(policy==="standards"){c.emissions=clamp(c.emissions-7,0,100);s.environment=clamp(s.environment+5,0,100);p.approval=clamp(p.approval-1,0,100);}
+    addNews("Klimapolitische Entscheidung","Eine Maßnahme für Klimaschutz oder Anpassung wurde beschlossen.","success");saveGame();render();
+  }
+  function makeTradeDeal(id){
+    const c=countryById(id);if(!c||id===state.countryId)return;if(state.trade.agreements.includes(id)){notify("Es besteht bereits ein Abkommen.");return;}
+    if(state.player.treasury<70){notify("Nicht genügend Geld.");return;}if(!spendAP(1))return;
+    state.player.treasury-=70;state.trade.agreements.push(id);if(!state.player.tradePartners.includes(id))state.player.tradePartners.push(id);state.player.relationships[id]=clamp(relation(id)+8,-100,100);
+    addNews("Neues Handelsabkommen","Mit "+c.name+" wurde ein Handelsabkommen geschlossen.","success");saveGame();render();
+  }
+  function unlockResearch(id){
+    const t=TECHS.find(x=>x.id===id);if(!t||state.researchTree.completed.includes(id))return;
+    if(!state.researchTree.completed.includes(t.requires)){notify("Die notwendige Vorstufe fehlt.");return;}
+    if(state.player.research<t.cost){notify("Dir fehlen Forschungspunkte.");return;}if(!spendAP(1))return;
+    state.player.research-=t.cost;state.researchTree.completed.push(id);state.researchTree.unlocked.push(id);
+    const p=state.player,s=state.society,c=state.climate;
+    if(id==="clean-energy"){s.environment=clamp(s.environment+8,0,100);p.technology=clamp(p.technology+4,0,100);}
+    if(id==="digital-state"){p.technology=clamp(p.technology+7,0,100);p.approval=clamp(p.approval+3,0,100);}
+    if(id==="medical"){p.stability=clamp(p.stability+7,0,100);s.happiness=clamp(s.happiness+4,0,100);}
+    if(id==="advanced-industry"){p.economy=clamp(p.economy+8,0,100);p.technology=clamp(p.technology+5,0,100);}
+    if(id==="climate-adapt"){c.adaptation=clamp(c.adaptation+10,0,100);s.environment=clamp(s.environment+4,0,100);}
+    if(id==="education-network"){p.research=clamp(p.research+8,0,100);p.influence=clamp(p.influence+5,0,100);}
+    addNews("Forschungserfolg: "+t.name,"Eine neue Technologie wurde entwickelt.","success");saveGame();render();
+  }
+  function startProject(id){
+    const t=PROJECTS.find(x=>x.id===id);if(!t)return;if(state.projects.some(x=>x.id===id)){notify("Dieses Projekt läuft bereits oder wurde bereits umgesetzt.");return;}
+    if(state.player.treasury<t.cost){notify("Nicht genügend Geld.");return;}if(!spendAP(1))return;state.player.treasury-=t.cost;state.projects.push({...t,progress:0});addNews("Großprojekt begonnen",t.name+" wurde auf den Weg gebracht.","success");saveGame();render();
+  }
+  function runForeignOffice(id,move){
+    const c=countryById(id),costs={visit:35,aid:90,sanction:50};if(!c||!costs[move])return;
+    if(state.player.treasury<costs[move]){notify("Nicht genügend Geld.");return;}if(!spendAP(1))return;state.player.treasury-=costs[move];
+    if(move==="visit")state.player.relationships[id]=clamp(relation(id)+9,-100,100);
+    if(move==="aid"){state.player.relationships[id]=clamp(relation(id)+12,-100,100);c.stability=clamp(c.stability+3,0,100);}
+    if(move==="sanction"){state.player.relationships[id]=clamp(relation(id)-14,-100,100);c.economy=clamp(c.economy-2,0,100);state.player.influence=clamp(state.player.influence+1,0,100);}
+    addNews("Außenpolitische Initiative",({visit:"Ein Staatsbesuch stärkt den direkten Gesprächskanal.",aid:"Ein Hilfspaket unterstützt die Stabilität des Partnerstaats.",sanction:"Gezielte Sanktionen erhöhen den politischen Druck, verschlechtern aber Beziehungen."})[move],"neutral");saveGame();render();
+  }
+  function advanceExtendedWorld(){
+    const s=state.society,c=state.climate,p=state.player;
+    s.happiness=clamp(s.happiness+(p.approval-55)*.025+(p.stability-60)*.015,0,100);s.mediaTrust=clamp(s.mediaTrust+(s.freedom-60)*.012,0,100);
+    s.employment=clamp(s.employment+(p.economy-65)*.012,0,100);s.environment=clamp(s.environment+(c.renewables-40)*.012-(c.emissions-45)*.008,0,100);
+    state.projects.forEach(project=>{project.progress++;if(project.progress>=project.turns){if(project.effect==="economy")p.economy=clamp(p.economy+6,0,100);if(project.effect==="technology")p.technology=clamp(p.technology+7,0,100);if(project.effect==="climate"){c.renewables=clamp(c.renewables+10,0,100);c.emissions=clamp(c.emissions-6,0,100);}if(project.effect==="society"){s.happiness=clamp(s.happiness+8,0,100);s.inequality=clamp(s.inequality-5,0,100);}addNews("Großprojekt abgeschlossen",project.name+" entfaltet nun seine Wirkung.","success");}});
+    state.projects=state.projects.filter(x=>x.progress<x.turns);
+    state.countries.filter(x=>x.id!==state.countryId).forEach(country=>{const roll=Math.random();if(roll<.13){country.economy=clamp(country.economy+(Math.random()*3-1),0,100);country.stability=clamp(country.stability+(Math.random()*2-1),0,100);}if(roll<.035){const delta=Math.random()<.5?-1:1;state.player.relationships[country.id]=clamp(relation(country.id)+delta*4,-100,100);country.lastAction=delta>0?"Diplomatische Annäherung":"Politische Spannungen";addNews("Internationale Entwicklung: "+country.name,country.name+" verändert seinen außenpolitischen Kurs: "+country.lastAction+".","neutral");}});
+    if(Math.random()<.12){const country=state.countries.filter(x=>x.id!==state.countryId).sort((a,b)=>a.stability-b.stability)[0];addNews("Internationale Lage","In "+country.name+" sorgen innenpolitische Entwicklungen für Unsicherheit.","warning");}
+  }
+
   function renderNews() {
     const rows=state.news.map(n=>'<article class="wo-news-card"><div class="wo-news-card-head"><span class="wo-news-dot '+esc(n.tone)+'"></span><span class="wo-tag">'+esc(n.date)+'</span></div><h3>'+esc(n.title)+'</h3><p>'+esc(n.text)+'</p></article>').join("");
     return pageHead("PRESSE & INFORMATION","Nachrichtenarchiv","Verfolge die Ereignisse in deinem Land und in der internationalen Ordnung.")+
@@ -453,6 +563,7 @@
       c.technology=clamp(c.technology+(Math.random()*0.35),0,100);
       c.trend=Math.round((Math.random()*2-0.8)*10)/10;
     });
+    advanceExtendedWorld();
     state.turn++;
     state.month++;
     if(state.month>12){state.month=1;state.year++;}
@@ -534,6 +645,11 @@
     else if(kind==="grade")gradeLearning(action.dataset.result);
     else if(kind==="open-studyspace"){try{if(window.parent&&typeof window.parent.openPage==="function")window.parent.openPage(action.dataset.target);}catch(error){notify("Öffne den entsprechenden Lernbereich über die StudySpace-Navigation.");}}
     else if(kind==="export")exportSave();
+    else if(kind==="society-policy")applySocietyPolicy(action.dataset.policy);
+    else if(kind==="climate-policy")applyClimatePolicy(action.dataset.policy);
+    else if(kind==="trade-deal")makeTradeDeal(action.dataset.country);
+    else if(kind==="research")unlockResearch(action.dataset.tech);
+    else if(kind==="ai-diplomacy")runForeignOffice(action.dataset.country,action.dataset.move);
   }
   function handleSubmit(event) {
     const form=event.target;
@@ -541,6 +657,8 @@
     if(form.id==="wo-tax-form"){event.preventDefault();changeTax($("wo-tax").value);}
     if(form.id==="wo-budget-form"){event.preventDefault();saveBudget(form);}
     if(form.id==="wo-resolution-form"){event.preventDefault();resolveResolution($("wo-resolution").value);}
+    if(form.id==="wo-trade-form"){event.preventDefault();makeTradeDeal($("wo-trade-country").value);}
+    if(form.id==="wo-project-form"){event.preventDefault();startProject($("wo-project-select").value);}
   }
   function handleChange(event) {
     if(event.target.id==="wo-dip-country"){const c=countryById(event.target.value);$("wo-dip-profile").innerHTML=diplomacyProfile(c);}
