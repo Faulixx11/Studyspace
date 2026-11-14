@@ -364,7 +364,7 @@
 <script src="studyspace-sync.js?v=2"></script>
 <script src="studyspace-cloud.js?v=12"></script>
 <link rel="stylesheet" href="material-reader.css?v=1">
-<script src="script.js?v=16"></script>
+<script src="script.js?v=17"></script>
 <script src="material-reader.js?v=7"></script>
 <script src="flashcards-pro.js?v=15"></script>
 <script src="studyspace-plus.js?v=3"></script>
@@ -374,7 +374,22 @@
 <script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
 <script src="nutrition.js?v=10"></script>
 <script src="empire.js?v=54"></script>
-<script>if(typeof pageTitles!=="undefined")pageTitles.french="Französisch-Test";</script>
+
+<script>
+/* Französisch-Seite direkt öffnen, unabhängig von anderen Navigations-Erweiterungen. */
+document.addEventListener("click", function(event) {
+    const trigger = event.target.closest('.nav-item[data-page="french"]');
+    if (!trigger) return;
+    document.querySelectorAll(".page").forEach(function(page) {
+        page.classList.toggle("active", page.id === "page-french");
+    });
+    document.querySelectorAll(".nav-item[data-page]").forEach(function(item) {
+        item.classList.toggle("active", item.dataset.page === "french");
+    });
+    const title = document.getElementById("pageTitle");
+    if (title) title.textContent = "Französisch-Test";
+}, true);
+</script>
 <script>
 /* Fallback-Navigation: stellt sicher, dass das Imperium auch dann geöffnet wird,
    wenn ein anderer Navigationshandler vorher nicht korrekt gebunden wurde. */
