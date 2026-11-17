@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Französisch-Vokabeltrainer · StudySpace</title>
+<style>
+:root{color-scheme:dark;--bg:#10131d;--panel:#171c2a;--line:#30384b;--muted:#aab4c7;--accent:#8b8df5;--cyan:#55c5e8;--green:#55d6a1;--red:#fb8585}
+*{box-sizing:border-box}body{margin:0;padding:22px;background:var(--bg);color:#eef1f8;font-family:Inter,system-ui,sans-serif}.wrap{max-width:1120px;margin:auto}.hero,.panel{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:22px;margin-bottom:16px}.hero{background:radial-gradient(ellipse at 90% 0%,#7777ed2b,transparent 48%),var(--panel)}.kicker{font-size:10px;letter-spacing:2px;font-weight:800;color:#b5b6ff}.hero h1{font-size:clamp(25px,4vw,36px);margin:9px 0}.muted{color:var(--muted);line-height:1.6}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.stat{padding:13px;border:1px solid var(--line);border-radius:12px;background:#ffffff05}.stat small{display:block;color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:4px}.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}.field select,.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:#101521;color:#eef1f8;font:inherit}.progress{height:7px;background:#ffffff17;border-radius:9px;overflow:hidden;margin:15px 0 5px}.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));width:0;transition:width .2s}.study{max-width:760px;margin:0 auto;text-align:center;padding:25px 18px}.tag{display:inline-block;padding:6px 10px;border-radius:20px;background:#8b8df51c;color:#c5c6ff;font-size:11px}.prompt{font-size:clamp(25px,4vw,38px);font-weight:750;line-height:1.35;margin:24px 0 18px;overflow-wrap:anywhere}.direction{font-size:12px;color:var(--muted)}.answer{display:flex;gap:9px;max-width:570px;margin:0 auto}.answer input{flex:1;min-width:0;padding:14px;border:1px solid #59617a;border-radius:10px;background:#101521;color:white;font:inherit;font-size:16px}.btn{border:1px solid #7476df;border-radius:10px;padding:11px 15px;background:#6467d4;color:white;font-weight:700;cursor:pointer}.btn.secondary{background:transparent;color:#c8c9ff;border-color:#555b78}.btn.good{background:#176a50;border-color:#238a69}.btn.bad{background:#7b343b;border-color:#a94b55}.btn:disabled{opacity:.4;cursor:not-allowed}.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:14px}.feedback{min-height:50px;margin:17px auto 0;max-width:570px;padding:12px;border-radius:10px;font-size:14px;line-height:1.5}.feedback.ok{background:#55d6a118;color:#8df0c1;border:1px solid #55d6a14a}.feedback.no{background:#fb858518;color:#ffb0b0;border:1px solid #fb85854a}.feedback.neutral{color:var(--muted)}.small{font-size:12px}.list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.item{display:flex;justify-content:space-between;gap:12px;padding:11px;border:1px solid var(--line);border-radius:9px;background:#ffffff04}.item strong{font-size:13px}.item span{font-size:12px;color:var(--muted);text-align:right}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.hidden{display:none!important}.pill{font-size:11px;color:var(--muted)}@media(max-width:700px){body{padding:10px}.controls{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.list{grid-template-columns:1fr}.answer{flex-direction:column}.answer .btn{width:100%}.hero,.panel{padding:16px}}
+</style></head><body><div class="wrap">
+<header class="hero"><span class="kicker">STUDYSPACE · DEIN PERSÖNLICHER VOKABELTRAINER</span><h1>🇫🇷 Deine Französisch-Vokabeln</h1><p class="muted">Lerne die Wörter aus deinen GoodNotes-Seiten so lange, bis du sie in beide Richtungen sicher kannst. Deine Lernstände werden auf diesem Gerät gespeichert.</p>
+<div class="stats"><div class="stat"><small>Alle Vokabeln</small><strong id="total">–</strong></div><div class="stat"><small>Sicher gelernt</small><strong id="mastered">0</strong></div><div class="stat"><small>Noch offen</small><strong id="open">–</strong></div><div class="stat"><small>Richtig heute</small><strong id="today">0</strong></div></div><div class="progress"><span id="overall"></span></div><small class="muted" id="overallText">Dein Gesamtfortschritt</small></header>
+<section class="panel"><div class="controls"><div class="field"><label for="direction">Abfragerichtung</label><select id="direction"><option value="fr-de">Französisch → Deutsch</option><option value="de-fr">Deutsch → Französisch</option><option value="mix">Gemischt</option></select></div><div class="field"><label for="category">Thema</label><select id="category"><option value="all">Alle Themen</option><option>Allgemein & Mengen</option><option>Festival & Kultur</option><option>Personen</option><option>Alltag & Verben</option><option>Orte & Beschreibungen</option><option>Weitere Begriffe</option></select></div><div class="field"><label for="scope">Welche Vokabeln?</label><select id="scope"><option value="all">Alle Vokabeln</option><option value="open">Noch nicht sicher</option><option value="wrong">Zuletzt falsch</option><option value="new">Noch nie abgefragt</option></select></div></div><div class="actions" style="justify-content:flex-start"><button class="btn" id="start">Lernrunde starten</button><button class="btn secondary" id="reset">Lernstand zurücksetzen</button><button class="btn secondary" id="toggleList">Vokabelliste anzeigen</button></div></section>
+<section class="panel study"><span class="tag" id="cardTag">Bereit?</span><div class="direction" id="directionText">Wähle deine Lernrunde und starte.</div><div class="prompt" id="prompt">Los geht’s!</div><div class="answer"><input id="response" autocomplete="off" placeholder="Übersetzung eingeben …" disabled><button class="btn" id="check" disabled>Prüfen</button></div><div class="feedback neutral" id="feedback">Tipp: Schreibe die Übersetzung selbst. Akzente werden beim Prüfen nicht streng gewertet.</div><div class="actions"><button class="btn secondary" id="hint" disabled>Tipp anzeigen</button><button class="btn secondary" id="reveal" disabled>Antwort zeigen</button><button class="btn good" id="known" disabled>Gewusst ✓</button><button class="btn bad" id="again" disabled>Noch üben ↻</button><button class="btn secondary" id="skip" disabled>Überspringen</button></div><p class="muted small" id="roundText">Noch keine aktive Lernrunde.</p></section>
+<section class="panel hidden" id="listPanel"><div class="section-head"><h2>Vokabelliste</h2><span class="pill" id="listCount"></span></div><p class="muted small">Die Liste basiert auf den fünf hochgeladenen GoodNotes-Seiten.</p><div class="list" id="vocabList"></div></section>
+</div>
+<script>
+const vocab = [
+["un événement","ein Ereignis / eine Veranstaltung","Allgemein & Mengen"],
+["avoir une impression (que …)","den Eindruck haben (dass …)","Allgemein & Mengen"],
+["célèbre","berühmt","Allgemein & Mengen"],
+["connu / connue","bekannt","Allgemein & Mengen"],
+["comme","wie / als","Allgemein & Mengen"],
+["environ dix","ungefähr zehn","Allgemein & Mengen"],
+["le monde entier","die ganze Welt","Allgemein & Mengen"],
+["choisir quelque chose (qc.)","etwas auswählen","Allgemein & Mengen"],
+["le meilleur / la meilleure","der / die / das Beste","Allgemein & Mengen"],
+["presque","beinahe / fast","Allgemein & Mengen"],
+["à moitié","zur Hälfte / halb","Allgemein & Mengen"],
+["une dizaine","etwa zehn / eine Zehnergruppe","Allgemein & Mengen"],
+["une centaine","etwa hundert / eine Hundertergruppe","Allgemein & Mengen"],
+["autant de … que","genauso viel(e) … wie","Allgemein & Mengen"],
+["à peu près","ungefähr","Allgemein & Mengen"],
+["énormément de","sehr viele / sehr viel","Allgemein & Mengen"],
+["le Palais des Festivals","der Festivalpalast","Festival & Kultur"],
+["Cannes","Cannes (Stadt in Frankreich)","Festival & Kultur"],
+["la Croisette","die Croisette (Boulevard in Cannes)","Festival & Kultur"],
+["international / internationale","international","Festival & Kultur"],
+["un dessin animé","ein Zeichentrickfilm","Festival & Kultur"],
+["une troupe","eine (Theater-)Truppe","Festival & Kultur"],
+["un fan / une fan","ein Fan / eine Anhängerin","Festival & Kultur"],
+["la Bretagne","die Bretagne","Festival & Kultur"],
+["un genre (de)","eine Gattung / Art (von)","Festival & Kultur"],
+["un lieu / des lieux","ein Ort / Orte","Festival & Kultur"],
+["un festival","ein Festival","Festival & Kultur"],
+["la Palme d’or","die Goldene Palme","Festival & Kultur"],
+["Quel cinéma !","Was für ein Theater!","Festival & Kultur"],
+["un défilé","ein Umzug / eine Parade","Festival & Kultur"],
+["une marche","eine Stufe","Festival & Kultur"],
+["un drame","ein Drama","Festival & Kultur"],
+["un scandale","ein Skandal","Festival & Kultur"],
+["scandaleux / scandaleuse","skandalös","Festival & Kultur"],
+["une prestation","eine Darbietung / Leistung","Festival & Kultur"],
+["une scène / sur scène","eine Bühne / auf der Bühne","Festival & Kultur"],
+["un décor","ein Bühnenbild / eine Kulisse","Festival & Kultur"],
+["une décoration","eine Dekoration","Festival & Kultur"],
+["décorer","dekorieren / schmücken","Festival & Kultur"],
+["un palmier","eine Palme","Festival & Kultur"],
+["une attraction touristique","eine Touristenattraktion","Festival & Kultur"],
+["un journaliste / une journaliste","ein Journalist / eine Journalistin","Personen"],
+["un spectateur / une spectatrice","ein Zuschauer / eine Zuschauerin","Personen"],
+["un jury","eine Jury","Personen"],
+["un professionnel / une professionnelle","ein Fachmann / eine Fachfrau / ein Profi","Personen"],
+["une personnalité","eine Persönlichkeit","Personen"],
+["un réalisateur / une réalisatrice","ein Filmregisseur / eine Filmregisseurin","Personen"],
+["un photographe / une photographe","ein Fotograf / eine Fotografin","Personen"],
+["un grand couturier / une grande couturière","ein Modeschöpfer / eine Modeschöpferin","Personen"],
+["un bijou / des bijoux","ein Schmuckstück / Schmuckstücke","Personen"],
+["le public","das Publikum / die Öffentlichkeit","Personen"],
+["un rendez-vous","eine Verabredung / ein Termin","Alltag & Verben"],
+["se donner rendez-vous","sich verabreden","Alltag & Verben"],
+["se donner rendez-vous avec quelqu’un (qn)","sich mit jemandem verabreden","Alltag & Verben"],
+["avoir lieu","stattfinden / sich ereignen","Alltag & Verben"],
+["réserver quelque chose (qc.)","etwas reservieren","Alltag & Verben"],
+["garder l’espoir","die Hoffnung bewahren","Alltag & Verben"],
+["avoir besoin de quelque chose","etwas benötigen","Alltag & Verben"],
+["avoir besoin de faire quelque chose","etwas tun müssen / etwas tun zu müssen","Alltag & Verben"],
+["se promener","spazieren gehen","Alltag & Verben"],
+["s’adresser à quelqu’un (qn)","sich an jemanden wenden","Alltag & Verben"],
+["marcher","laufen / gehen; funktionieren","Alltag & Verben"],
+["faire un choix","eine Entscheidung treffen","Alltag & Verben"],
+["ne pas avoir le choix","keine Wahl haben","Alltag & Verben"],
+["faire de la publicité","Werbung machen","Alltag & Verben"],
+["une publicité","Werbung / eine Anzeige","Alltag & Verben"],
+["un mélange / mélanger","eine Mischung / mischen","Alltag & Verben"],
+["une machine","eine Maschine","Alltag & Verben"],
+["une caméra","eine Kamera","Alltag & Verben"],
+["à l’étranger","im Ausland","Orte & Beschreibungen"],
+["étranger / étrangère","ausländisch / fremd","Orte & Beschreibungen"],
+["ancien / ancienne","ehemalig / früher; alt","Orte & Beschreibungen"],
+["en bas de","unten / am unteren Ende von","Orte & Beschreibungen"],
+["en haut de","oben / am oberen Ende von","Orte & Beschreibungen"],
+["haut / haute","hoch","Orte & Beschreibungen"],
+["bas / basse","niedrig / tief","Orte & Beschreibungen"],
+["large","breit","Orte & Beschreibungen"],
+["étroit / étroite","eng / schmal","Orte & Beschreibungen"],
+["la largeur","die Breite","Orte & Beschreibungen"],
+["la hauteur","die Höhe","Orte & Beschreibungen"],
+["la longueur","die Länge","Orte & Beschreibungen"],
+["énorme","enorm / riesig","Orte & Beschreibungen"],
+["géant / géante","gigantisch / riesig","Orte & Beschreibungen"],
+["médiatique","medial / medienwirksam","Weitere Begriffe"],
+["compétitif / compétitive","wettbewerbsfähig / konkurrenzfähig","Weitere Begriffe"],
+["un accident","ein Unfall","Weitere Begriffe"],
+["le hasard","der Zufall","Weitere Begriffe"],
+["comme par hasard","wie durch Zufall / zufälligerweise","Weitere Begriffe"],
+["au motif de","mit der Begründung, dass","Weitere Begriffe"],
+["suivant / suivante","folgend","Weitere Begriffe"],
+["précédent / précédente","vorherig","Weitere Begriffe"],
+["à la page suivante","auf der folgenden Seite","Weitere Begriffe"],
+["inconnu / inconnue","unbekannt","Weitere Begriffe"],
+["un billet (d’avion, de concert)","ein Ticket / eine Eintrittskarte","Weitere Begriffe"],
+["un ticket (de bus, de tram)","eine Fahrkarte","Weitere Begriffe"],
+["se souvenir de","sich erinnern an","Alltag & Verben"],
+["garder","behalten / bewahren","Alltag & Verben"],
+["mélanger","mischen","Alltag & Verben"],
+["marcher beaucoup","viel laufen / gehen","Alltag & Verben"],
+["je me suis adressé(e) à elle","ich habe mich an sie gewandt","Alltag & Verben"],
+["j’ai beaucoup marché","ich bin viel gelaufen","Alltag & Verben"],
+["je me promène","ich gehe spazieren","Alltag & Verben"],
+["cette salle fait dix mètres de haut","dieser Saal ist zehn Meter hoch","Orte & Beschreibungen"],
+["cette salle fait vingt mètres de large","dieser Saal ist zwanzig Meter breit","Orte & Beschreibungen"],
+["il y a énormément de gens dans les rues","es gibt sehr viele Menschen auf den Straßen","Weitere Begriffe"]
+];
+const KEY="studyspaceFrenchVocabProgressV1";
+let progress={};try{progress=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){progress={}}
+let queue=[],current=null,answered=false,roundDone=0,todayRight=0,wrongSet=new Set();
+const $=id=>document.getElementById(id);
+const norm=s=>String(s||"").toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g,"'").replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim();
+function save(){localStorage.setItem(KEY,JSON.stringify(progress));renderStats()}
+function masteredCount(){return vocab.filter(v=>(progress[v[0]]?.streak||0)>=2).length}
+function renderStats(){$("total").textContent=vocab.length;$("mastered").textContent=masteredCount();$("open").textContent=vocab.length-masteredCount();$("today").textContent=todayRight;$("overall").style.width=(masteredCount()/vocab.length*100)+"%";$("overallText").textContent=masteredCount()+" von "+vocab.length+" Vokabeln sicher (zweimal hintereinander gewusst)."}
+function renderList(){ $("listCount").textContent=vocab.length+" Einträge";$("vocabList").innerHTML=vocab.map(v=>'<div class="item"><strong>'+esc(v[0])+'</strong><span>'+esc(v[1])+'</span></div>').join("")}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function start(){let cat=$("category").value,scope=$("scope").value;queue=vocab.map((v,i)=>i).filter(i=>(cat==="all"||vocab[i][2]===cat)&&(scope==="all"||(scope==="open"&&(progress[vocab[i][0]]?.streak||0)<2)||(scope==="wrong"&&wrongSet.has(vocab[i][0]))||(scope==="new"&&!progress[vocab[i][0]])));if(!queue.length){$("prompt").textContent="Keine Vokabeln in dieser Auswahl";$("directionText").textContent="Ändere Thema oder Auswahl.";disable(true);return}queue.sort(()=>Math.random()-.5);roundDone=0;next()}
+function disable(on){["response","check","hint","reveal","known","again","skip"].forEach(id=>$(id).disabled=on)}
+function next(){answered=false;if(!queue.length){current=null;$("cardTag").textContent="Runde beendet";$("prompt").textContent="Sehr gut! 🎉";$("directionText").textContent="Du hast diese Lernrunde abgeschlossen.";$("feedback").className="feedback ok";$("feedback").textContent="Starte eine neue Runde, um weiter zu üben oder deine schwierigen Wörter erneut abzufragen."; $("roundText").textContent=roundDone+" Vokabeln bearbeitet.";disable(true);return}current=vocab[queue.shift()];let dir=$("direction").value;if(dir==="mix")dir=Math.random()<.5?"fr-de":"de-fr";current.dir=dir;$("cardTag").textContent=current[2];$("directionText").textContent=dir==="fr-de"?"Übersetze ins Deutsche":"Übersetze ins Französische";$("prompt").textContent=dir==="fr-de"?current[0]:current[1];$("response").value="";$("response").disabled=false;$("check").disabled=false;$("hint").disabled=false;$("reveal").disabled=false;$("known").disabled=true;$("again").disabled=true;$("skip").disabled=false;$("feedback").className="feedback neutral";$("feedback").textContent="Gib deine Antwort ein und prüfe sie. Du kannst auch Enter drücken.";$("roundText").textContent=(roundDone+1)+" von "+(roundDone+queue.length+1)+" in dieser Runde";$("response").focus()}
+function expected(){return current.dir==="fr-de"?current[1]:current[0]}
+function check(){if(!current||answered)return;let val=$("response").value.trim();if(!val){$("feedback").className="feedback no";$("feedback").textContent="Schreibe zuerst eine Antwort.";return}answered=true;let ok=norm(val)===norm(expected());if(ok){$("feedback").className="feedback ok";$("feedback").textContent="Richtig! "+expected();todayRight++;let p=progress[current[0]]||{streak:0,seen:0};p.streak=(p.streak||0)+1;p.seen=(p.seen||0)+1;p.last=Date.now();progress[current[0]]=p;wrongSet.delete(current[0]);}else{$("feedback").className="feedback no";$("feedback").textContent="Noch nicht richtig. Richtige Antwort: "+expected();let p=progress[current[0]]||{streak:0,seen:0};p.streak=0;p.seen=(p.seen||0)+1;p.last=Date.now();progress[current[0]]=p;wrongSet.add(current[0]);}save();$("known").disabled=false;$("again").disabled=false;$("check").disabled=true}
+function markKnown(){if(!current)return;if(!answered){check();if(!answered)return}roundDone++;next()}
+function retry(){if(!current)return;roundDone++;queue.push(vocab.indexOf(current));next()}
+$("start").onclick=start;$("check").onclick=check;$("response").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();check()}});$("known").onclick=markKnown;$("again").onclick=retry;$("skip").onclick=()=>{if(current){roundDone++;next()}};$("hint").onclick=()=>{$("feedback").className="feedback neutral";$("feedback").textContent="Anfang: "+expected().slice(0,Math.max(2,Math.ceil(expected().length*.28)))+" …"};$("reveal").onclick=()=>{$("feedback").className="feedback neutral";$("feedback").textContent="Lösung: "+expected();answered=true;$("known").disabled=false;$("again").disabled=false;$("check").disabled=true};$("toggleList").onclick=()=>{$("listPanel").classList.toggle("hidden");$("toggleList").textContent=$("listPanel").classList.contains("hidden")?"Vokabelliste anzeigen":"Vokabelliste ausblenden"};$("reset").onclick=()=>{if(confirm("Möchtest du wirklich deinen gesamten Vokabellernstand zurücksetzen?")){progress={};wrongSet.clear();save();start()}};renderList();renderStats();disable(true);
+</script></body></html>
