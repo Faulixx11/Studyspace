@@ -450,12 +450,17 @@
     const history=statsFor(card).history.slice(-5);
     return history.length?history.filter(Boolean).length/history.length:0;
   }
+  function isFinalSet2Card(card) {
+    return activeSet()?.name === "finalesset2" && card.finalSet2 === true;
+  }
   function isMasteredCard(card) {
     const st=statsFor(card);
+    if (isFinalSet2Card(card)) return st.correct > 0 && st.wrong === 0;
     return st.attempts>=4 && st.streak>=3 && recentAccuracy(card)>=0.8;
   }
   function isDifficultCard(card) {
     const st=statsFor(card);
+    if (isFinalSet2Card(card)) return st.wrong > 0;
     return st.attempts>=2 && !isMasteredCard(card) && (recentAccuracy(card)<0.7 || st.streak===0);
   }
   function chooseNextCard(list) {
@@ -527,6 +532,7 @@
   ensureFrenchVerbSet();
   ensureFrenchDifficultVocabSet();
   ensureFrenchCompleteVocabSet();
+  ensureFrenchFinalSet2();
   build();
   render();
   console.log("StudySpace Karteikarten: Textimport aktiv.");
