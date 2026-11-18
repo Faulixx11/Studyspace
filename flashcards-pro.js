@@ -26,6 +26,77 @@
   const subjectSets = () => sets.filter(s => s.subjectId === subjectId);
   const activeSet = () => sets.find(s => s.id === setId && s.subjectId === subjectId);
   const activeCards = () => cards().filter(c => c.setId === setId);
+
+  // Vorgefertigtes Lernset: 40 zentrale Verben mit Présent als Vorderseite
+  // und Futur simple + Passé composé auf der Rückseite.
+  function ensureFrenchVerbSet() {
+    const frenchSubject = subjects().find(s => /^(französisch|français|francais)$/i.test(String(s.name||"").trim()))
+      || (() => {
+        const created = { id: makeId(), name: "Französisch", color: "blue", created: new Date().toISOString() };
+        data.subjects.push(created);
+        return created;
+      })();
+    let set = sets.find(s => s.subjectId === frenchSubject.id && s.name.toLocaleLowerCase("de-DE") === "französsichtest");
+    if (!set) {
+      set = { id: makeId(), subjectId: frenchSubject.id, name: "französsichtest", createdAt: Date.now() };
+      sets.push(set);
+    }
+    const verbs = [
+      ["être","je suis","je serai","j'ai été"],
+      ["avoir","j'ai","j'aurai","j'ai eu"],
+      ["aller","je vais","j'irai","je suis allé(e)"],
+      ["faire","je fais","je ferai","j'ai fait"],
+      ["dire","je dis","je dirai","j'ai dit"],
+      ["pouvoir","je peux","je pourrai","j'ai pu"],
+      ["vouloir","je veux","je voudrai","j'ai voulu"],
+      ["savoir","je sais","je saurai","j'ai su"],
+      ["voir","je vois","je verrai","j'ai vu"],
+      ["venir","je viens","je viendrai","je suis venu(e)"],
+      ["prendre","je prends","je prendrai","j'ai pris"],
+      ["mettre","je mets","je mettrai","j'ai mis"],
+      ["devoir","je dois","je devrai","j'ai dû"],
+      ["croire","je crois","je croirai","j'ai cru"],
+      ["connaître","je connais","je connaîtrai","j'ai connu"],
+      ["écrire","j'écris","j'écrirai","j'ai écrit"],
+      ["lire","je lis","je lirai","j'ai lu"],
+      ["boire","je bois","je boirai","j'ai bu"],
+      ["recevoir","je reçois","je recevrai","j'ai reçu"],
+      ["vivre","je vis","je vivrai","j'ai vécu"],
+      ["partir","je pars","je partirai","je suis parti(e)"],
+      ["sortir","je sors","je sortirai","je suis sorti(e)"],
+      ["dormir","je dors","je dormirai","j'ai dormi"],
+      ["servir","je sers","je servirai","j'ai servi"],
+      ["ouvrir","j'ouvre","j'ouvrirai","j'ai ouvert"],
+      ["offrir","j'offre","j'offrirai","j'ai offert"],
+      ["courir","je cours","je courrai","j'ai couru"],
+      ["mourir","je meurs","je mourrai","je suis mort(e)"],
+      ["naître","je nais","je naîtrai","je suis né(e)"],
+      ["envoyer","j'envoie","j'enverrai","j'ai envoyé"],
+      ["appeler","j'appelle","j'appellerai","j'ai appelé"],
+      ["acheter","j'achète","j'achèterai","j'ai acheté"],
+      ["payer","je paie","je paierai","j'ai payé"],
+      ["manger","je mange","je mangerai","j'ai mangé"],
+      ["commencer","je commence","je commencerai","j'ai commencé"],
+      ["finir","je finis","je finirai","j'ai fini"],
+      ["choisir","je choisis","je choisirai","j'ai choisi"],
+      ["attendre","j'attends","j'attendrai","j'ai attendu"],
+      ["répondre","je réponds","je répondrai","j'ai répondu"],
+      ["vendre","je vends","je vendrai","j'ai vendu"]
+    ];
+    const existing = new Set(cards().filter(c => c.setId === set.id).map(c => c.verbKey || ""));
+    verbs.forEach(([verb,present,future,perfect]) => {
+      if (existing.has(verb)) return;
+      cards().push({
+        id: makeId(), subjectId: frenchSubject.id, setId: set.id, materialId: "",
+        question: "Futur simple : " + future + "\nPassé composé : " + perfect,
+        answer: present + " (" + verb + ")",
+        verbKey: verb, known: false
+      });
+    });
+    save();
+    if (!subjectId || !subjects().some(s => s.id === subjectId)) subjectId = frenchSubject.id;
+    if (setId === "" || !sets.some(s => s.id === setId)) setId = set.id;
+  }
   const save = () => {
     try {
       localStorage.setItem(KEY, JSON.stringify({sets}));
@@ -340,6 +411,7 @@
     }
   }, true);
 
+  ensureFrenchVerbSet();
   build();
   render();
   console.log("StudySpace Karteikarten: Textimport aktiv.");
