@@ -102,6 +102,53 @@
     if (!subjectId || !subjects().some(s => s.id === subjectId)) subjectId = frenchSubject.id;
     if (setId === "" || !sets.some(s => s.id === setId)) setId = set.id;
   }
+  // Zusätzliches Französisch-Lernset mit den aktuell schwierigen Vokabeln.
+  function ensureFrenchDifficultVocabSet() {
+    const frenchSubject = subjects().find(s => /^(französisch|français|francais)$/i.test(String(s.name||"").trim()));
+    if (!frenchSubject) return;
+    const setName = "Französisch – schwierige Vokabeln";
+    let set = sets.find(s => s.subjectId === frenchSubject.id && s.name.toLocaleLowerCase("de-DE") === setName.toLocaleLowerCase("de-DE"));
+    if (!set) {
+      set = { id: makeId(), subjectId: frenchSubject.id, name: setName, createdAt: Date.now() };
+      sets.push(set);
+    }
+    const vocabulary = [
+      ["entier / entière", "ganz; vollständig"],
+      ["à peu près", "ungefähr; etwa"],
+      ["autant de … que", "so viel(e) … wie"],
+      ["énormément", "enorm viel; sehr viel"],
+      ["une marche", "eine Stufe; ein Schritt"],
+      ["une prestation", "eine Leistung; eine Darbietung"],
+      ["un décor", "eine Kulisse; ein Bühnenbild"],
+      ["avoir lieu", "stattfinden"],
+      ["ne pas avoir le choix", "keine Wahl haben"],
+      ["faire de la publicité", "Werbung machen"],
+      ["étranger / étrangère", "fremd; ausländisch"],
+      ["la largeur", "die Breite"],
+      ["la hauteur", "die Höhe"],
+      ["la longueur", "die Länge"],
+      ["énorme", "riesig; enorm"],
+      ["géant / géante", "riesig; gigantisch"],
+      ["au milieu de", "mitten in; in der Mitte von"]
+    ];
+    const existing = new Map(cards().filter(c => c.setId === set.id).map(c => [String(c.vocabKey || c.question || "").toLocaleLowerCase("fr"), c]));
+    vocabulary.forEach(([french, german]) => {
+      const key = french.toLocaleLowerCase("fr");
+      const card = existing.get(key);
+      if (card) {
+        card.question = french;
+        card.answer = german;
+        card.vocabKey = french;
+        return;
+      }
+      cards().push({
+        id: makeId(), subjectId: frenchSubject.id, setId: set.id, materialId: "",
+        question: french, answer: german, vocabKey: french, known: false
+      });
+    });
+    save();
+  }
+
   const save = () => {
     try {
       localStorage.setItem(KEY, JSON.stringify({sets}));
@@ -417,6 +464,7 @@
   }, true);
 
   ensureFrenchVerbSet();
+  ensureFrenchDifficultVocabSet();
   build();
   render();
   console.log("StudySpace Karteikarten: Textimport aktiv.");
