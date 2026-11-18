@@ -149,6 +149,42 @@
     save();
   }
 
+  // Finales Gesamtset: alle 108 GoodNotes-Vokabeln plus ergänzende schwierige Begriffe.
+  function ensureFrenchCompleteVocabSet() {
+    const frenchSubject = subjects().find(s => /^(französisch|français|francais)$/i.test(String(s.name||"").trim()));
+    if (!frenchSubject) return;
+    const setName = "Französisch – Gesamtwortschatz";
+    let set = sets.find(s => s.subjectId === frenchSubject.id && s.name.toLocaleLowerCase("de-DE") === setName.toLocaleLowerCase("de-DE"));
+    if (!set) {
+      set = { id: makeId(), subjectId: frenchSubject.id, name: setName, createdAt: Date.now() };
+      sets.push(set);
+    }
+    const vocabulary = [["un événement","ein Ereignis / eine Veranstaltung","Allgemein & Mengen"],["avoir une impression (que …)","den Eindruck haben (dass …)","Allgemein & Mengen"],["célèbre","berühmt","Allgemein & Mengen"],["connu / connue","bekannt","Allgemein & Mengen"],["comme","wie / als","Allgemein & Mengen"],["environ dix","ungefähr zehn","Allgemein & Mengen"],["le monde entier","die ganze Welt","Allgemein & Mengen"],["choisir quelque chose (qc.)","etwas auswählen","Allgemein & Mengen"],["le meilleur / la meilleure","der / die / das Beste","Allgemein & Mengen"],["presque","beinahe / fast","Allgemein & Mengen"],["à moitié","zur Hälfte / halb","Allgemein & Mengen"],["une dizaine","etwa zehn / eine Zehnergruppe","Allgemein & Mengen"],["une centaine","etwa hundert / eine Hundertergruppe","Allgemein & Mengen"],["autant de … que","genauso viel(e) … wie","Allgemein & Mengen"],["à peu près","ungefähr","Allgemein & Mengen"],["dont","dessen / wovon / an den, die oder das (je nach Zusammenhang)","Weitere Begriffe"],["énormément de","sehr viele / sehr viel","Allgemein & Mengen"],["le Palais des Festivals","der Festivalpalast","Festival & Kultur"],["Cannes","Cannes (Stadt in Frankreich)","Festival & Kultur"],["la Croisette","die Croisette (Boulevard in Cannes)","Festival & Kultur"],["international / internationale","international","Festival & Kultur"],["un dessin animé","ein Zeichentrickfilm","Festival & Kultur"],["une troupe","eine (Theater-)Truppe","Festival & Kultur"],["un fan / une fan","ein Fan / eine Anhängerin","Festival & Kultur"],["la Bretagne","die Bretagne","Festival & Kultur"],["un genre (de)","eine Gattung / Art (von)","Festival & Kultur"],["un lieu / des lieux","ein Ort / Orte","Festival & Kultur"],["un festival","ein Festival","Festival & Kultur"],["la Palme d’or","die Goldene Palme","Festival & Kultur"],["Quel cinéma !","Was für ein Theater!","Festival & Kultur"],["un défilé","ein Umzug / eine Parade","Festival & Kultur"],["une marche","eine Stufe","Festival & Kultur"],["un drame","ein Drama","Festival & Kultur"],["un scandale","ein Skandal","Festival & Kultur"],["scandaleux / scandaleuse","skandalös","Festival & Kultur"],["une prestation","eine Darbietung / Leistung","Festival & Kultur"],["une scène / sur scène","eine Szene / auf der Bühne","Festival & Kultur"],["un décor","ein Bühnenbild / eine Kulisse","Festival & Kultur"],["une décoration","eine Dekoration","Festival & Kultur"],["décorer","dekorieren / schmücken","Festival & Kultur"],["un palmier","eine Palme","Festival & Kultur"],["une attraction touristique","eine Touristenattraktion","Festival & Kultur"],["un journaliste / une journaliste","ein Journalist / eine Journalistin","Personen"],["un spectateur / une spectatrice","ein Zuschauer / eine Zuschauerin","Personen"],["un jury","eine Jury","Personen"],["un professionnel / une professionnelle","ein Fachmann / eine Fachfrau / ein Profi","Personen"],["une personnalité","eine Persönlichkeit","Personen"],["un réalisateur / une réalisatrice","ein Filmregisseur / eine Filmregisseurin","Personen"],["un photographe / une photographe","ein Fotograf / eine Fotografin","Personen"],["un grand couturier / une grande couturière","ein Modeschöpfer / eine Modeschöpferin","Personen"],["un bijou / des bijoux","ein Schmuckstück / Schmuckstücke","Personen"],["le public","das Publikum / die Öffentlichkeit","Personen"],["un rendez-vous","eine Verabredung / ein Termin","Alltag & Verben"],["se donner rendez-vous","sich verabreden","Alltag & Verben"],["se donner rendez-vous avec quelqu’un (qn)","sich mit jemandem verabreden","Alltag & Verben"],["avoir lieu","stattfinden / sich ereignen","Alltag & Verben"],["réserver quelque chose (qc.)","etwas reservieren","Alltag & Verben"],["garder l’espoir","die Hoffnung bewahren","Alltag & Verben"],["avoir besoin de quelque chose","etwas benötigen","Alltag & Verben"],["avoir besoin de faire quelque chose","etwas tun müssen / etwas tun zu müssen","Alltag & Verben"],["se promener","spazieren gehen","Alltag & Verben"],["s’adresser à quelqu’un (qn)","sich an jemanden wenden","Alltag & Verben"],["marcher","laufen / gehen; funktionieren","Alltag & Verben"],["faire un choix","eine Entscheidung treffen","Alltag & Verben"],["ne pas avoir le choix","keine Wahl haben","Alltag & Verben"],["faire de la publicité","Werbung machen","Alltag & Verben"],["une publicité","Werbung / eine Anzeige","Alltag & Verben"],["un mélange / mélanger","eine Mischung / mischen","Alltag & Verben"],["une machine","eine Maschine","Alltag & Verben"],["une caméra","eine Kamera","Alltag & Verben"],["à l’étranger","im Ausland","Orte & Beschreibungen"],["étranger / étrangère","ausländisch / fremd","Orte & Beschreibungen"],["ancien / ancienne","ehemalig / früher; alt","Orte & Beschreibungen"],["en bas de","unten / am unteren Ende von","Orte & Beschreibungen"],["en haut de","oben / am oberen Ende von","Orte & Beschreibungen"],["haut / haute","hoch","Orte & Beschreibungen"],["bas / basse","niedrig / tief","Orte & Beschreibungen"],["large","breit","Orte & Beschreibungen"],["étroit / étroite","eng / schmal","Orte & Beschreibungen"],["la largeur","die Breite","Orte & Beschreibungen"],["la hauteur","die Höhe","Orte & Beschreibungen"],["la longueur","die Länge","Orte & Beschreibungen"],["de haut","hoch (bei einer Höhenangabe)","Orte & Beschreibungen"],["de large","breit (bei einer Breitenangabe)","Orte & Beschreibungen"],["énorme","enorm / riesig","Orte & Beschreibungen"],["géant / géante","gigantisch / riesig","Orte & Beschreibungen"],["médiatique","medial / medienwirksam","Weitere Begriffe"],["compétitif / compétitive","wettbewerbsfähig / konkurrenzfähig","Weitere Begriffe"],["un accident","ein Unfall","Weitere Begriffe"],["le hasard","der Zufall","Weitere Begriffe"],["comme par hasard","wie durch Zufall / zufälligerweise","Weitere Begriffe"],["au motif de","mit der Begründung, dass","Weitere Begriffe"],["suivant / suivante","folgend","Weitere Begriffe"],["précédent / précédente","vorherig","Weitere Begriffe"],["à la page suivante","auf der folgenden Seite","Weitere Begriffe"],["inconnu / inconnue","unbekannt","Weitere Begriffe"],["un billet (d’avion, de concert)","ein Ticket / eine Eintrittskarte","Weitere Begriffe"],["un ticket (de bus, de tram)","eine Fahrkarte","Weitere Begriffe"],["se souvenir de","sich erinnern an","Alltag & Verben"],["garder","behalten / bewahren","Alltag & Verben"],["mélanger","mischen","Alltag & Verben"],["marcher beaucoup","viel laufen / gehen","Alltag & Verben"],["je me suis adressé(e) à elle","ich habe mich an sie gewandt","Alltag & Verben"],["j’ai beaucoup marché","ich bin viel gelaufen","Alltag & Verben"],["je me promène","ich gehe spazieren","Alltag & Verben"],["cette salle fait dix mètres de haut","dieser Saal ist zehn Meter hoch","Orte & Beschreibungen"],["cette salle fait vingt mètres de large","dieser Saal ist zwanzig Meter breit","Orte & Beschreibungen"],["il y a énormément de gens dans les rues","es gibt sehr viele Menschen auf den Straßen","Weitere Begriffe"],["entier / entière","ganz; vollständig","Allgemein & Mengen"],["énormément","enorm viel; sehr viel","Allgemein & Mengen"]];
+    const existing = new Map(cards().filter(c => c.setId === set.id).map(c => [String(c.vocabKey || c.question || "").toLocaleLowerCase("fr"), c]));
+    vocabulary.forEach(([french, german, category]) => {
+      const key = french.toLocaleLowerCase("fr");
+      const card = existing.get(key);
+      if (card) {
+        card.question = french;
+        card.answer = german;
+        card.vocabKey = french;
+        card.category = category;
+        return;
+      }
+      cards().push({
+        id: makeId(), subjectId: frenchSubject.id, setId: set.id, materialId: "",
+        question: french, answer: german, vocabKey: french, category, known: false
+      });
+    });
+    // Schreibfehler aus dem vorherigen Zusatzset korrigieren: gemeint ist "au motif de".
+    const difficultSet = sets.find(s => s.subjectId === frenchSubject.id && s.name === "Französisch – schwierige Vokabeln");
+    if (difficultSet) {
+      const mistaken = cards().find(c => c.setId === difficultSet.id && c.question === "au milieu de");
+      if (mistaken) { mistaken.question = "au motif de"; mistaken.answer = "mit der Begründung, dass"; mistaken.vocabKey = "au motif de"; }
+    }
+    save();
+  }
+
   const save = () => {
     try {
       localStorage.setItem(KEY, JSON.stringify({sets}));
@@ -465,6 +501,7 @@
 
   ensureFrenchVerbSet();
   ensureFrenchDifficultVocabSet();
+  ensureFrenchCompleteVocabSet();
   build();
   render();
   console.log("StudySpace Karteikarten: Textimport aktiv.");
