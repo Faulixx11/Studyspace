@@ -83,13 +83,19 @@
       ["répondre","je réponds","je répondrai","j'ai répondu"],
       ["vendre","je vends","je vendrai","j'ai vendu"]
     ];
-    const existing = new Set(cards().filter(c => c.setId === set.id).map(c => c.verbKey || ""));
+    const existing = new Map(cards().filter(c => c.setId === set.id).map(c => [c.verbKey || "", c]));
     verbs.forEach(([verb,present,future,perfect]) => {
-      if (existing.has(verb)) return;
+      const card = existing.get(verb);
+      if (card) {
+        // Vorderseite/Frage: nur der Infinitiv. Rückseite: beide gesuchten Zeitformen.
+        card.answer = verb;
+        card.question = "Futur simple : " + future + "\nPassé composé : " + perfect;
+        return;
+      }
       cards().push({
         id: makeId(), subjectId: frenchSubject.id, setId: set.id, materialId: "",
         question: "Futur simple : " + future + "\nPassé composé : " + perfect,
-        answer: present + " (" + verb + ")",
+        answer: verb,
         verbKey: verb, known: false
       });
     });
