@@ -185,6 +185,31 @@
     save();
   }
 
+
+  // Zweites finales Vokabelset: eigenständige Karten mit 1-Punkt-Bewertung je Begriff.
+  function ensureFrenchFinalSet2() {
+    const frenchSubject = subjects().find(s => /^(französisch|français|francais)$/i.test(String(s.name||"").trim()));
+    if (!frenchSubject) return;
+    const source = sets.find(s => s.subjectId === frenchSubject.id && s.name === "Französisch – Gesamtwortschatz");
+    if (!source) return;
+    let target = sets.find(s => s.subjectId === frenchSubject.id && s.name === "finalesset2");
+    if (!target) {
+      target = { id: makeId(), subjectId: frenchSubject.id, name: "finalesset2", createdAt: Date.now() };
+      sets.push(target);
+    }
+    const targetCards = cards().filter(card => card.setId === target.id);
+    if (!targetCards.length) {
+      cards().filter(card => card.setId === source.id).forEach(card => {
+        cards().push({
+          id: makeId(), subjectId: frenchSubject.id, setId: target.id, materialId: "",
+          question: card.question, answer: card.answer, vocabKey: card.vocabKey || card.question,
+          category: card.category || "", known: false, finalSet2: true
+        });
+      });
+    }
+    save();
+  }
+
   const save = () => {
     try {
       localStorage.setItem(KEY, JSON.stringify({sets}));
@@ -395,14 +420,14 @@
     const difficult=list.filter(isDifficultCard);
     const attempted=list.filter(c=>statsFor(c).attempts>0);
     const mastered=list.filter(isMasteredCard);
-    const mastery=list.length?Math.round(list.reduce((sum,card)=>{const st=statsFor(card);if(isMasteredCard(card))return sum+100;const accuracy=st.attempts?st.correct/st.attempts:0;return sum+(st.attempts?Math.min(95,Math.round((Math.min(st.streak,3)/3)*85+accuracy*10)):0);},0)/list.length):0;
+    const isFinalSet2=set?.name==="finalesset2"; const mastery=list.length?(isFinalSet2?list.filter(isMasteredCard).length:Math.round(list.reduce((sum,card)=>{const st=statsFor(card);if(isMasteredCard(card))return sum+100;const accuracy=st.attempts?st.correct/st.attempts:0;return sum+(st.attempts?Math.min(95,Math.round((Math.min(st.streak,3)/3)*85+accuracy*10)):0);},0)/list.length)):0;
     $("fcx-review-count").textContent=list.length+" Karten";
     $("fcx-list-count").textContent=(difficultOnly?difficult.length:list.length)+" Karten";
     $("fcx-difficult-count").textContent=difficult.length;
     $("fcx-mastery-percent").textContent=mastery+" %";
     $("fcx-mastery-bar").style.setProperty("width",mastery+"%","important");
     $("fcx-mastery-bar").setAttribute("aria-valuenow",String(mastery));
-    $("fcx-mastery-detail").textContent=attempted.length?mastered.length+" von "+list.length+" Karten sicher gelernt · "+difficult.length+" noch schwierig":"Noch keine Antworten bewertet.";
+    $("fcx-mastery-detail").textContent=isFinalSet2?mastered.length+" von "+list.length+" Vokabeln sicher · "+difficult.length+" schwierig · jede sichere Vokabel zählt 1 %":(attempted.length?mastered.length+" von "+list.length+" Karten sicher gelernt · "+difficult.length+" noch schwierig":"Noch keine Antworten bewertet.");
     $("fcx-review-subtitle").textContent=set?esc(subjects().find(s=>s.id===subjectId)?.name||"")+" · "+esc(set.name):"Wähle ein Fach und erstelle ein Lernset.";
     $("fcx-direction").value=reviewDirection;
     $("fcx-all-cards").classList.toggle("fcx-primary",!difficultOnly);
