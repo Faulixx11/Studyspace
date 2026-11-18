@@ -27,8 +27,7 @@
   const activeSet = () => sets.find(s => s.id === setId && s.subjectId === subjectId);
   const activeCards = () => cards().filter(c => c.setId === setId);
 
-  // Vorgefertigtes Lernset: 40 zentrale Verben mit Présent als Vorderseite
-  // und Futur simple + Passé composé auf der Rückseite.
+  // Vorgefertigtes Lernset: 40 zentrale Verben. Vorderseite: Infinitiv; Rückseite: nur Passé composé.
   function ensureFrenchVerbSet() {
     const frenchSubject = subjects().find(s => /^(französisch|français|francais)$/i.test(String(s.name||"").trim()))
       || (() => {
@@ -89,12 +88,12 @@
       if (card) {
         // Vorderseite/Frage: nur der Infinitiv. Rückseite: beide gesuchten Zeitformen.
         card.answer = verb;
-        card.question = "Futur simple : " + future + "\nPassé composé : " + perfect;
+        card.question = "Passé composé : " + perfect;
         return;
       }
       cards().push({
         id: makeId(), subjectId: frenchSubject.id, setId: set.id, materialId: "",
-        question: "Futur simple : " + future + "\nPassé composé : " + perfect,
+        question: "Passé composé : " + perfect,
         answer: verb,
         verbKey: verb, known: false
       });
