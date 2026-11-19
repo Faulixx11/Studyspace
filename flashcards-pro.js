@@ -207,6 +207,14 @@
         });
       });
     }
+    const resetKey = "studyspace_finalesset2_progress_reset_2026_11";
+    if (!localStorage.getItem(resetKey)) {
+      cards().filter(card => card.setId === target.id).forEach(card => {
+        delete card.studyStats;
+        card.known = false;
+      });
+      localStorage.setItem(resetKey, "1");
+    }
     save();
   }
 
