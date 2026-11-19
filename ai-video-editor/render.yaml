@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: cutline-ai-video-editor
+    runtime: node
+    plan: free
+    rootDir: ai-video-editor
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_CHAT_MODEL
+        value: gpt-4o-mini
