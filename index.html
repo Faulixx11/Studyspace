@@ -1,99 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f5f1">
-  <meta name="description" content="STUDIO 01 — Zeitlose Essentials mit klarer Form und reduziertem Design.">
-  <title>STUDIO 01 — Everyday, redefined.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f3ef"><meta name="description" content="NEXSTY — modern essentials, made for everyday.">
+<title>NEXSTY — Everyday, redefined.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"><link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
-  <a class="skip-link" href="#main">Zum Inhalt springen</a>
-  <div class="announcement"><p>FREE SHIPPING AB 100 € <span>·</span> GEMACHT FÜR JEDEN TAG</p></div>
-
-  <header class="site-header">
-    <button class="icon-button menu-toggle" id="menuToggle" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainNav"><span></span><span></span></button>
-    <a class="wordmark" href="#" aria-label="STUDIO 01 Startseite">STUDIO<span>01</span></a>
-    <nav class="main-nav" id="mainNav" aria-label="Hauptnavigation">
-      <a href="#collection">SHOP</a><a href="#story">STORY</a><a href="#journal">JOURNAL</a><a href="#faq">FAQ</a>
-    </nav>
-    <div class="header-actions"><button class="icon-button search-open" id="searchOpen" aria-label="Suche öffnen">⌕</button><button class="icon-button wishlist-open" id="wishlistOpen" aria-label="Favoriten öffnen">♡ <span class="count-dot" id="wishlistCount">0</span></button><button class="bag-button" id="openBag" aria-label="Warenkorb öffnen">BAG <span class="bag-count" id="bagCount">0</span></button></div>
-  </header>
-
-  <main id="main">
-    <section class="hero" aria-labelledby="heroTitle">
-      <div class="hero-copy">
-        <p class="eyebrow">KOLLEKTION 001 &nbsp; / &nbsp; EVERYDAY ESSENTIALS</p>
-        <h1 id="heroTitle">Weniger,<br><em>aber besser.</em></h1>
-        <p class="hero-description">Klar im Design. Angenehm im Alltag. Stücke, die bleiben – und sich immer wieder neu kombinieren lassen.</p>
-        <div class="hero-actions"><a class="button button-dark" href="#collection">Kollektion entdecken <span>↗</span></a><span class="hero-note">DESIGNED FOR DAILY LIFE</span></div>
-        <div class="hero-index"><span>01</span><span class="index-line"></span><span>04</span></div>
-      </div>
-      <div class="hero-visual">
-        <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1500&q=85" alt="Editorial Fashion-Aufnahme mit minimalistischer Alltagsmode" fetchpriority="high">
-        <div class="image-caption"><span>THE EVERYDAY EDIT</span><span>01 / 04</span></div>
-      </div>
-    </section>
-
-    <div class="ticker" aria-label="Markenversprechen"><div class="ticker-track"><span>GOOD FORM</span><i>✳</i><span>LESS, BUT BETTER</span><i>✳</i><span>MADE FOR EVERY DAY</span><i>✳</i><span>GOOD FORM</span><i>✳</i><span>LESS, BUT BETTER</span><i>✳</i><span>MADE FOR EVERY DAY</span><i>✳</i></div></div>
-
-    <section class="section collection-section" id="collection">
-      <div class="section-heading"><div><p class="eyebrow">01 — DIE AUSWAHL</p><h2>Wenige Teile.<br><em>Viele Möglichkeiten.</em></h2></div><p class="section-intro">Eine kleine Auswahl an Essentials, die sich mühelos in deinen Alltag einfügen.</p></div>
-      
-      <div class="shop-tools"><div class="filter-row" role="group" aria-label="Produkte filtern"><button class="filter-button is-active" data-filter="all" aria-pressed="true">Alle</button><button class="filter-button" data-filter="tops" aria-pressed="false">Tops</button><button class="filter-button" data-filter="bottoms" aria-pressed="false">Bottoms</button><button class="filter-button" data-filter="layers" aria-pressed="false">Layers</button></div><div class="sort-wrap"><span id="resultCount">4 Produkte</span><select id="sortSelect" aria-label="Produkte sortieren"><option value="featured">Featured</option><option value="price-low">Preis: niedrig → hoch</option><option value="price-high">Preis: hoch → niedrig</option><option value="name">Name A–Z</option></select></div></div>
-      <div class="product-grid" id="productGrid">
-        <article class="product-card" data-category="tops"><a class="product-image" href="#product-note" aria-label="The Essential Tee ansehen"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1000&q=85" alt="Minimalistisches T-Shirt in neutraler Farbe" loading="lazy"><span class="product-tag">BESTSELLER</span></a><div class="product-meta"><div><h3>The Essential Tee</h3><p>Heavy cotton · Off-white</p></div><span>39 €</span></div><button class="quick-add" data-add="tee">IN DEN BAG <span>+</span></button></article>
-        <article class="product-card" data-category="layers"><a class="product-image" href="#product-note" aria-label="The Daily Hoodie ansehen"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85" alt="Clean geschnittener Hoodie" loading="lazy"><span class="product-tag">NEW</span></a><div class="product-meta"><div><h3>The Daily Hoodie</h3><p>Brushed fleece · Stone</p></div><span>89 €</span></div><button class="quick-add" data-add="hoodie">IN DEN BAG <span>+</span></button></article>
-        <article class="product-card" data-category="bottoms"><a class="product-image" href="#product-note" aria-label="The Relaxed Trouser ansehen"><img src="https://images.unsplash.com/photo-1506629905607-d9d3c5f9a4c4?auto=format&fit=crop&w=1000&q=85" alt="Locker geschnittene Hose in neutralem Ton" loading="lazy"></a><div class="product-meta"><div><h3>The Relaxed Trouser</h3><p>Relaxed fit · Sand</p></div><span>79 €</span></div><button class="quick-add" data-add="trouser">IN DEN BAG <span>+</span></button></article>
-        <article class="product-card" data-category="layers"><a class="product-image" href="#product-note" aria-label="The Everyday Overshirt ansehen"><img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85" alt="Schlichtes Overshirt als Layering-Piece" loading="lazy"><span class="product-tag">LIMITED</span></a><div class="product-meta"><div><h3>The Everyday Overshirt</h3><p>Structured cotton · Ecru</p></div><span>99 €</span></div><button class="quick-add" data-add="overshirt">IN DEN BAG <span>+</span></button></article>
-      </div><p class="no-results" id="noResults" hidden>Keine Produkte gefunden.</p>
-      <p class="product-note" id="product-note">Die gezeigten Produkte, Preise und Bilder sind Platzhalter für den Shop-Entwurf.</p>
-    </section>
-
-    <section class="editorial" id="story">
-      <div class="editorial-image"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1400&q=85" alt="Zeitlose, reduzierte Streetwear in einer Editorial-Aufnahme" loading="lazy"><span class="editorial-stamp">FORM<br>FOLLOWS<br>FEELING.</span></div>
-      <div class="editorial-copy"><p class="eyebrow">02 — UNSERE HALTUNG</p><h2>Style ist nicht<br>laut. <em>Er ist klar.</em></h2><p>Wir glauben an gute Schnitte, durchdachte Details und Teile, die nicht nach einer Saison verschwinden. Weniger Auswahl. Mehr Gefühl für das, was wirklich passt.</p><a class="underlined-link" href="#journal">MEHR ÜBER UNS <span>↗</span></a><div class="editorial-number">S / 001</div></div>
-    </section>
-
-    <section class="values section" id="journal">
-      <div class="values-heading"><p class="eyebrow">03 — DIE DETAILS</p><h2>Gemacht für<br><em>dein echtes Leben.</em></h2></div>
-      <div class="value-list">
-        <article class="value-item"><span>01</span><div><h3>Weniger, aber durchdacht.</h3><p>Eine fokussierte Auswahl statt endloser Trends.</p></div><span class="value-arrow">↗</span></article>
-        <article class="value-item"><span>02</span><div><h3>Komfort ohne Kompromisse.</h3><p>Angenehme Materialien und Schnitte für jeden Tag.</p></div><span class="value-arrow">↗</span></article>
-        <article class="value-item"><span>03</span><div><h3>Einfach kombinierbar.</h3><p>Klare Farben und Formen, die zusammen funktionieren.</p></div><span class="value-arrow">↗</span></article>
-      </div>
-    </section>
-
-    
-    <section class="faq-section section" id="faq"><div class="faq-heading"><p class="eyebrow">04 — HELP</p><h2>Good to<br><em>know.</em></h2><p>Alles Wichtige auf einen Blick.</p></div><div class="faq-list"><details><summary>Wie finde ich meine Größe?<span>+</span></summary><p>Die Größenhilfe ist eine Demo. Bitte vor einem echten Shopstart mit realen Produktmaßen ersetzen.</p></details><details><summary>Wie lange dauert der Versand?<span>+</span></summary><p>Lieferzeiten und Versandkosten sind noch nicht festgelegt.</p></details><details><summary>Kann ich Artikel zurückgeben?<span>+</span></summary><p>Rückgabebedingungen müssen vor einem Verkauf verbindlich ergänzt werden.</p></details><details><summary>Welche Zahlungsmethoden wird es geben?<span>+</span></summary><p>Es gibt aktuell keine Zahlungsanbindung.</p></details></div></section>
-    <section class="newsletter"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Weniger Noise.<br><em>Mehr Neues.</em></h2></div><form class="newsletter-form" id="newsletterForm"><label for="emailInput">Neue Drops und ausgewählte Updates. Kein Spam.</label><div class="email-field"><input id="emailInput" name="email" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" required><button type="submit" aria-label="Newsletter anmelden">↗</button></div><p class="form-note" id="formNote">Demo-Formular: Newsletter-Anmeldung und Datenschutz sind noch nicht angebunden.</p></form></section>
-  </main>
-
-  <footer class="site-footer" id="footer">
-    <div class="footer-top"><div class="footer-brand"><a class="wordmark wordmark-footer" href="#">STUDIO<span>01</span></a><p>EVERYDAY, REDEFINED.</p></div><div class="footer-column"><p class="footer-label">EXPLORE</p><a href="#collection">Shop</a><a href="#story">About</a><a href="#journal">Journal</a></div><div class="footer-column"><p class="footer-label">HELP</p><a href="#contactInfo" data-info="contact">Kontakt</a><a href="#shippingInfo" data-info="shipping">Versand & Rückgabe</a><a href="#faq">FAQ</a></div><div class="footer-column"><p class="footer-label">FOLLOW</p><a href="#" class="placeholder-link">Instagram ↗</a><a href="#" class="placeholder-link">Pinterest ↗</a></div></div>
-    <div class="footer-bottom"><span>© 2026 STUDIO 01 — DEMO BRAND</span><div><a href="#" data-info="imprint">Impressum</a><a href="#" data-info="privacy">Datenschutz</a><a href="#" data-info="terms">AGB</a></div><span>MADE TO BE WORN.</span></div>
-  </footer>
-
-  <div class="bag-overlay" id="bagOverlay" hidden></div>
-  <aside class="bag-drawer" id="bagDrawer" aria-labelledby="bagTitle" aria-modal="true" role="dialog" hidden>
-    <div class="bag-header"><div><p class="eyebrow">YOUR SELECTION</p><h2 id="bagTitle">Dein Bag <span id="drawerCount">(0)</span></h2></div><button class="icon-button close-bag" id="closeBag" aria-label="Warenkorb schließen">×</button></div>
-    <div class="bag-items" id="bagItems"><p class="empty-bag">Dein Bag ist noch leer.</p></div>
-    <div class="bag-footer"><div class="shipping-progress"><p id="shippingMessage">Noch 100 € bis zum kostenlosen Versand.</p><div class="progress-track"><span id="shippingProgress"></span></div></div><div class="bag-subtotal"><span>Zwischensumme</span><strong id="bagSubtotal">0 €</strong></div><p>Versand wird im nächsten Schritt berechnet.</p><button class="button button-dark checkout-button" id="checkoutButton">ZUM CHECKOUT <span>↗</span></button><span class="demo-disclaimer">Demo-Shop · Checkout noch nicht verbunden</span></div>
-  </aside>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <aside class="bag-drawer wishlist-drawer" id="wishlistDrawer" aria-labelledby="wishlistTitle" aria-modal="true" role="dialog" hidden><div class="bag-header"><div><p class="eyebrow">SAVED FOR LATER</p><h2 id="wishlistTitle">Deine Favoriten</h2></div><button class="icon-button close-wishlist" id="closeWishlist" aria-label="Favoriten schließen">×</button></div><div class="bag-items" id="wishlistItems"><p class="empty-bag">Noch nichts gespeichert.</p></div><div class="bag-footer"><button class="text-button" id="clearWishlist">Favoriten löschen</button></div></aside>
-  <div class="overlay" id="overlay" hidden></div>
-  <section class="modal product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalProductTitle" hidden><button class="modal-close" data-close-modal aria-label="Schließen">×</button><div class="modal-image"><img id="modalProductImage" src="" alt=""></div><div class="modal-info"><p class="eyebrow">STUDIO 01 / ESSENTIALS</p><h2 id="modalProductTitle"></h2><div id="modalProductPrice"></div><p id="modalProductDescription" class="modal-description"></p><div class="option-heading"><span>Farbe</span><span id="selectedColorName"></span></div><div id="colorOptions" class="color-options"></div><div class="option-heading"><span>Größe</span><button id="sizeGuideOpen" class="text-button">Größenhilfe ↗</button></div><div id="sizeOptions" class="size-options"></div><p id="sizeError" class="size-error" hidden>Bitte wähle eine Größe.</p><div class="modal-actions"><button class="button button-dark full-button" id="modalAddToBag">IN DEN BAG <span>+</span></button><button id="modalWishlist" class="wishlist-modal-button" aria-label="Favorit speichern">♡</button></div><p class="demo-note">Produktdetails sind Platzhalter.</p></div></section>
-  <section class="modal small-modal" id="sizeModal" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle" hidden><button class="modal-close" data-close-modal aria-label="Schließen">×</button><p class="eyebrow">SIZE GUIDE</p><h2 id="sizeModalTitle">Finde deine Größe.</h2><p class="small-note">Beispielwerte – vor Veröffentlichung mit echten Produktmaßen ersetzen.</p><table class="size-table"><thead><tr><th>Size</th><th>Brust (cm)</th><th>Fit</th></tr></thead><tbody><tr><td>XS</td><td>84–88</td><td>Close</td></tr><tr><td>S</td><td>89–96</td><td>Regular</td></tr><tr><td>M</td><td>97–104</td><td>Regular</td></tr><tr><td>L</td><td>105–112</td><td>Relaxed</td></tr><tr><td>XL</td><td>113–120</td><td>Relaxed</td></tr></tbody></table></section>
-  <section class="modal small-modal" id="searchModal" role="dialog" aria-modal="true" aria-labelledby="searchTitle" hidden><button class="modal-close" data-close-modal aria-label="Schließen">×</button><p class="eyebrow">FIND YOUR PIECE</p><h2 id="searchTitle">Wonach suchst du?</h2><div class="search-field"><input id="searchInput" type="search" placeholder="Produkt, Kategorie, Farbe …"></div><p class="small-note">Filtert Produkte nach Name und Beschreibung.</p><button class="button button-dark full-button" id="searchApply">ERGEBNISSE ANSEHEN</button></section>
-  <section class="modal small-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" hidden><button class="modal-close" data-close-modal aria-label="Schließen">×</button><p class="eyebrow">DEMO CHECKOUT</p><h2 id="checkoutTitle">Fast deiner.</h2><p class="checkout-disclaimer">Demo only: Keine Bestellung, Zahlung oder Datenübertragung. Bitte keine echten persönlichen Daten eingeben.</p><div id="checkoutSummary" class="checkout-summary"></div><div class="checkout-steps"><span class="step-dot active">1 · Übersicht</span><span class="step-dot">2 · Demo</span><span class="step-dot">3 · Ende</span></div><div id="checkoutStepContent"></div><div class="checkout-controls"><button class="button button-dark full-button" id="checkoutNext">WEITER</button><button class="text-button" id="checkoutBack" hidden>Zurück</button></div></section>
-  <section class="modal small-modal" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle" hidden><button class="modal-close" data-close-modal aria-label="Schließen">×</button><p class="eyebrow">INFORMATION</p><h2 id="infoTitle"></h2><div id="infoContent" class="info-content"></div></section>
-  <div class="cookie-banner" id="cookieBanner" hidden><div><p class="eyebrow">YOUR PRIVACY</p><h2>Cookies, aber bewusst.</h2><p>Diese Demo verwendet nur notwendige lokale Funktionen. Keine Analyse- oder Werbe-Cookies eingebunden.</p></div><div class="cookie-actions"><button class="button button-dark" id="cookieAccept">OK</button><button class="button button-outline" id="cookieDismiss">Nur notwendige</button></div></div>
-  <script src="script.js"></script>
-</body>
-</html>
+<div class="announcement">FREE SHIPPING AB 100 € <span>—</span> NEXSTY COLLECTION 001</div>
+<header class="header">
+<button class="icon-btn menu-btn" id="menuBtn" aria-label="Menü">☰</button>
+<a class="logo" href="#home" aria-label="NEXSTY Home">NEXSTY</a>
+<nav id="nav"><a href="#shop">SHOP</a><a href="#story">OUR STORY</a><a href="#journal">JOURNAL</a><a href="#faq">FAQ</a></nav>
+<div class="header-tools"><button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button><button class="icon-btn" id="favoritesBtn" aria-label="Favoriten">♡</button><button class="icon-btn" id="accountBtn" aria-label="Account">♙</button><button class="bag-btn" id="bagBtn">BAG <span id="bagCount">0</span></button></div>
+</header>
+<main id="home">
+<section class="hero">
+<div class="hero-copy"><p class="eyebrow">COLLECTION 001 · EVERYDAY ESSENTIALS</p><h1>Less noise.<br><em>More style.</em></h1><p class="hero-text">Pieces made to live in. Clean silhouettes, considered details, everyday comfort.</p><a class="button black" href="#shop">DISCOVER THE COLLECTION ↗</a><p class="hero-small">DESIGNED FOR EVERY DAY · NEXSTY</p></div>
+<div class="hero-img"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1500&q=85" alt="Minimalist fashion editorial"></div>
+</section>
+<div class="ticker"><span>NEXSTY — GOOD FORM — MADE FOR EVERY DAY — NEXSTY — GOOD FORM — MADE FOR EVERY DAY — </span></div>
+<section class="section" id="shop">
+<div class="section-title"><div><p class="eyebrow">01 / THE COLLECTION</p><h2>Everyday,<br><em>redefined.</em></h2></div><p>Versatile essentials.<br>Nothing unnecessary.</p></div>
+<div class="shop-controls"><div class="filters"><button class="filter active" data-filter="all">ALL</button><button class="filter" data-filter="tops">TOPS</button><button class="filter" data-filter="layers">LAYERS</button><button class="filter" data-filter="bottoms">BOTTOMS</button></div><div class="sort"><span id="productCount">4 products</span><select id="sort"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="az">Name A–Z</option></select></div></div>
+<div class="products" id="products"></div>
+</section>
+<section class="campaign"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=85" alt="NEXSTY campaign style"><div class="campaign-copy"><p class="eyebrow">THE NEXSTY STANDARD</p><h2>Built around<br><em>your everyday.</em></h2><a href="#story" class="button white">OUR APPROACH ↗</a></div></section>
+<section class="section story" id="story"><p class="eyebrow">02 / THE IDEA</p><h2>Style shouldn't<br>be <em>complicated.</em></h2><div class="story-grid"><p>NEXSTY is about finding the pieces you reach for again and again. Thoughtful design, everyday versatility and a quiet confidence.</p><p>We're starting with a small collection of essentials. Fewer pieces, more combinations. A wardrobe that feels like you.</p></div></section>
+<section class="journal section" id="journal"><div class="section-title"><div><p class="eyebrow">03 / NOTES</p><h2>Made to<br><em>move with you.</em></h2></div><p>Ideas, inspiration<br>and the NEXSTY world.</p></div><div class="journal-grid"><article><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1000&q=80" alt="Street style"><p class="eyebrow">STYLE NOTES · 01</p><h3>One piece. More ways.</h3><p>Build a wardrobe around versatile essentials.</p></article><article><img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80" alt="Neutral clothing details"><p class="eyebrow">THE EDIT · 02</p><h3>Keep it simple.</h3><p>Small details. A better everyday.</p></article></div></section>
+<section class="newsletter"><p class="eyebrow">STAY IN THE LOOP</p><h2>Something new<br><em>is on the way.</em></h2><p>Be the first to hear about new drops and updates.</p><form id="newsletter"><input type="email" id="newsletterEmail" placeholder="Your email address" required><button type="submit">JOIN ↗</button></form><small id="newsletterNote">Demo form — not connected yet.</small></section>
+<section class="section faq" id="faq"><p class="eyebrow">04 / HELP</p><h2>Questions,<br><em>answered.</em></h2><details><summary>Where are you shipping?</summary><p>Shipping details will be announced before launch.</p></details><details><summary>How do I choose my size?</summary><p>Each product will include sizing information. Contact us if you need help.</p></details><details><summary>Can I return an item?</summary><p>Our return policy will be published before the shop goes live.</p></details><details><summary>Is NEXSTY available to buy now?</summary><p>This website is currently a preview. Products, accounts and checkout are in demo mode.</p></details></section>
+</main>
+<footer><div class="footer-top"><a class="logo" href="#home">NEXSTY</a><p>Less noise. More style.</p></div><div class="footer-links"><a href="#shop">Shop</a><a href="#story">About</a><a href="#faq">FAQ</a><button data-info="Contact">Contact</button><button data-info="Shipping">Shipping</button><button data-info="Returns">Returns</button><button data-info="Privacy">Privacy</button><button data-info="Imprint">Imprint</button></div><div class="footer-bottom"><span>© 2026 NEXSTY — PRE-LAUNCH DEMO</span><span>DESIGNED FOR EVERY DAY</span></div></footer>
+<div class="overlay" id="overlay" hidden></div>
+<aside class="drawer" id="cartDrawer" aria-label="Shopping bag" hidden><div class="drawer-head"><h2>Your bag <span id="drawerCount">(0)</span></h2><button class="close" id="closeCart">×</button></div><div id="cartItems" class="drawer-content"></div><div class="drawer-bottom"><div class="subtotal"><span>Subtotal</span><strong id="subtotal">0 €</strong></div><p class="muted">Shipping calculated at checkout.</p><button class="button black full" id="checkout">CHECKOUT ↗</button><button class="text-link" id="continue">CONTINUE SHOPPING</button></div></aside>
+<div class="modal-wrap" id="modalWrap" hidden><section class="modal" id="modal" role="dialog" aria-modal="true"></section></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="script.js"></script>
+</body></html>
