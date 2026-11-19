@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="description" content="CUTLINE turns plain-language instructions into real video edits.">
+  <title>CUTLINE — AI Video Editor</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="CUTLINE home">
+        <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8h11l9 8-9 8H6l9-8z" fill="currentColor"/><path d="M20 8h6v16h-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+        <span>CUTLINE<span class="brand-dot">.</span></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="#studio"><span class="nav-icon">✳</span> AI Studio <span class="nav-pill">NEW</span></a>
+        <a class="nav-item muted" href="#how-it-works"><span class="nav-icon">◫</span> How it works</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-card">
+          <div class="mini-orb"></div>
+          <strong>Your creative co-editor</strong>
+          <p>Describe the result. CUTLINE builds the edit.</p>
+        </div>
+        <div class="sidebar-foot"><span class="status-dot"></span><span id="connectionText">Checking server…</span></div>
+        <div class="sidebar-version">CUTLINE BUILD 0.1.0</div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="studio">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Workspace</span><i>/</i><strong>AI Studio</strong></div>
+        <div class="top-actions">
+          <span class="mode-chip" id="modeChip"><span class="mode-dot"></span> CONNECTING</span>
+          <a class="top-link" href="https://github.com/Faulixx11/Studyspace/tree/ai-video-editor/ai-video-editor" target="_blank" rel="noreferrer">Project source <span>↗</span></a>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-kicker"><span class="spark">✳</span> THE EDITOR THAT GETS YOUR VISION</div>
+        <h1>Your footage.<br><span>Your rules.</span></h1>
+        <p>Tell CUTLINE what the video should feel like. The AI plans the cuts, styles the story and renders a real video you can download.</p>
+        <div class="hero-meta"><span><b>01</b> Upload</span><span class="meta-line"></span><span><b>02</b> Describe</span><span class="meta-line"></span><span><b>03</b> Export</span></div>
+      </section>
+
+      <div class="work-grid">
+        <section class="panel editor-panel" aria-labelledby="uploadHeading">
+          <div class="panel-heading">
+            <div><div class="eyebrow">START A PROJECT</div><h2 id="uploadHeading">Bring your footage</h2></div>
+            <span class="step-number">01 / 03</span>
+          </div>
+
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a video file or drop one here">
+            <input id="videoInput" type="file" accept="video/mp4,video/quicktime,video/x-m4v,video/x-matroska,video/webm,.mp4,.mov,.m4v,.mkv,.webm" hidden>
+            <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15.5v2A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <strong>Drop your video here</strong>
+            <span>or <button class="text-button" id="browseButton" type="button">browse files</button></span>
+            <small>MP4 · MOV · MKV · WEBM <i>·</i> Up to <span id="maxUpload">500</span> MB</small>
+          </div>
+          <div class="file-card hidden" id="fileCard">
+            <div class="file-symbol">▶</div>
+            <div class="file-details"><strong id="fileName">video.mp4</strong><span id="fileMeta">Video selected</span></div>
+            <button class="icon-button" id="removeFile" type="button" aria-label="Remove video">×</button>
+          </div>
+
+          <div class="section-divider"><span>THE CREATIVE DIRECTION</span></div>
+          <div class="field-row">
+            <label class="field"><span>EDITING STYLE</span>
+              <select id="styleSelect">
+                <option value="dynamic">⚡ Dynamic / social</option>
+                <option value="cinematic">◒ Cinematic</option>
+                <option value="clean">✦ Clean & minimal</option>
+                <option value="gaming">▣ Gaming / high energy</option>
+              </select>
+            </label>
+            <label class="field"><span>OUTPUT FORMAT</span>
+              <select id="ratioSelect">
+                <option value="9:16">9:16 · TikTok / Reels</option>
+                <option value="16:9">16:9 · YouTube</option>
+                <option value="1:1">1:1 · Square</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field prompt-field" for="promptInput">
+            <span>DESCRIBE YOUR EDIT <em>THE MORE SPECIFIC, THE BETTER</em></span>
+            <textarea id="promptInput" rows="5" maxlength="4000" placeholder="e.g. Turn this into a punchy 30-second vertical short. Keep the strongest moments, remove pauses and repeated phrases, add bold word-by-word style subtitles and a strong opening hook. Make it feel energetic but not cheesy…"></textarea>
+          </label>
+          <div class="prompt-suggestions">
+            <button class="suggestion" type="button" data-prompt="Turn this into a fast, engaging vertical short. Keep the strongest moments, remove long pauses and repetition, open with the best hook, and add bold readable subtitles.">Viral short <span>↗</span></button>
+            <button class="suggestion" type="button" data-prompt="Create a cinematic edit. Keep the complete story, remove only awkward pauses, use a subtle colour grade, calm pacing and clean understated subtitles.">Cinematic <span>↗</span></button>
+            <button class="suggestion" type="button" data-prompt="Make a clean podcast highlight. Select the most interesting complete thought, remove dead air and repeated words, keep natural pacing and add clear subtitles.">Podcast clip <span>↗</span></button>
+          </div>
+          <div class="submit-row">
+            <div class="privacy-note"><span class="lock-icon">▣</span> Your file is processed on the project server.</div>
+            <button class="primary-button" id="generateButton" type="button" disabled><span>Generate my edit</span><b>✳</b></button>
+          </div>
+          <p class="form-error hidden" id="formError" role="alert"></p>
+        </section>
+
+        <section class="panel preview-panel" aria-labelledby="previewHeading">
+          <div class="panel-heading">
+            <div><div class="eyebrow">LIVE WORKSPACE</div><h2 id="previewHeading">Your canvas</h2></div>
+            <span class="preview-indicator"><i></i> PREVIEW</span>
+          </div>
+          <div class="preview-frame" id="previewFrame">
+            <div class="preview-empty" id="emptyState">
+              <div class="empty-graphic">
+                <div class="empty-frame frame-back"></div>
+                <div class="empty-frame frame-mid"></div>
+                <div class="empty-frame frame-front"><span class="play-mark">▶</span></div>
+                <span class="graphic-spark spark-one">✳</span><span class="graphic-spark spark-two">✦</span>
+              </div>
+              <strong>Your next edit lives here.</strong>
+              <p>Upload a video to preview your footage<br>and see the finished cut.</p>
+            </div>
+            <video id="sourcePreview" class="preview-video hidden" controls playsinline></video>
+            <video id="resultPreview" class="preview-video hidden" controls playsinline></video>
+            <div class="preview-tag" id="previewTag">SOURCE FOOTAGE</div>
+          </div>
+          <div class="preview-filebar hidden" id="previewFilebar">
+            <div><span class="file-live-dot"></span><strong id="previewFilename">video.mp4</strong></div>
+            <span id="previewDuration">00:00</span>
+          </div>
+
+          <div class="render-status" id="renderStatus">
+            <div class="status-head"><div><span class="eyebrow">RENDER ENGINE</span><strong id="statusTitle">Waiting for footage</strong></div><span id="statusPercent">—</span></div>
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <p id="statusMessage">Your workspace is ready when you are.</p>
+          </div>
+
+          <div class="result-details hidden" id="resultDetails">
+            <div class="result-heading"><span class="success-check">✓</span><strong>Your edit is ready</strong></div>
+            <p id="resultNotes">The new video has been rendered.</p>
+            <div class="result-stats">
+              <div><span>FINAL LENGTH</span><strong id="finalDuration">—</strong></div>
+              <div><span>EDITED SECTIONS</span><strong id="sectionCount">—</strong></div>
+              <div><span>CAPTIONS</span><strong id="captionCount">—</strong></div>
+            </div>
+            <a class="download-button" id="downloadButton" href="#"><span>↓</span> Download MP4</a>
+          </div>
+
+          <div class="timeline-preview" id="timelinePreview">
+            <div class="timeline-title"><span>EDIT TIMELINE</span><span id="timelineLabel">No edit yet</span></div>
+            <div class="timeline-track"><div class="timeline-empty">Your cut will appear here</div></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="how-section" id="how-it-works">
+        <div><div class="eyebrow">NOT ANOTHER COMPLICATED TIMELINE</div><h2>From idea to edit.<br><span>Without the busywork.</span></h2></div>
+        <div class="how-steps">
+          <div class="how-step"><span>01</span><strong>Upload once</strong><p>Start with the footage you already have. No timeline setup needed.</p></div>
+          <div class="how-step"><span>02</span><strong>Explain the vision</strong><p>Write what to keep, remove and how the final video should feel.</p></div>
+          <div class="how-step"><span>03</span><strong>Review the cut</strong><p>The AI plans the edit. The render engine creates an actual MP4 file.</p></div>
+        </div>
+      </section>
+
+      <footer class="footer"><span>© 2026 CUTLINE STUDIO</span><span>MADE FOR CREATORS, NOT TIMELINES.</span><span><a href="https://github.com/Faulixx11/Studyspace/tree/ai-video-editor/ai-video-editor" target="_blank" rel="noreferrer">SOURCE CODE ↗</a></span></footer>
+    </main>
+  </div>
+</body>
+</html>
