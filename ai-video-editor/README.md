@@ -29,6 +29,11 @@ The included \`render.yaml\` can be used as a starting point for a Node web serv
 
 This starter stores uploads and outputs on the server filesystem. Many free hosting plans use ephemeral storage and impose request/runtime limits. For a public production service, add private object storage, user accounts, quotas, job persistence, deletion controls, virus scanning, stronger rate limiting, and a queue/worker setup before accepting other people's videos.
 
+
+### Transcription model note
+
+Timestamped speech segments currently use `whisper-1`, because the current OpenAI API documentation only describes `timestamp_granularities[]` for that model. OpenAI has marked `whisper-1` deprecated with a scheduled shutdown date of **February 26, 2027**. This integration must be migrated to a supported timestamp-alignment workflow before that date; do not treat the current transcription adapter as long-term production infrastructure. See the [official speech-to-text guide](https://developers.openai.com/api/docs/guides/speech-to-text#timestamps).
+
 ## Important limitations
 
 This is a working MVP, not a finished professional post-production suite. AI edit decisions depend on the transcript; it cannot reliably understand every visual joke, action, camera movement, or speaker position. The current portrait crop is centre-based (not face tracking), edits are hard cuts (not AI-generated footage), and there is no automatic music licensing, multi-camera sync, collaborative timeline, or guaranteed studio-grade result. Always review an edit before publishing it.
