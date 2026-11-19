@@ -6,7 +6,7 @@
 <title>NEXSTY — Everyday, redefined.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css"><link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="marketplace.css"><link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
 <div class="announcement">FREE SHIPPING AB 100 € <span>—</span> NEXSTY COLLECTION 001</div>
@@ -17,16 +17,14 @@
 <div class="header-tools"><button class="icon-btn" id="searchBtn" aria-label="Suche">⌕</button><button class="icon-btn" id="favoritesBtn" aria-label="Favoriten">♡</button><button class="icon-btn" id="accountBtn" aria-label="Account">♙</button><button class="bag-btn" id="bagBtn">BAG <span id="bagCount">0</span></button></div>
 </header>
 <main id="home">
-<section class="hero">
-<div class="hero-copy"><p class="eyebrow">COLLECTION 001 · EVERYDAY ESSENTIALS</p><h1>Less noise.<br><em>More style.</em></h1><p class="hero-text">Pieces made to live in. Clean silhouettes, considered details, everyday comfort.</p><a class="button black" href="#shop">DISCOVER THE COLLECTION ↗</a><p class="hero-small">DESIGNED FOR EVERY DAY · NEXSTY</p></div>
-<div class="hero-img"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1500&q=85" alt="Minimalist fashion editorial"></div>
-</section>
+<section class="hero"><div class="hero-copy"><p class="eyebrow">NEXSTY MARKETPLACE · FIND YOUR NEXT FIND</p><h1>Find your<br><em>next favourite.</em></h1><p class="hero-text">Good pieces. Better prices. Your own style. Discover clothes you’ll actually want to wear.</p><div class="hero-actions"><a class="button black" href="#shop">EXPLORE THE DROP ↗</a><button class="button outline" id="sellHero">SELL A PIECE +</button></div><p class="hero-small">YOUR STYLE. YOUR FINDS. YOUR RULES.</p></div><div class="hero-img"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1500&q=85" alt="Streetwear outfit inspiration"><div class="hero-bubble">STYLE<br><strong>IS YOURS</strong></div></div></section>
 <div class="ticker"><span>NEXSTY — GOOD FORM — MADE FOR EVERY DAY — NEXSTY — GOOD FORM — MADE FOR EVERY DAY — </span></div>
 <section class="section" id="shop">
 <div class="section-title"><div><p class="eyebrow">01 / THE COLLECTION</p><h2>Everyday,<br><em>redefined.</em></h2></div><p>Versatile essentials.<br>Nothing unnecessary.</p></div>
 <div class="shop-controls"><div class="filters"><button class="filter active" data-filter="all">ALL</button><button class="filter" data-filter="tops">TOPS</button><button class="filter" data-filter="layers">LAYERS</button><button class="filter" data-filter="bottoms">BOTTOMS</button></div><div class="sort"><span id="productCount">4 products</span><select id="sort"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="az">Name A–Z</option></select></div></div>
 <div class="products" id="products"></div>
 </section>
+<section class="marketplace-extra" id="community"><div class="marketplace-heading"><div><p class="eyebrow">02 / THE COMMUNITY EDIT</p><h2>Pieces with a past.<br><em>Fits for your future.</em></h2></div><p>Find unexpected gems.<br>Give good clothes another round.</p></div><div class="community-grid" id="communityGrid"></div><div class="community-cta"><span>Got pieces you don’t wear anymore?</span><button class="button black" id="communitySell">LIST YOUR PIECE ↗</button></div></section>
 <section class="campaign"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=85" alt="NEXSTY campaign style"><div class="campaign-copy"><p class="eyebrow">THE NEXSTY STANDARD</p><h2>Built around<br><em>your everyday.</em></h2><a href="#story" class="button white">OUR APPROACH ↗</a></div></section>
 <section class="section story" id="story"><p class="eyebrow">02 / THE IDEA</p><h2>Style shouldn't<br>be <em>complicated.</em></h2><div class="story-grid"><p>NEXSTY is about finding the pieces you reach for again and again. Thoughtful design, everyday versatility and a quiet confidence.</p><p>We're starting with a small collection of essentials. Fewer pieces, more combinations. A wardrobe that feels like you.</p></div></section>
 <section class="journal section" id="journal"><div class="section-title"><div><p class="eyebrow">03 / NOTES</p><h2>Made to<br><em>move with you.</em></h2></div><p>Ideas, inspiration<br>and the NEXSTY world.</p></div><div class="journal-grid"><article><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1000&q=80" alt="Street style"><p class="eyebrow">STYLE NOTES · 01</p><h3>One piece. More ways.</h3><p>Build a wardrobe around versatile essentials.</p></article><article><img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80" alt="Neutral clothing details"><p class="eyebrow">THE EDIT · 02</p><h3>Keep it simple.</h3><p>Small details. A better everyday.</p></article></div></section>
@@ -38,5 +36,5 @@
 <aside class="drawer" id="cartDrawer" aria-label="Shopping bag" hidden><div class="drawer-head"><h2>Your bag <span id="drawerCount">(0)</span></h2><button class="close" id="closeCart">×</button></div><div id="cartItems" class="drawer-content"></div><div class="drawer-bottom"><div class="subtotal"><span>Subtotal</span><strong id="subtotal">0 €</strong></div><p class="muted">Shipping calculated at checkout.</p><button class="button black full" id="checkout">CHECKOUT ↗</button><button class="text-link" id="continue">CONTINUE SHOPPING</button></div></aside>
 <div class="modal-wrap" id="modalWrap" hidden><section class="modal" id="modal" role="dialog" aria-modal="true"></section></div>
 <div class="toast" id="toast" role="status"></div>
-<script src="script.js"></script>
+<script src="script.js"></script><script src="marketplace.js"></script>
 </body></html>
