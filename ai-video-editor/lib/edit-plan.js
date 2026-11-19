@@ -40,8 +40,8 @@ function splitCaption(text, maxChars = 42) {
     }
   }
   if (current) lines.push(current);
-  if (lines.length <= 2) return lines.join("\\N");
-  return lines.slice(0, 2).join("\\N");
+  if (lines.length <= 2) return lines.join("\n");
+  return lines.slice(0, 2).join("\n");
 }
 
 export function buildCaptionTimeline(transcriptSegments, editSegments) {
