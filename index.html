@@ -1,440 +1,90 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudySpace – Deine Lernplattform</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <link rel="stylesheet" href="flashcards-pro.css?v=5">
-    <link rel="stylesheet" href="nutrition.css?v=6">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5f1">
+  <meta name="description" content="STUDIO 01 — Zeitlose Essentials mit klarer Form und reduziertem Design.">
+  <title>STUDIO 01 — Everyday, redefined.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+  <div class="announcement"><p>FREE SHIPPING AB 100 € <span>·</span> GEMACHT FÜR JEDEN TAG</p></div>
 
-<div class="app">
+  <header class="site-header">
+    <button class="icon-button menu-toggle" id="menuToggle" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mainNav"><span></span><span></span></button>
+    <a class="wordmark" href="#" aria-label="STUDIO 01 Startseite">STUDIO<span>01</span></a>
+    <nav class="main-nav" id="mainNav" aria-label="Hauptnavigation">
+      <a href="#collection">SHOP</a><a href="#story">STORY</a><a href="#journal">JOURNAL</a>
+    </nav>
+    <div class="header-actions"><a class="text-link account-link" href="#footer">INFO</a><button class="bag-button" id="openBag" aria-label="Warenkorb öffnen">BAG <span class="bag-count" id="bagCount">0</span></button></div>
+  </header>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <span class="logo-icon">S</span>
-            <span class="logo-text">StudySpace</span>
-        </div>
+  <main id="main">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">KOLLEKTION 001 &nbsp; / &nbsp; EVERYDAY ESSENTIALS</p>
+        <h1 id="heroTitle">Weniger,<br><em>aber besser.</em></h1>
+        <p class="hero-description">Klar im Design. Angenehm im Alltag. Stücke, die bleiben – und sich immer wieder neu kombinieren lassen.</p>
+        <div class="hero-actions"><a class="button button-dark" href="#collection">Kollektion entdecken <span>↗</span></a><span class="hero-note">DESIGNED FOR DAILY LIFE</span></div>
+        <div class="hero-index"><span>01</span><span class="index-line"></span><span>04</span></div>
+      </div>
+      <div class="hero-visual">
+        <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1500&q=85" alt="Editorial Fashion-Aufnahme mit minimalistischer Alltagsmode" fetchpriority="high">
+        <div class="image-caption"><span>THE EVERYDAY EDIT</span><span>01 / 04</span></div>
+      </div>
+    </section>
 
-        <button class="toggle-button" id="toggleButton" title="Menü einklappen">☰</button>
+    <div class="ticker" aria-label="Markenversprechen"><div class="ticker-track"><span>GOOD FORM</span><i>✳</i><span>LESS, BUT BETTER</span><i>✳</i><span>MADE FOR EVERY DAY</span><i>✳</i><span>GOOD FORM</span><i>✳</i><span>LESS, BUT BETTER</span><i>✳</i><span>MADE FOR EVERY DAY</span><i>✳</i></div></div>
 
-        <nav class="navigation">
-            <button class="nav-item active" data-page="dashboard">
-                <span class="nav-icon">⌂</span><span class="nav-text">Dashboard</span>
-            </button>
-            <button class="nav-item" data-page="subjects">
-                <span class="nav-icon">▤</span><span class="nav-text">Meine Fächer</span>
-            </button>
-            <button class="nav-item" data-page="materials">
-                <span class="nav-icon">▧</span><span class="nav-text">Hefter & Materialien</span>
-            </button>
-            <button class="nav-item" data-page="tutor">
-                <span class="nav-icon">✧</span><span class="nav-text">KI-Tutor</span>
-            </button>
-            <button class="nav-item" data-page="french"><span class="nav-icon">🇫🇷</span><span class="nav-text">Französisch-Test</span></button>
-            <button class="nav-item" data-page="french-vocab"><span class="nav-icon">🗂️</span><span class="nav-text">Französisch-Vokabeltrainer</span></button>
-            <button class="nav-item" data-page="world-order"><span class="nav-icon">🌐</span><span class="nav-text">WORLD ORDER</span></button>
-            <button class="nav-item" data-page="flashcards">
-                <span class="nav-icon">▣</span><span class="nav-text">Karteikarten</span>
-            </button>
-            <button class="nav-item" data-page="empire" style="display:none" aria-hidden="true">
-                <span class="nav-icon">♜</span><span class="nav-text">Imperium</span>
-            </button>
-        </nav>
+    <section class="section collection-section" id="collection">
+      <div class="section-heading"><div><p class="eyebrow">01 — DIE AUSWAHL</p><h2>Wenige Teile.<br><em>Viele Möglichkeiten.</em></h2></div><p class="section-intro">Eine kleine Auswahl an Essentials, die sich mühelos in deinen Alltag einfügen.</p></div>
+      <div class="filter-row" role="group" aria-label="Produkte filtern">
+        <button class="filter-button is-active" data-filter="all" aria-pressed="true">Alle</button><button class="filter-button" data-filter="tops" aria-pressed="false">Tops</button><button class="filter-button" data-filter="bottoms" aria-pressed="false">Bottoms</button><button class="filter-button" data-filter="layers" aria-pressed="false">Layers</button>
+      </div>
+      <div class="product-grid" id="productGrid">
+        <article class="product-card" data-category="tops"><a class="product-image" href="#product-note" aria-label="The Essential Tee ansehen"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1000&q=85" alt="Minimalistisches T-Shirt in neutraler Farbe" loading="lazy"><span class="product-tag">BESTSELLER</span></a><div class="product-meta"><div><h3>The Essential Tee</h3><p>Heavy cotton · Off-white</p></div><span>39 €</span></div><button class="quick-add" data-add="tee">IN DEN BAG <span>+</span></button></article>
+        <article class="product-card" data-category="layers"><a class="product-image" href="#product-note" aria-label="The Daily Hoodie ansehen"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85" alt="Clean geschnittener Hoodie" loading="lazy"><span class="product-tag">NEW</span></a><div class="product-meta"><div><h3>The Daily Hoodie</h3><p>Brushed fleece · Stone</p></div><span>89 €</span></div><button class="quick-add" data-add="hoodie">IN DEN BAG <span>+</span></button></article>
+        <article class="product-card" data-category="bottoms"><a class="product-image" href="#product-note" aria-label="The Relaxed Trouser ansehen"><img src="https://images.unsplash.com/photo-1506629905607-d9d3c5f9a4c4?auto=format&fit=crop&w=1000&q=85" alt="Locker geschnittene Hose in neutralem Ton" loading="lazy"></a><div class="product-meta"><div><h3>The Relaxed Trouser</h3><p>Relaxed fit · Sand</p></div><span>79 €</span></div><button class="quick-add" data-add="trouser">IN DEN BAG <span>+</span></button></article>
+        <article class="product-card" data-category="layers"><a class="product-image" href="#product-note" aria-label="The Everyday Overshirt ansehen"><img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85" alt="Schlichtes Overshirt als Layering-Piece" loading="lazy"><span class="product-tag">LIMITED</span></a><div class="product-meta"><div><h3>The Everyday Overshirt</h3><p>Structured cotton · Ecru</p></div><span>99 €</span></div><button class="quick-add" data-add="overshirt">IN DEN BAG <span>+</span></button></article>
+      </div>
+      <p class="product-note" id="product-note">Die gezeigten Produkte, Preise und Bilder sind Platzhalter für den Shop-Entwurf.</p>
+    </section>
 
-        <div class="sidebar-bottom">
-            <button class="nav-item" data-page="settings">
-                <span class="nav-icon">⚙</span><span class="nav-text">Einstellungen</span>
-            </button>
-        </div>
-    </aside>
+    <section class="editorial" id="story">
+      <div class="editorial-image"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1400&q=85" alt="Zeitlose, reduzierte Streetwear in einer Editorial-Aufnahme" loading="lazy"><span class="editorial-stamp">FORM<br>FOLLOWS<br>FEELING.</span></div>
+      <div class="editorial-copy"><p class="eyebrow">02 — UNSERE HALTUNG</p><h2>Style ist nicht<br>laut. <em>Er ist klar.</em></h2><p>Wir glauben an gute Schnitte, durchdachte Details und Teile, die nicht nach einer Saison verschwinden. Weniger Auswahl. Mehr Gefühl für das, was wirklich passt.</p><a class="underlined-link" href="#journal">MEHR ÜBER UNS <span>↗</span></a><div class="editorial-number">S / 001</div></div>
+    </section>
 
-    <main class="main-content">
+    <section class="values section" id="journal">
+      <div class="values-heading"><p class="eyebrow">03 — DIE DETAILS</p><h2>Gemacht für<br><em>dein echtes Leben.</em></h2></div>
+      <div class="value-list">
+        <article class="value-item"><span>01</span><div><h3>Weniger, aber durchdacht.</h3><p>Eine fokussierte Auswahl statt endloser Trends.</p></div><span class="value-arrow">↗</span></article>
+        <article class="value-item"><span>02</span><div><h3>Komfort ohne Kompromisse.</h3><p>Angenehme Materialien und Schnitte für jeden Tag.</p></div><span class="value-arrow">↗</span></article>
+        <article class="value-item"><span>03</span><div><h3>Einfach kombinierbar.</h3><p>Klare Farben und Formen, die zusammen funktionieren.</p></div><span class="value-arrow">↗</span></article>
+      </div>
+    </section>
 
-        <header class="topbar">
-            <div>
-                <p class="topbar-label">DEIN PERSÖNLICHER LERNBEREICH</p>
-                <h2 id="pageTitle">Dashboard</h2>
-            </div>
-            <div class="profile">
-                <span class="profile-dot"></span>
-                <span>Mein Lernbereich</span>
-            </div>
-        </header>
+    <section class="newsletter"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Weniger Noise.<br><em>Mehr Neues.</em></h2></div><form class="newsletter-form" id="newsletterForm"><label for="emailInput">Neue Drops und ausgewählte Updates. Kein Spam.</label><div class="email-field"><input id="emailInput" name="email" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" required><button type="submit" aria-label="Newsletter anmelden">↗</button></div><p class="form-note" id="formNote">Demo-Formular: Newsletter-Anmeldung und Datenschutz sind noch nicht angebunden.</p></form></section>
+  </main>
 
-        <!-- DASHBOARD -->
-        <section class="page active" id="page-dashboard">
-            <div class="welcome">
-                <p class="welcome-label">WILLKOMMEN BEI STUDYSPACE</p>
-                <h1>Bereit, etwas Neues zu lernen?</h1>
-                <p>Organisiere dein Wissen und erreiche deine Lernziele.</p>
-                <button class="primary-button" data-goto="subjects">Meine Fächer öffnen →</button>
-            </div>
+  <footer class="site-footer" id="footer">
+    <div class="footer-top"><div class="footer-brand"><a class="wordmark wordmark-footer" href="#">STUDIO<span>01</span></a><p>EVERYDAY, REDEFINED.</p></div><div class="footer-column"><p class="footer-label">EXPLORE</p><a href="#collection">Shop</a><a href="#story">About</a><a href="#journal">Journal</a></div><div class="footer-column"><p class="footer-label">HELP</p><a href="mailto:hello@example.com">Kontakt</a><a href="#footer">Versand & Rückgabe</a><a href="#footer">FAQ</a></div><div class="footer-column"><p class="footer-label">FOLLOW</p><a href="#footer">Instagram ↗</a><a href="#footer">Pinterest ↗</a></div></div>
+    <div class="footer-bottom"><span>© 2026 STUDIO 01 — DEMO BRAND</span><div><a href="#footer">Impressum</a><a href="#footer">Datenschutz</a><a href="#footer">AGB</a></div><span>MADE TO BE WORN.</span></div>
+  </footer>
 
-            <div class="section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Deine Lernbereiche</h2>
-                        <p>Alles an einem Ort.</p>
-                    </div>
-                </div>
-                <div class="dashboard-grid">
-                    <button class="dashboard-card" data-goto="subjects">
-                        <span class="card-icon blue">▤</span>
-                        <h3>Meine Fächer</h3>
-                        <p>Verwalte deine Schulfächer und Themen.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="cockpit">
-                        <span class="card-icon cyan">◷</span>
-                        <h3>Lerncockpit</h3>
-                        <p>Plane deine Lernzeit und behalte alles im Blick.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="tutor">
-                        <span class="card-icon purple">✧</span>
-                        <h3>KI-Tutor</h3>
-                        <p>Bereite Fragen und Lernaufträge vor.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="materials">
-                        <span class="card-icon green">▧</span>
-                        <h3>Meine Hefter</h3>
-                        <p>Organisiere Fotos und Unterrichtsmaterial.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="flashcards">
-                        <span class="card-icon orange">▣</span>
-                        <h3>Karteikarten</h3>
-                        <p>Wiederhole Inhalte und festige dein Wissen.</p>
-                    </button>
-<button class="dashboard-card" data-goto="progress">
-                        <span class="card-icon cyan">▥</span>
-                        <h3>Fortschritt</h3>
-                        <p>Behalte deine Entwicklung im Blick.</p>
-                    </button>
-                    <button class="dashboard-card" data-goto="world-order"><span class="card-icon purple">🌐</span><h3>WORLD ORDER</h3><p>Führe einen Staat, gestalte Diplomatie und lerne internationale Politik durch eigene Entscheidungen.</p></button>
-                    <button class="dashboard-card empire-launch-card" data-goto="empire" style="display:none" aria-hidden="true"><span class="card-icon orange">♜</span><h3>Dein Imperium</h3><p>Archiviertes Aufbauspiel.</p></button>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- FÄCHER -->
-        <section class="page" id="page-subjects">
-            <div class="page-intro">
-                <h1>Meine Fächer</h1>
-                <p>Erstelle deine persönliche Fächerübersicht und ordne deine Themen.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Neues Fach hinzufügen</h3>
-                <form id="subjectForm" class="form-grid">
-                    <input id="subjectName" placeholder="Name des Fachs, z. B. Mathematik" required>
-                    <select id="subjectColor">
-                        <option value="blue">Blau</option>
-                        <option value="purple">Lila</option>
-                        <option value="green">Türkis</option>
-                        <option value="orange">Orange</option>
-                        <option value="pink">Rosa</option>
-                    </select>
-                    <button class="primary-button" type="submit">+ Fach hinzufügen</button>
-                </form>
-            </div>
-
-            <div class="section-heading">
-                <h2>Deine Fächerübersicht</h2>
-                <span class="muted" id="subjectCount">0 Fächer</span>
-            </div>
-            <div class="subject-grid" id="subjectList"></div>
-        </section>
-
-        <!-- MATERIALIEN -->
-        <section class="page" id="page-materials">
-            <div class="page-intro">
-                <h1>Hefter & Materialien</h1>
-                <p>Sammle deine Unterrichtsunterlagen an einem Ort.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Material hinzufügen</h3>
-                <p class="muted">Wähle ein Fach und lade mehrere Fotos oder Dokumente gleichzeitig hoch.</p>
-                <form id="materialForm" class="form-stack">
-                    <label>Fach
-                        <select id="materialSubject" required></select>
-                    </label>
-                    <label>Bezeichnung
-                        <input id="materialName" placeholder="z. B. Meiose – Hefterseite 12" required>
-                    </label>
-                    <label>Datei oder Foto
-                        <input id="materialFile" type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple required>
-                    </label>
-                    <button class="primary-button" type="submit">Material vormerken</button>
-                </form>
-                <p class="info-note">Mehrere Dateien können gleichzeitig ausgewählt werden. Bilder und PDFs lassen sich im digitalen Hefter Seite für Seite durchgehen.</p>
-            </div>
-
-            <div class="section-heading">
-                <h2>Meine Materialien</h2>
-            </div>
-            <div id="materialList" class="material-list"></div>
-        </section>
-
-        <!-- KI-TUTOR -->
-        <section class="page" id="page-tutor">
-            <div class="page-intro">
-                <h1>KI-Tutor</h1>
-                <p>Bereite deine Lernsession vor und lege fest, wie du lernen möchtest.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Deine Lernsession</h3>
-                <form id="tutorForm" class="form-stack">
-                    <label>Was möchtest du lernen?
-                        <input id="tutorTopic" placeholder="z. B. Die Französische Revolution">
-                    </label>
-                    <label>Fach
-                        <select id="tutorSubject"></select>
-                    </label>
-                    <label>Welche Wissensquelle?
-                        <select id="learningSource">
-                            <option value="notebook">Nur mein Hefter</option>
-                            <option value="combined">Hefter + allgemeines Wissen</option>
-                            <option value="general">Nur allgemeines Wissen</option>
-                        </select>
-                    </label>
-                    <label>Schwierigkeitsgrad
-                        <select id="difficulty">
-                            <option>Einfach</option>
-                            <option selected>Mittel</option>
-                            <option>Anspruchsvoll</option>
-                        </select>
-                    </label>
-                    <label>Wie möchtest du lernen?
-                        <select id="learningMethod">
-                            <option>Schrittweise Erklärung</option>
-                            <option>Fragen und Antworten</option>
-                            <option>Übungsaufgaben</option>
-                            <option>Prüfungssimulation</option>
-                            <option>Lernzettel erstellen</option>
-                        </select>
-                    </label>
-                    <button class="primary-button" type="submit">Lernsession vorbereiten</button>
-                </form>
-            </div>
-
-            <div class="panel" id="tutorResult">
-                <h3>Deine Lernsession</h3>
-                <p class="muted">Hier erscheint deine gewählte Lerneinstellung.</p>
-            </div>
-
-            <!-- KI-CHAT -->
-            <div class="panel ai-chat-panel">
-                <div class="ai-chat-header">
-                    <div>
-                        <h3>StudySpace KI-Tutor</h3>
-                        <p class="muted">Dein persönlicher Lernassistent – läuft lokal im Browser.</p>
-                    </div>
-                    <div class="ai-engine-actions">
-                        <button type="button" class="primary-button" id="aiStartButton">KI starten</button>
-                        <button type="button" class="small-button" id="aiStopButton">KI beenden</button>
-                    </div>
-                </div>
-
-                <div id="aiEngineStatus" class="ai-engine-status" data-type="info">
-                    KI noch nicht gestartet.
-                </div>
-
-                <div class="ai-progress-track">
-                    <div id="aiProgressBar" class="ai-progress-bar"></div>
-                </div>
-
-                <p id="aiProgressText" class="muted">
-                    Beim ersten Start wird das Modell heruntergeladen.
-                </p>
-
-                <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite">
-                    <div class="ai-message assistant">
-                        Hallo! Starte zuerst die KI, dann können wir gemeinsam lernen.
-                    </div>
-                </div>
-
-                <form id="aiChatForm" class="ai-chat-form">
-                    <textarea id="aiChatInput" rows="2" placeholder="Stelle eine Frage..." required></textarea>
-                    <button type="submit" class="primary-button" id="aiSendButton">Senden</button>
-                </form>
-
-                <button type="button" class="small-button" id="aiClearButton">Chat leeren</button>
-            </div>
-        </section>
-
-        <!-- FRANZÖSISCH-TEST -->
-        <section class="page" id="page-french"><iframe title="Französisch-Test Lernbereich" src="french-test.html" style="width:100%;height:calc(100vh - 100px);min-height:900px;border:0;border-radius:14px;background:#10131d"></iframe></section>
-        <section class="page" id="page-french-vocab"><iframe title="Französisch-Vokabeltrainer" src="french-vocabulary.html" style="width:100%;height:calc(100vh - 100px);min-height:1100px;border:0;border-radius:14px;background:#10131d"></iframe></section>
-
-        <section class="page" id="page-world-order"><iframe title="WORLD ORDER – Internationale Politik" src="world-order.html" style="width:100%;height:calc(100vh - 100px);min-height:1250px;border:0;border-radius:14px;background:#0b111b"></iframe></section>
-
-        <!-- KARTEIKARTEN -->
-        <section class="page" id="page-flashcards">
-            <div class="page-intro">
-                <h1>Karteikarten</h1>
-                <p>Erstelle eigene Karten und wiederhole dein Wissen.</p>
-            </div>
-
-            <div class="panel">
-                <h3>Neue Karteikarte erstellen</h3>
-                <form id="flashcardForm" class="form-stack">
-                    <label>Fach
-                        <select id="flashcardSubject"></select>
-                    </label>
-                    <label>Frage oder Begriff
-                        <input id="flashcardQuestion" placeholder="Was möchtest du wissen?" required>
-                    </label>
-                    <label>Antwort
-                        <textarea id="flashcardAnswer" placeholder="Schreibe die Antwort..." required></textarea>
-                    </label>
-                    <button class="primary-button" type="submit">Karteikarte speichern</button>
-                </form>
-            </div>
-
-            <div class="panel" id="reviewPanel">
-                <div class="section-heading">
-                    <h3>Wiederholen</h3>
-                    <span class="muted" id="reviewCounter">0 Karten</span>
-                </div>
-                <div id="reviewCard" class="review-card empty-state">Erstelle deine erste Karteikarte.</div>
-                <div class="button-row">
-                    <button class="secondary-button" id="showAnswerButton" type="button">Antwort zeigen</button>
-                    <button class="primary-button" id="knownButton" type="button">Gewusst ✓</button>
-                </div>
-                <p class="muted" id="reviewAnswer"></p>
-            </div>
-
-            <div class="section-heading"><h2>Alle Karteikarten</h2></div>
-            <div id="flashcardList" class="material-list"></div>
-        </section>
-
-        <!-- LERNPLAN -->
-        <section class="page" id="page-empire"><div class="empire-app" id="empireApp">
-<div class="empire-hero"><div><span class="empire-kicker">STUDYSPACE · STRATEGIE & AUFBAU</span><h1>Chroniken von Aurelion</h1><p>Aus einer kleinen Grenzsiedlung soll ein blühendes Imperium werden. Baue Städte, lenke deine Bevölkerung, erforsche Technologien und erschließe neue Provinzen. Dein Wissen öffnet die Grenzen.</p><button class="empire-btn gold" data-tab="map">Reich betreten →</button></div><div class="empire-emblem">♜<small>A U R E L I O N</small></div></div>
-<div id="empireResources" class="empire-resources"></div>
-<nav class="empire-tabs empire-nav-groups">
-<button data-tab="path" class="active empire-path-home">🧭 Dein Pfad</button><button data-tab="handbook">📖 Handbuch</button>
-<details open><summary>🏰 Aufbau</summary><div class="empire-nav-group"><button data-tab="overview">Übersicht</button><button data-tab="map">Hauptstadt</button><button data-tab="build">Bauen</button><button data-tab="city">Stadt</button><button data-tab="economy">Wirtschaftszentrale</button></div></details>
-<details><summary>📦 Wirtschaft</summary><div class="empire-nav-group"><button data-tab="shop">Shop</button><button data-tab="inventory">Lager</button><button data-tab="trade">Handel</button><button data-tab="research">Forschung</button></div></details>
-<details><summary>🌍 Reich</summary><div class="empire-nav-group"><button data-tab="cities">Städte</button><button data-tab="strategy">Reichsverwaltung</button><button data-tab="diplomacy">Diplomatie</button><button data-tab="military">Militär</button><button data-tab="council">Staatsrat</button><button data-tab="intrigue">Hofintrigen</button><button data-tab="court">Hof & Schicksal</button></div></details>
-<details><summary>📖 Geschichte & Lernen</summary><div class="empire-nav-group"><button data-tab="story">Chronik</button><button data-tab="quests">Lernquests</button><button data-tab="events">Ereignisse</button><button data-tab="achievements">Erfolge</button></div></details>
-</nav>
-<div id="empireContent"></div><footer class="empire-footer">Dein Reich wächst durch Wissen. Dein Spielstand wird automatisch gespeichert.</footer></div></section>
-        <!-- EINSTELLUNGEN -->
-        <section class="page" id="page-settings">
-            <div class="page-intro">
-                <h1>Einstellungen</h1>
-                <p>Gestalte StudySpace nach deinen Vorstellungen.</p>
-            </div>
-            <div class="panel">
-                <h3>Darstellung</h3>
-                <label class="setting-row">Akzentfarbe
-                    <select id="accentSetting">
-                        <option value="blue">Blau</option>
-                        <option value="purple">Lila</option>
-                        <option value="green">Türkis</option>
-                        <option value="pink">Rosa</option>
-                    </select>
-                </label>
-                <label class="setting-row">Schriftgröße
-                    <select id="fontSetting">
-                        <option value="15px">Klein</option>
-                        <option value="16px" selected>Normal</option>
-                        <option value="18px">Groß</option>
-                    </select>
-                </label>
-                <button class="primary-button" id="saveSettingsButton">Einstellungen speichern</button>
-            </div>
-            <div class="panel">
-                <h3>Deine Daten</h3>
-                <p class="muted">Sichere oder übertrage deine StudySpace-Daten einschließlich Lernsets, Lernzeiten und hochgeladener Hefterdateien auf ein anderes Gerät.</p>
-                <button class="secondary-button" id="exportButton">Komplettsicherung herunterladen</button>
-                <label class="setting-row">Komplettsicherung auf diesem Gerät wiederherstellen
-                    <input type="file" id="backupImportInput" accept=".json,application/json">
-                </label>
-                <p class="muted" id="backupStatus" aria-live="polite">Der Import ersetzt die vorhandenen StudySpace-Daten auf diesem Gerät.</p>
-                <button class="danger-button" id="resetButton">Alle Daten löschen</button>
-            </div>
-            <div class="panel">
-                <h3>Archiviertes Spiel</h3>
-                <p class="muted">Das bisherige Imperium-Spiel wurde vorübergehend deaktiviert. Der bisherige Spielcode und dein gespeicherter Imperium-Spielstand bleiben erhalten.</p>
-                <button class="secondary-button" type="button" id="restoreLegacyEmpireButton">Altes Imperium-Spiel wieder einblenden</button>
-            </div>
-        </section>
-
-    </main>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="studyspace-sync.js?v=2"></script>
-<script src="studyspace-cloud.js?v=12"></script>
-<link rel="stylesheet" href="material-reader.css?v=1">
-<script src="script.js?v=17"></script>
-<script src="material-reader.js?v=7"></script>
-<script src="flashcards-pro.js?v=15"></script>
-<script src="studyspace-plus.js?v=3"></script>
-<script src="studyspace-practice.js?v=2"></script>
-<script src="studyspace-knowledge.js?v=1"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://unpkg.com/@zxing/browser@0.1.5"></script>
-<script src="nutrition.js?v=10"></script>
-<script>
-/* Das bisherige Imperium bleibt archiviert und wird erst auf ausdrücklichen Wunsch geladen. */
-window.restoreLegacyEmpire = function() {
-    const navItem = document.querySelector('.nav-item[data-page="empire"]');
-    const dashboardCard = document.querySelector('.dashboard-card[data-goto="empire"]');
-    if (navItem) { navItem.style.display = ""; navItem.removeAttribute("aria-hidden"); }
-    if (dashboardCard) { dashboardCard.style.display = ""; dashboardCard.removeAttribute("aria-hidden"); }
-    if (window.__studySpaceEmpireLoaded) { openPage("empire"); return; }
-    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "empire.css?v=44"; document.head.appendChild(css);
-    const game = document.createElement("script"); game.src = "empire.js?v=54";
-    game.onload = function() { window.__studySpaceEmpireLoaded = true; openPage("empire"); };
-    document.body.appendChild(game);
-};
-if (typeof pageTitles !== "undefined") pageTitles["world-order"] = "WORLD ORDER";
-document.getElementById("restoreLegacyEmpireButton")?.addEventListener("click", function() {
-    window.restoreLegacyEmpire();
-});
-</script>
-
-<script>
-/* Französisch-Seite direkt öffnen, unabhängig von anderen Navigations-Erweiterungen. */
-document.addEventListener("click", function(event) {
-    const trigger = event.target.closest('.nav-item[data-page="french"]');
-    if (!trigger) return;
-    document.querySelectorAll(".page").forEach(function(page) {
-        page.classList.toggle("active", page.id === "page-french");
-    });
-    document.querySelectorAll(".nav-item[data-page]").forEach(function(item) {
-        item.classList.toggle("active", item.dataset.page === "french");
-    });
-    const title = document.getElementById("pageTitle");
-    if (title) title.textContent = "Französisch-Test";
-}, true);
-</script>
-<script>
-/* Fallback-Navigation: stellt sicher, dass das Imperium auch dann geöffnet wird,
-   wenn ein anderer Navigationshandler vorher nicht korrekt gebunden wurde. */
-document.addEventListener("click", function(event) {
-    const trigger = event.target.closest('[data-page="empire"], [data-goto="empire"]');
-    if (!trigger) return;
-    event.preventDefault();
-    document.querySelectorAll(".page").forEach(function(page) {
-        page.classList.toggle("active", page.id === "page-empire");
-    });
-    document.querySelectorAll(".nav-item[data-page]").forEach(function(item) {
-        item.classList.toggle("active", item.dataset.page === "empire");
-    });
-    const title = document.getElementById("pageTitle");
-    if (title) title.textContent = "Dein Imperium";
-    window.scrollTo({ top: 0, behavior: "auto" });
-}, true);
-</script>
+  <div class="bag-overlay" id="bagOverlay" hidden></div>
+  <aside class="bag-drawer" id="bagDrawer" aria-labelledby="bagTitle" aria-modal="true" role="dialog" hidden>
+    <div class="bag-header"><div><p class="eyebrow">YOUR SELECTION</p><h2 id="bagTitle">Dein Bag <span id="drawerCount">(0)</span></h2></div><button class="icon-button close-bag" id="closeBag" aria-label="Warenkorb schließen">×</button></div>
+    <div class="bag-items" id="bagItems"><p class="empty-bag">Dein Bag ist noch leer.</p></div>
+    <div class="bag-footer"><div class="bag-subtotal"><span>Zwischensumme</span><strong id="bagSubtotal">0 €</strong></div><p>Versand wird im nächsten Schritt berechnet.</p><button class="button button-dark checkout-button" id="checkoutButton">ZUM CHECKOUT <span>↗</span></button><span class="demo-disclaimer">Demo-Shop · Checkout noch nicht verbunden</span></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
 </body>
 </html>
